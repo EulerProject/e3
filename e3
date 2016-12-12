@@ -1,0 +1,23 @@
+#!/usr/bin/env python
+'''
+@author: Thomas
+'''
+import logging, sys
+import e3_run
+import e3_parse
+import e3_io
+
+def main():
+    logging.basicConfig(level=logging.INFO, stream=sys.stdout, format="%(levelname)s:%(name)s:%(funcName)s:%(message)s")
+    config = e3_io.get_config()
+    #sys.path.append(config['eulerXPath'])
+    
+    run = None
+    if len(sys.argv) > 1:
+        run = e3_run.OneShot(e3_parse.CommandProvider())
+    else:
+        run = e3_run.Interactive(e3_parse.CommandProvider())
+    run.run()
+    
+if __name__ == '__main__':
+    main()
