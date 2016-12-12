@@ -69,8 +69,13 @@ print project history					| Print the project's command history
 remove project history \<index\>				| Remove command with \<index\> and all dependent commands from the project's command history
 
 ### Prerequisites
-Python 2.7.x, Python modules: autologging, pinject, pyyaml, hashlib
-[EulerX](https://github.com/EulerProject/EulerX) 
+* Python 2.7.x
+* Python modules: 
+ * autologging
+ * pinject
+ * pyyaml
+ * hashlib
+* [EulerX](https://github.com/EulerProject/EulerX) 
 
 ### Setup
 * Setup preqrequistis
