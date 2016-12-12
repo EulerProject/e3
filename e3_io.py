@@ -182,7 +182,8 @@ def get_taxonomies(cleantax):
     articulations = []
     taxonomiesComplete = False
     for line in cleantax:
-        line = line.rstrip()
+        line = line.strip().rstrip()
+        if line.startswith('#'): continue
         if len(line.strip()) == 0:
             if not taxonomiesComplete and not len(taxonomy) == 0:
                 taxonomies.append(taxonomy)
@@ -199,7 +200,8 @@ def get_articulations(cleantax):
     articulations = []
     articulationStarts = False
     for line in cleantax:
-        line = line.rstrip()
+        line = line.strip().rstrip()
+        if len(line) == 0 or line.startswith('#'): continue
         if line.startswith("articulation"):
             articulationStarts = True
         if articulationStarts:

@@ -6,7 +6,6 @@ Created on Nov 21, 2016
 import sys
 from autologging import logged
 import pinject
-from pinject_config import Config
 from pinject import copy_args_to_public_fields
 import readline
 import os
