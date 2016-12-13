@@ -681,10 +681,18 @@ class GraphAmbiguity(Euler2Command):
         Euler2Command.__init__(self, tap)
     def run(self):
         Euler2Command.run(self)
-        stdout, stderr, returnCode = self.run_euler(self.alignArtRemCommand)
+        self.maxN = 2
+        stdout, stderr, returnCode = self.run_euler(self.alignMaxNCommand)
         if not self.is_consistent():
             self.output.append("The tap is inconsistent")
             return
+        
+        possibleWorldsCount = len(self.get_possible_worlds())
+        if possibleWorldsCount == self.maxN:
+            self.output.append("The tap is ambiguous. There are >= 2 worlds")
+            return
+        
+        stdout, stderr, returnCode = self.run_euler(self.alignArtRemCommand)
         stdout, stderr, returnCode = self.run_euler(self.showAmbLatCommand)
         if "No MUS generated for this example" in stdout:
             self.output.append("The tap is not valid for graph ambiguity")
