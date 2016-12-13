@@ -185,7 +185,7 @@ class AddArticulationParser(CommandParser):
         #add articulation [1.A equals 2.B]
         #add articulation [1.A equals 2.B] 2312842819299391
         #add articulation [1.A equals 2.B] my_tap_name
-        CommandParser.__init__(self, '^add articulation (\[.*\])( (\S*))?$')
+        CommandParser.__init__(self, '^add articulation (.+)( (\S*))?$')
     def get_command(self, input):
         match = self.is_command(input)
         if match:

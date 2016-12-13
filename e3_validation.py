@@ -4,6 +4,7 @@ Created on Nov 22, 2016
 @author: Thomas
 '''
 import e3_io
+import re
 
 class ValidationException(Exception):
     pass
@@ -14,8 +15,10 @@ def validate_cleantax(cleantax):
         validate_taxonomy(taxonomy)
     articulations = e3_io.get_articulations(cleantax)
     
+    validated_articulations = []
     for articulation in articulations[1:]:
-        validate_articulation(articulation, taxonomies)
+        validate_articulation(articulation, taxonomies, validated_articulations)
+        validated_articulations.append(articulation)
         
 def validate_taxonomy(taxonomy):
     if not len(taxonomy[0].split()) == 3:
@@ -31,56 +34,60 @@ def validate_taxonomy(taxonomy):
         if len(inside.split()) <= 1:
             raise ValidationException("Taxonomy line has to consist of two or more nodes")
 
-def validate_articulation(articulation, taxonomies):
-    validRelations = ['equals', 'overlaps', 'includes', 'is_included_in', 'disjoint', 'lsum', 'rsum']
+def validate_articulation(articulation, taxonomies, articulations):  
+    if articulation in articulations:
+        raise ValidationException("This articulation already exists")
+    node = "(.+\..+)"  
+    validRelations = [ "lsum", "l3sum", "l4sum", "rsum", "r3sum", "r4sum", "ldiff", "rdiff", "e4sum", "i4sum", "equals", "includes", 
+                      "is_included_in", "overlaps", "disjoint" 
+                      ]
+    validRelationsRegex = [
+        "\[" + node + " " + node + " lsum " + node + "\]",
+        "\[" + node + " " + node + " " + node + " l3sum " + node + "\]",
+        "\[" + node + " " + node + " " + node + " " + node + " l4sum " + node + "\]",
+        "\[" + node + " " + " rsum "  + node + " " + node + "\]",
+        "\[" + node + " " + " r3sum " + node + " " + node + " " + node + "\]",
+        "\[" + node + " " + " r4sum " + node + " " + node + " " + node + " " + node + "\]",
+        "\[" + node + " " + node + " ldiff " + node + "\]",
+        "\[" + node + " " + " rdiff "  + node + " " + node + "\]",
+        "\[" + node + " " + node + " e4sum "  + node + " " + node + "\]",
+        "\[" + node + " " + node + " i4sum "  + node + " " + node + "\]",
+        "\[" + node + " equals " + node + "\]",
+        "\[" + node + " includes " + node + "\]",
+        "\[" + node + " is_included_in " + node + "\]",
+        "\[" + node + " overlaps " + node + "\]",
+        "\[" + node + " disjoint " + node + "\]",
+        ]
     taxonomyIdToNodes = { }
     for taxonomy in taxonomies:
         id = taxonomy[0].split()[1]
         taxonomyIdToNodes[id] = []
         for line in taxonomy[1:]:
             taxonomyIdToNodes[id].extend(line.strip()[1:-1].split())
-    articulation = articulation[1:-1]
-    parts = articulation.split()
     
-    relationIndex = None
-    for i, part in enumerate(parts):
-        if part in validRelations:
-            relation = part
-            relationIndex = i
-            break
-    if not relationIndex:    
-        raise ValidationException("No valid relation found. The set of supported relations is: {validRelations}.".format(
-            validRelations = ', '.join(validRelations)))
-    leftNodes = parts[0:i]
-    rightNodes = parts[i+1:]
-    if len(leftNodes) == 0:
-        raise ValidationException("Missing left part of articulation")
-    if len(rightNodes) == 0:
-        raise ValidationException("Missing right part of articulation")
-    
+    for validRelationRegex in validRelationsRegex:
+        match = re.match(validRelationRegex, articulation)
+        if match:
+            valid = True
+            for group in match.groups():
+                validate_node(group, taxonomyIdToNodes)
+            return 
+    raise ValidationException("No valid relation found. The set of supported relations is: {validRelations}.".format(
+        validRelations = ', '.join(validRelations)))
+        
+def validate_node(node, taxonomyIdToNodes):
     taxonomyIds = ', '.join(taxonomyIdToNodes.keys())
     taxonomyIdNotFoundText = "{taxonomyId} of {node} not found in the list of taxonomies ({taxonomyIds})"
     nodeNotFoundText = "{nodeName} of {node} not found in the nodes of taxonomy {taxonomyId}"
-    for node in leftNodes + rightNodes:
-        if not '.' in node:
-            raise ValidationException(node + " has an invalid node syntax. The period is missing.")
-        if not len(node.split('.')) == 2:
-            raise ValidationException(node + " has an invalid node syntax. More than one period contained.")
-            
-        nodeTaxonomyId = node.split('.')[0]
-        nodeName = node.split('.')[1]
-        if not nodeTaxonomyId in taxonomyIdToNodes:
-            raise ValidationException(taxonomyIdNotFoundText.format(taxonomyId = nodeTaxonomyId, node = node, taxonomyIds = taxonomyIds))
-        if not nodeName in taxonomyIdToNodes[nodeTaxonomyId]:
-            raise ValidationException(nodeNotFoundText.format(nodeName = nodeName, node = node, taxonomyId = nodeTaxonomyId))
     
-    leftNodesId = leftNodes[0].split('.')[0]
-    for node in leftNodes:
-        nodeTaxonomyId = node.split('.')[0]
-        if not nodeTaxonomyId == leftNodesId:
-            raise ValidationException("All nodes of the left part of the articulation have to stem from the same taxonomy")
-    rightNodesId = rightNodes[0].split('.')[0]
-    for node in rightNodes:
-        nodeTaxonomyId = node.split('.')[0]
-        if not nodeTaxonomyId == rightNodesId:
-            raise ValidationException("All nodes of the right part of the articulation have to stem from the same taxonomy")
+    if not '.' in node:
+        raise ValidationException(node + " has an invalid node syntax. The period is missing.")
+    if not len(node.split('.')) == 2:
+        raise ValidationException(node + " has an invalid node syntax. More than one period contained.")
+        
+    nodeTaxonomyId = node.split('.')[0]
+    nodeName = node.split('.')[1]
+    if not nodeTaxonomyId in taxonomyIdToNodes:
+        raise ValidationException(taxonomyIdNotFoundText.format(taxonomyId = nodeTaxonomyId, node = node, taxonomyIds = taxonomyIds))
+    if not nodeName in taxonomyIdToNodes[nodeTaxonomyId]:
+        raise ValidationException(nodeNotFoundText.format(nodeName = nodeName, node = node, taxonomyId = nodeTaxonomyId))

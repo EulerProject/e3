@@ -420,8 +420,9 @@ class AddArticulation(ModelCommand):
         ModelCommand.__init__(self)
     def run(self):
         ModelCommand.run(self)
+        self.articulation = "[" + self.articulation + "]"
         try:
-            e3_validation.validate_articulation(self.articulation, self.tap.taxonomies)
+            e3_validation.validate_articulation(self.articulation, self.tap.taxonomies, self.tap.articulations[1:])
         except e3_validation.ValidationException as e:
             self.output.append(str(e))
             return
