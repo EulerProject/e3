@@ -104,7 +104,7 @@ class Euler2Command(Command):
             if "Input is inconsistent" in stdout:
                 self.isConsistent = False
             if returnCode and stderr:
-                print stderr
+                print stderr.rstrip()
             return stdout, stderr, returnCode
         # add remaining parameters
         command = command.format(euler2Executable = self.euler2Executable, 
@@ -540,24 +540,25 @@ class IsConsistent(Euler2Command):
             self.output.append("no")
     
 @logged 
-class MoreWorldsOrEqualThan(Euler2Command):
+class MoreWorldsThan(Euler2Command):
     @copy_args_to_public_fields
-    def __init__(self, tap, maxN):
+    def __init__(self, tap, more):
         Euler2Command.__init__(self, tap)
+        self.maxN = self.more + 1 #adapt from "more than" to "more than equals"
     def run(self):
         Euler2Command.run(self)
         stdout, stderr, returnCode = self.run_euler(self.alignMaxNCommand)
         if not self.is_consistent():
-            self.output.append("Cannot determine if there are >= worlds. The tap is not consistent")
+            self.output.append("Cannot determine if there are more than {more} worlds. The tap is not consistent".format(more = self.more))
             return
                
         possibleWorldsCount = len(self.get_possible_worlds())
         if possibleWorldsCount < self.maxN:
-            self.output.append("There are < {maxN} possible worlds. There are {count}.".format(
-                maxN = self.maxN, count = possibleWorldsCount))
+            self.output.append("There are less than or equal to {more} possible worlds. There are {count}.".format(
+                more = self.more, count = possibleWorldsCount))
         else:
-            self.output.append("There are >= {maxN} possible worlds.".format(
-                maxN = self.maxN))
+            self.output.append("There are more than {more} possible worlds.".format(
+                more = self.more))
             
 @logged 
 class PrintFix(Euler2Command):
@@ -690,7 +691,7 @@ class GraphAmbiguity(Euler2Command):
         
         possibleWorldsCount = len(self.get_possible_worlds())
         if possibleWorldsCount == self.maxN:
-            self.output.append("The tap is ambiguous. There are >= 2 worlds")
+            self.output.append("The tap is ambiguous. There is more than one possible worlds")
             return
         
         stdout, stderr, returnCode = self.run_euler(self.alignArtRemCommand)

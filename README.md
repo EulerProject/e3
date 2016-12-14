@@ -51,7 +51,7 @@ print names						| Shows all stored names and their corresponding taps
 use tap \<tap\>						| Makes \<tap\> the current tap
 graph tap [\<tap\>]					| Creates a graph visualization of the current tap or the optionally provided \<tap\>
 is consistent [\<tap\>]					| Checks the consistency of the current tap or the optionally provided \<tap\>
->= \<count\> worlds [\<tap\>]				| Checks if there are more than or equal than count number of possible worlds in the current tap or the optionally provided \<tap\>
+more than \<count\> worlds [\<tap\>]				| Checks if there are more than <count> number of possible worlds in the current tap or the optionally provided \<tap\>
 graph worlds [\<tap\>]					| Creates graph visualizations of the possible worlds, if any exist, for the current tap or the optionally provided \<tap\>
 print worlds [\<tap\>]					| Prints the possible worlds, if any exist, of the current tap or the optionally provided \<tap\>
 graph summary [\<tap\>]					| Creates a summary visualization of the current tap or the optionally provided \<tap\>

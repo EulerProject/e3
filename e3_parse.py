@@ -414,9 +414,9 @@ class PrintArticulationsParser(CommandParser):
     def get_help(self):
         return "print articulations [<tap>]\t\t\t\tPrints the articulations of the current tap or the optionally provided <tap>"
 
-class MoreWorldsOrEqualThanParser(CommandParser):
+class MoreWorldsThanParser(CommandParser):
     def __init__(self):
-        CommandParser.__init__(self, '^>= (\d+) worlds( (\S*))?$')
+        CommandParser.__init__(self, '^more than (\d+) worlds( (\S*))?$')
     def get_command(self, input):
         match = self.is_command(input)
         if match:
@@ -424,13 +424,13 @@ class MoreWorldsOrEqualThanParser(CommandParser):
             if match.group(2) and match.group(3):
                 tap = e3_io.get_tap_from_id_or_name(match.group(3))
             if tap:
-                return e3_command.MoreWorldsOrEqualThan(tap, int(match.group(1)))
+                return e3_command.MoreWorldsThan(tap, int(match.group(1)))
             else:
                 raise Exception('Tap %s not found' % match.group(3))
         else:
             raise Exception('Unrecognized command line')
     def get_help(self):
-        return ">= <count> worlds [<tap>]\t\t\t\tChecks if there are more than or equal than count number of possible worlds in the current tap or the optionally provided <tap>"
+        return "more than <count> worlds [<tap>]\t\t\t\tChecks if there are more than <count> number of possible worlds in the current tap or the optionally provided <tap>"
 
 class GraphWorldsParser(CommandParser):
     def __init__(self):
@@ -611,7 +611,7 @@ commandParsers = [  ByeParser(),
                     UseTapParser(), 
                     GraphTapParser(), 
                     IsConsistentParser(),
-                    MoreWorldsOrEqualThanParser(),
+                    MoreWorldsThanParser(),
                     GraphWorldsParser(), 
                     PrintWorldsParser(),
                     GraphSummaryParser(),
