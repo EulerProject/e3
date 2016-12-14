@@ -25,11 +25,11 @@ def get_config():
     defaultConfig = {
                 'euler2Executable': 'euler2', #os.path.join(get_home_dir(), 'git', 'EulerX'),
                 'imageViewer': 'xdg-open {file}',
-                'maxPossibleWorldsToShow': '5',
+                'maxPossibleWorldsToShow': 5,
                 'imageFormat': 'svg',
                 'repairMethod': 'topdown',
-                'defaultIsCoverage': 'True',
-                'defaultIsSiblingDisjointness': 'True',
+                'defaultIsCoverage': True,
+                'defaultIsSiblingDisjointness': True,
                 'defaultRegions': 'mnpw',
                 'reasoner': 'dlv'
                 }
@@ -38,13 +38,7 @@ def get_config():
         yaml.dump(config, f, default_flow_style=False)
     return config
 
-def exists_config(key):
-    return key in get_config()
-
-
-def set_config(key, value):
-    config = get_config()
-    config[key] = value
+def store_config(config):
     with open(get_config_file(), 'w') as f:
         yaml.dump(config, f, default_flow_style=False)
 
@@ -65,7 +59,7 @@ def get_names():
         if doc:
             for key, value in doc.items():
                 names.append(key + " = " + value)
-    return names       
+    return names
 
 def clear_names():
     with open(get_names_file(), 'w'): pass

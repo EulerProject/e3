@@ -62,6 +62,7 @@ class Euler2Command(Command):
         self.isSiblingDisjointness = self.tap.isSiblingDisjointness
         self.regions = self.tap.regions
         self.defaultIsSiblingDisjointness = self.config['defaultIsSiblingDisjointness']
+        self.defaultIsCoverage = self.config['defaultIsCoverage']
         self.defaultRegions = self.config['defaultRegions']
         self.tapId = self.tap.get_id()
         self.cleantaxFile = e3_io.get_cleantax_file(self.tap)
@@ -157,11 +158,19 @@ class SetConfig(MiscCommand):
         MiscCommand.__init__(self)
     def run(self):
         MiscCommand.run(self)
-        if not e3_io.exists_config(self.key):
+        config = e3_io.get_config()
+        if not self.key in config:
             self.output.append("Configuration parameter " + self.key + " does not exist.")
             return
-        e3_io.set_config(self.key, self.value)
-        self.output.append("Configuration updated: " + self.key + " = " + self.value)
+        if type(config[self.key]) is bool:
+            self.value = True if not (self.value == 'false' or self.value == 'False') else False
+        if type(config[self.key]) is int:
+            self.value = int(self.value)
+        if type(config[self.key]) is str:
+            self.value = str(self.value)
+        config[self.key] = self.value
+        e3_io.store_config(config)
+        self.output.append("Configuration updated: " + self.key + " = " + str(self.value))
 
 class PrintConfig(MiscCommand):
     @copy_args_to_public_fields
@@ -171,7 +180,7 @@ class PrintConfig(MiscCommand):
         MiscCommand.run(self)
         config = e3_io.get_config()
         for key in config:
-            self.output.append(key + " = " + config[key]) 
+            self.output.append("{key} = {value}".format(key = key, value = config[key])) 
           
 @logged 
 class Reset(MiscCommand):
@@ -463,7 +472,7 @@ class SetCoverage(ModelCommand):
         ModelCommand.__init__(self)
     def run(self):
         ModelCommand.run(self)
-        self.tap.isCoverage = self.value == 'true'
+        self.tap.isCoverage = self.value
         e3_io.set_current_tap(self.tap)
         e3_io.store_tap(self.tap)
         self.output.append("Tap: " + e3_io.get_tap_id_and_name(self.tap))
@@ -490,7 +499,7 @@ class SetSiblingDisjointness(ModelCommand):
         ModelCommand.__init__(self)
     def run(self):
         ModelCommand.run(self)
-        self.tap.isSiblingDisjointness = self.value == 'true'
+        self.tap.isSiblingDisjointness = self.value
         e3_io.set_current_tap(self.tap)
         e3_io.store_tap(self.tap)
         self.output.append("Tap: " + e3_io.get_tap_id_and_name(self.tap))

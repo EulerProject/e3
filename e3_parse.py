@@ -233,7 +233,8 @@ class SetCoverageParser(CommandParser):
             if match.group(2) and match.group(3):
                 tap = e3_io.get_tap_from_id_or_name(match.group(3))
             if tap:
-                return e3_command.SetCoverage(tap, match.group(1))
+                value = match.group(1)
+                return e3_command.SetCoverage(tap, True if not (value == 'false' or value == 'False') else False)
             else:
                 raise Exception('Tap %s not found' % match.group(3))
         else:
@@ -243,7 +244,7 @@ class SetCoverageParser(CommandParser):
 
 class SetConfigParser(CommandParser):
     def __init__(self):
-        CommandParser.__init__(self, '^set config (\S+)\s*=\s*(\S*)$')
+        CommandParser.__init__(self, '^set config (\S+)\s*=\s*(.*)$')
     def get_command(self, input):
         match = self.is_command(input)
         if match:
@@ -275,7 +276,8 @@ class SetSiblingDisjointnessParser(CommandParser):
             if match.group(2) and match.group(3):
                 tap = e3_io.get_tap_from_id_or_name(match.group(3))
             if tap:
-                return e3_command.SetSiblingDisjointness(tap, match.group(1))
+                value = match.group(1)
+                return e3_command.SetSiblingDisjointness(tap, True if not (value == 'false' or value == 'False') else False)
             else:
                 raise Exception('Tap %s not found' % match.group(3))
         else:
