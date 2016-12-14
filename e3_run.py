@@ -17,7 +17,7 @@ class Run(object):
         pass
     def run(self):
         pass
-    def executeCommand(self, command):
+    def executeCommand(self, input, command):
         import e3_io
         if command != None:
             try:
@@ -47,7 +47,7 @@ class OneShot(Run):
         import e3_io
         input = ' '.join(sys.argv[1:])
         command = self.commandProvider.provide(input)
-        self.executeCommand(command)
+        self.executeCommand(input, command)
         
 @logged 
 class Interactive(Run):
@@ -64,4 +64,4 @@ class Interactive(Run):
         while True:
             input = raw_input('e3 > ')
             command = self.commandProvider.provide(input)
-            self.executeCommand(command)
+            self.executeCommand(input, command)
