@@ -74,7 +74,6 @@ remove project history \<index\>				| Remove command with \<index\> and all depe
  * autologging
  * pinject
  * pyyaml
- * hashlib
 * [EulerX](https://github.com/EulerProject/EulerX) 
 
 ### Setup
