@@ -37,36 +37,36 @@ reset							| Resets e3 to factory settings
 set config \<key\>=\<value\>				| Sets the configuration \<parameter\> with \<value\>
 print config						| Prints the configuration settings
 load tap \<cleantax file\>				| Loads a tap (taxonomy alignment problem) from a CleanTax file
-print tap [\<tap\>]					| Prints the current tap or the optionally provided \<tap\>
-print taxonomies [\<tap\>]				| Prints the taxonomies of the current tap or the optionally provided \<tap\>
-print articulations [\<tap\>]				| Prints the articulations of the current tap or the optionally provided \<tap\>
-add articulation \<articulation\> [\<tap\>]			| Adds <articulation> to the current tap or the optionally provided \<tap\>
-remove articulation \<articulation_index\> [\<tap\>]	| Removes articulation with index <articulation_index> from the current tap or the optionally provided \<tap\>
-set sibling disjointness \<true\|false\> [\<tap\>]		| Sets the reasoning regions for the current tap or the optionally provided \<tap\>
-set coverage \<true\|false\> [\<tap\>]			| Sets the reasoning coverage for the current tap or the optionally provided \<tap\>
-set regions \<mnpw\|mncb\|mnve\|vrpw\|vrve\> [\<tap\>]		| Sets the reasoning regions for the current tap or the optionally provided \<tap\>
-name tap \<name\> [\<tap\>]					| Names the current tap or the optionally provided \<tap\> as \<name\>
-clear names						| Removes all stored named
+print tap [\<tap\>]					| Prints the current tap, or the optionally provided \<tap\>
+print taxonomies [\<tap\>]				| Prints the input taxonomies of the current tap, or the optionally provided \<tap\>
+print articulations [\<tap\>]				| Prints the input articulations of the current tap, or the optionally provided \<tap\>
+add articulation \<articulation\> [\<tap\>]			| Adds an <articulation> to the current tap, or the optionally provided \<tap\>
+remove articulation \<articulation_index\> [\<tap\>]	| Removes an articulation with index <articulation_index> from the current tap, or the optionally provided \<tap\>
+set sibling disjointness \<true\|false\> [\<tap\>]		| Sets the "sibling disjointness" reasoning constraint for the current tap, or the optionally provided \<tap\>
+set coverage \<true\|false\> [\<tap\>]			| Sets the "coverage" reasoning constraint for the current tap, or the optionally provided \<tap\>
+set regions \<mnpw\|mncb\|mnve\|vrpw\|vrve\> [\<tap\>]		| Sets the "region encoding" constraints for the current tap, or the optionally provided \<tap\>
+name tap \<name\> [\<tap\>]					| Names the current tap, or the optionally provided \<tap\> as \<name\>
+clear names						| Removes all stored names
 print names						| Shows all stored names and their corresponding taps
 use tap \<tap\>						| Makes \<tap\> the current tap
-graph tap [\<tap\>]					| Creates a graph visualization of the current tap or the optionally provided \<tap\>
-is consistent [\<tap\>]					| Checks the consistency of the current tap or the optionally provided \<tap\>
-more than \<count\> worlds [\<tap\>]				| Checks if there are more than <count> number of possible worlds in the current tap or the optionally provided \<tap\>
-graph worlds [\<tap\>]					| Creates graph visualizations of the possible worlds, if any exist, for the current tap or the optionally provided \<tap\>
-print worlds [\<tap\>]					| Prints the possible worlds, if any exist, of the current tap or the optionally provided \<tap\>
-graph summary [\<tap\>]					| Creates a summary visualization of the current tap or the optionally provided \<tap\>
-graph four in one [\<tap\>]				| Creates a four-in-one visualization of the current tap or the optionally provided \<tap\>
-graph inconsistency [\<tap\>]				|Creates a graph visualization of the inconsistency, if any exists, for the current tap or the optionally provided \<tap\>
-graph ambiguity [\<tap\>]					| Creates an ambiguity visualization of the current tap or the optionally provided \<tap\>
-print fix [\<tap\>]					| Prints a suggested fix of the inconsistency, if any exists, for the current tap or the optionally provided \<tap\>
-create project \<name\>					| Creates a project with \<name\> including managable command history
-print projects						| Print an overview of the existing projects
+graph tap [\<tap\>]					| Creates an input graph visualization of the current tap, or the optionally provided \<tap\>
+is consistent [\<tap\>]					| Checks the logical consistency of the current tap, or the optionally provided \<tap\>
+more than \<count\> worlds [\<tap\>]				| Checks if there are more than <count> number of possible worlds in the current tap, or the optionally provided \<tap\>
+graph worlds [\<tap\>]					| Creates output graph visualizations of the possible worlds - if any exist - for the current tap, or the optionally provided \<tap\>
+print worlds [\<tap\>]					| Prints the possible worlds - if any exist - of the current tap, or the optionally provided \<tap\>
+graph summary [\<tap\>]					| Creates a summary visualization of the current tap, or the optionally provided \<tap\>
+graph four in one [\<tap\>]				| Creates a "four-in-one" diagnostic visualization for the "level" of constraint specification of the current tap, or the optionally provided \<tap\>
+graph inconsistency [\<tap\>]				|Creates a graph visualization of the inconsistency - if any exists - for the current tap, or the optionally provided \<tap\>
+graph ambiguity [\<tap\>]					| Creates an ambiguity visualization of the current tap, or the optionally provided \<tap\>
+print fix [\<tap\>]					| Prints a suggested fix of the inconsistency - if any exists - for the current tap, or the optionally provided \<tap\>
+create project \<name\>					| Creates a project with \<name\>, including managable command history
+print projects						| Prints an overview of the existing projects
 open project \<name\>					| Opens an existing project with \<name\>
-close project						| Close the current project
-remove project \<name\>					| Remove the project with \<name\>
-clear projects						| Clears all the projects
-print project history					| Print the project's command history
-remove project history \<index\>				| Remove command with \<index\> and all dependent commands from the project's command history
+close project						| Closes the current project
+remove project \<name\>					| Removes the project with \<name\>
+clear projects						| Clears all projects
+print project history					| Prints the project's command history
+remove project history \<index\>				| Removes command with \<index\> and all dependent commands from the project's command history
 
 ### Prerequisites
 * Python 2.7.x
