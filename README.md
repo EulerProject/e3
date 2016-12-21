@@ -3,17 +3,17 @@
 
 ### Introduction
 This repository is for the command line wrapper e3 of the [EulerX](https://github.com/EulerProject/EulerX) toolkit.
-The [EulerX](https://github.com/EulerProject/EulerX) toolkit developed by the EulerProject team allows to solve the taxonomy alignment problem [<a href="http://www.slideshare.net/taxonbytes/ludaescher-etal-2014hybriddiagnosisconceptreasoning" target="_blank">1</a>, <a href="http://taxonbytes.org/pdf/ChenEtAl2014-HybridDiagnosisApproach.pdf" target="_blank">2</a>].
+The [EulerX](https://github.com/EulerProject/EulerX) toolkit developed by the EulerProject team allows to solve the taxonomy alignment problem ("tap") [<a href="http://www.slideshare.net/taxonbytes/ludaescher-etal-2014hybriddiagnosisconceptreasoning" target="_blank">1</a>, <a href="http://taxonbytes.org/pdf/ChenEtAl2014-HybridDiagnosisApproach.pdf" target="_blank">2</a>].
 Here we created a wrapper around the [EulerX](https://github.com/EulerProject/EulerX) toolkit to achieve the following benefits.
 
 ### Benefits
-* Use e3 as interactive shell or use it directly in your scripts
-* Use modular commands with single responsiblities
-* Be able to refine taxonomy alignment problem on-the-go
-* Reduced exposure to expert options
+* Use of e3 as an interactive shell, or directly in scripts
+* Use of modular commands with single responsiblities
+* Ability to refine taxonomy alignment problems on-the-go
+* Reduced exposure to certain expert options
 * Reduced knowledge of the EulerX life-cycle
 * Reduced exposure to EulerX generated output data
-* Re-use existing computation results
+* Re-use of existing computation results in "projects"
 
 ### Demo
 #### Configuration
@@ -34,9 +34,9 @@ Command                              | Description
 bye							| Exit e3
 help							| Shows this help
 reset							| Resets e3 to factory settings
-set config \<key\>=\<value\>				| Sets the configiguration \<parameter\> with \<value\>
-print config						| Prints the configiguration settings
-load tap \<cleantax file\>				| Loads a tap from a cleantax file
+set config \<key\>=\<value\>				| Sets the configuration \<parameter\> with \<value\>
+print config						| Prints the configuration settings
+load tap \<cleantax file\>				| Loads a tap (taxonomy alignment problem) from a CleanTax file
 print tap [\<tap\>]					| Prints the current tap or the optionally provided \<tap\>
 print taxonomies [\<tap\>]				| Prints the taxonomies of the current tap or the optionally provided \<tap\>
 print articulations [\<tap\>]				| Prints the articulations of the current tap or the optionally provided \<tap\>
