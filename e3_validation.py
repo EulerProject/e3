@@ -6,14 +6,18 @@ Created on Nov 22, 2016
 import e3_io
 import re
 
+validRelations = [ "lsum", "l3sum", "l4sum", "rsum", "r3sum", "r4sum", "ldiff", "rdiff", "e4sum", "i4sum", "equals", "includes", 
+                      "is_included_in", "overlaps", "disjoint" 
+                      ]
+
 class ValidationException(Exception):
     pass
 
 def validate_cleantax(cleantax):
-    taxonomies = e3_io.get_taxonomies(cleantax)
+    taxonomies = e3_io.get_taxonomy_lines(cleantax)
     for taxonomy in taxonomies:
         validate_taxonomy(taxonomy)
-    articulations = e3_io.get_articulations(cleantax)
+    articulations = e3_io.get_articulation_lines(cleantax)
     
     validated_articulations = []
     for articulation in articulations[1:]:
@@ -38,9 +42,6 @@ def validate_articulation(articulation, taxonomies, articulations):
     if articulation in articulations:
         raise ValidationException("This articulation already exists")
     node = "(.+\..+)"  
-    validRelations = [ "lsum", "l3sum", "l4sum", "rsum", "r3sum", "r4sum", "ldiff", "rdiff", "e4sum", "i4sum", "equals", "includes", 
-                      "is_included_in", "overlaps", "disjoint" 
-                      ]
     validRelationsRegex = [
         "\[" + node + " " + node + " lsum " + node + "\]",
         "\[" + node + " " + node + " " + node + " l3sum " + node + "\]",

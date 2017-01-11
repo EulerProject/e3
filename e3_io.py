@@ -119,22 +119,22 @@ def store_tap(tap):
         f.write(tap.regions + '\n')
         f.write('\n')
         for taxonomy in tap.taxonomies:
-            for line in taxonomy:
-                f.write(line + '\n')
-            f.write('\n')
-        for line in tap.articulations:
-            f.write(line + '\n')
+            f.write(taxonomy.__str__())
+            f.write('\n\n')
+        f.write('articulation\n')
+        for articulation in tap.articulations:
+            f.write(articulation.__str__() + '\n')
     store_tap_to_cleantax(tap)
 
 def store_tap_to_cleantax(tap):
     cleantaxFile = get_cleantax_file(tap)
     with open(cleantaxFile, 'w') as f:  
         for taxonomy in tap.taxonomies:      
-            for line in taxonomy:
-                f.write(line + '\n')
-            f.write('\n')
-        for line in tap.articulations:
-            f.write(line + '\n')
+            f.write(taxonomy.__str__())
+            f.write('\n\n')
+        f.write('articulation\n')
+        for articulation in tap.articulations:
+            f.write(articulation.__str__() + '\n')
             
 def get_tap(tapId):
     tapFile = get_tap_file_from_id(tapId)
@@ -165,12 +165,40 @@ def get_tap_from_cleantax_file(cleantaxFile):
     
       
 def get_tap_from_cleantax(isCoverage, isSiblingDisjointness, regions, cleantax):
+    tap = e3_model.Tap(isCoverage, isSiblingDisjointness, regions, [], [])
+    
     e3_validation.validate_cleantax(cleantax)
-    taxonomies = get_taxonomies(cleantax)
-    articulations = get_articulations(cleantax)
-    return e3_model.Tap(isCoverage, isSiblingDisjointness, regions, taxonomies, articulations)
+    taxonomyLinesPerTaxonomy = get_taxonomy_lines(cleantax)
+    taxonomies = []
+    for taxonomyLines in taxonomyLinesPerTaxonomy:
+        header = taxonomyLines[0]
+        taxonomyId = header.split()[1]
+        taxonomyName = header.split()[2]
+        taxonomy = e3_model.Taxonomy(taxonomyId, taxonomyName)
+        for line in taxonomyLines[1:]:
+            nodes = line[1:-1].split()
+            taxonomy.add_children(nodes[0], nodes[1:])
+        tap.add_taxonomy(taxonomy)
+    
+    articulationLines = get_articulation_lines(cleantax)
+    articulations = []
+    for line in articulationLines[1:]:
+        line = line.strip()[1:-1]
+        foundRelation = False
+        for validRelation in e3_validation.validRelations:
+            split = " " + validRelation + " "
+            if split in line:
+                parts = line.split(split)
+                left = parts[0].split()
+                right = parts[1].split()
+                tap.add_articulation(e3_model.Articulation(left, right, validRelation))
+                foundRelation = True
+        if not foundRelation:
+            raise Exception("Not a valid relation in articulation: " + line)
+            
+    return tap
 
-def get_taxonomies(cleantax):
+def get_taxonomy_lines(cleantax):
     taxonomies = []
     taxonomy = []
     articulations = []
@@ -190,7 +218,7 @@ def get_taxonomies(cleantax):
             taxonomy.append(line)
     return taxonomies
     
-def get_articulations(cleantax):
+def get_articulation_lines(cleantax):
     articulations = []
     articulationStarts = False
     for line in cleantax:

@@ -9,6 +9,8 @@ from subprocess import Popen, PIPE, call
 import os
 import e3_parse
 import e3_validation
+import e3_model
+from wx import NewId
     
 @logged
 class Command(object):
@@ -161,7 +163,7 @@ class SetConfig(MiscCommand):
         config = e3_io.get_config()
         if not self.key in config:
             self.output.append("Configuration parameter " + self.key + " does not exist.")
-            return
+            return 
         if type(config[self.key]) is bool:
             self.value = True if not (self.value == 'false' or self.value == 'False') else False
         if type(config[self.key]) is int:
@@ -213,6 +215,7 @@ class Help(MiscCommand):
         for commandParser in e3_parse.commandParsers:
             help = commandParser.get_help()
             if help:
+                self.output.append('-------------------')
                 self.output.append(commandParser.get_help())
                 
 @logged
@@ -421,7 +424,116 @@ class LoadTap(ModelCommand):
             return
         except e3_validation.ValidationException as e:
             self.output.append(str(e))
-    
+
+class AddChildren(ModelCommand):
+    @copy_args_to_public_fields
+    def __init__(self, tap, taxonomyId, children):
+        ModelCommand.__init__(self)
+    def run(self):
+        ModelCommand.run(self)
+        
+        taxonomy = self.tap.get_taxonomy(self.taxonomyId)
+        if taxonomy is None:
+            self.output.append("Taxonomy with id " + self.taxonomyId + " not found.")
+            return
+        
+        parts = self.children[1:-1].split()
+        if len(parts) <= 1:
+            self.output.append("Taxonomy line with one <= 1 node is not valid.")
+            return
+        
+        taxonomy.add_children(parts[0], parts[1:])
+        e3_io.set_current_tap(self.tap)
+        e3_io.store_tap(self.tap)
+        self.output.append("Tap: " + e3_io.get_tap_id_and_name(self.tap))
+
+class RemoveChildren(ModelCommand):
+    @copy_args_to_public_fields
+    def __init__(self, tap, taxonomyId, children):
+        ModelCommand.__init__(self)
+    def run(self):
+        ModelCommand.run(self)
+        
+        taxonomy = self.tap.get_taxonomy(self.taxonomyId)
+        if taxonomy is None:
+            self.output.append("Taxonomy with id " + self.taxonomyId + " not found.")
+            return
+        
+        parts = self.children[1:-1].split()
+        if len(parts) <= 1:
+            self.output.append("Taxonomy line with one <= 1 node is not valid.")
+            return
+        
+        taxonomy.remove_children(parts[0], parts[1:])
+        e3_io.set_current_tap(self.tap)
+        e3_io.store_tap(self.tap)
+        self.output.append("Tap: " + e3_io.get_tap_id_and_name(self.tap))
+
+class AddTaxonomy(ModelCommand):
+    @copy_args_to_public_fields
+    def __init__(self, tap, id, name):
+        ModelCommand.__init__(self)
+    def run(self):
+        ModelCommand.run(self)
+        if self.tap.has_taxonomy(self.id):
+            self.output.append("Taxonomy with id: " + self.id + " already exists")
+        taxonomy = self.tap.add_taxonomy(e3_model.Taxonomy(self.id, self.name))
+        e3_io.set_current_tap(self.tap)
+        e3_io.store_tap(self.tap)
+        self.output.append("Tap: " + e3_io.get_tap_id_and_name(self.tap))
+
+class RemoveTaxonomy(ModelCommand):
+    @copy_args_to_public_fields
+    def __init__(self, tap, id):
+        ModelCommand.__init__(self)
+    def run(self):
+        ModelCommand.run(self)
+        if not self.tap.has_taxonomy(self.id):
+            self.output.append("Taxonomy with id " + self.id + " does not exist")
+            return
+        taxonomy = self.tap.remove_taxonomy(self.id)
+        e3_io.set_current_tap(self.tap)
+        e3_io.store_tap(self.tap)
+        self.output.append("Tap: " + e3_io.get_tap_id_and_name(self.tap))
+            
+class ClearTaxonomy(ModelCommand):
+    @copy_args_to_public_fields
+    def __init__(self, tap, id):
+        ModelCommand.__init__(self)
+    def run(self):
+        ModelCommand.run(self)
+        if not self.tap.has_taxonomy(self.id):
+            self.output.append("Taxonomy with id " + self.id + " does not exist")
+            return
+        taxonomy = self.tap.get_taxonomy(self.id).clear()
+        e3_io.set_current_tap(self.tap)
+        e3_io.store_tap(self.tap)
+        self.output.append("Tap: " + e3_io.get_tap_id_and_name(self.tap))
+                    
+class ClearArticulations(ModelCommand):
+    @copy_args_to_public_fields
+    def __init__(self, tap):
+        ModelCommand.__init__(self)
+    def run(self):
+        ModelCommand.run(self)
+        self.tap.articulations.clear()
+        e3_io.set_current_tap(self.tap)
+        e3_io.store_tap(self.tap)
+        self.output.append("Tap: " + e3_io.get_tap_id_and_name(self.tap))
+            
+class SetTaxonomyInfo(ModelCommand):
+    @copy_args_to_public_fields
+    def __init__(self, tap, id, newId, newName):
+        ModelCommand.__init__(self)
+    def run(self):
+        ModelCommand.run(self)
+        taxonomy = self.tap.get_taxonomy(id)
+        taxonomy.id = self.newId
+        taxonomy.name = self.newName
+        e3_io.set_current_tap(self.tap)
+        e3_io.store_tap(self.tap)
+        self.output.append("Tap: " + e3_io.get_tap_id_and_name(self.tap))
+        
 @logged
 class AddArticulation(ModelCommand):
     @copy_args_to_public_fields
@@ -429,13 +541,21 @@ class AddArticulation(ModelCommand):
         ModelCommand.__init__(self)
     def run(self):
         ModelCommand.run(self)
-        self.articulation = "[" + self.articulation + "]"
+        cleantaxArticulation = "[" + self.articulation + "]"
         try:
-            e3_validation.validate_articulation(self.articulation, self.tap.taxonomies, self.tap.articulations[1:])
+            e3_validation.validate_articulation(cleantaxArticulation, self.tap.taxonomies, self.tap.articulations)
         except e3_validation.ValidationException as e:
             self.output.append(str(e))
             return
-        self.tap.add_articulation(self.articulation)
+        
+        for validRelation in e3_validation.validRelations:
+            split = " " + validRelation + " "
+            if split in self.articulation:
+                parts = self.articulation.split(split)
+                left = parts[0].split()
+                right = parts[1].split()
+                self.tap.add_articulation(e3_model.Articulation(left, right, validRelation))
+                
         e3_io.set_current_tap(self.tap)
         e3_io.store_tap(self.tap)
         self.output.append("Tap: " + e3_io.get_tap_id_and_name(self.tap))
@@ -447,7 +567,7 @@ class RemoveArticulation(ModelCommand):
         ModelCommand.__init__(self)
     def run(self):
         ModelCommand.run(self)
-        if self.articulationIndex >= len(self.tap.articulations) or self.articulationIndex < 0:
+        if self.articulationIndex > len(self.tap.articulations) or self.articulationIndex < 0:
             self.output.append("This is not a valid index")
             return
         self.tap.remove_articulation(self.articulationIndex)
@@ -685,7 +805,7 @@ class GraphSummary(Euler2Command):
             if filename.endswith(".%s" % self.imageFormat):
                 self.executeOutput.append(self.imageViewer.format(file = os.path.join(self.e2AggregatesDir, filename)))
                         
-@logged 
+@logged
 class GraphAmbiguity(Euler2Command):
     @copy_args_to_public_fields
     def __init__(self, tap):

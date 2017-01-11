@@ -20,7 +20,7 @@ class Run(object):
     def executeCommand(self, input, command):
         import e3_io
         if command != None:
-            try:
+            #try:
                 command.run()
                 e3_io.append_project_history(input, command)
                 if command.get_output():
@@ -33,8 +33,8 @@ class Run(object):
                                 sys.exit()
                             else:
                                 p = Popen(execute, stdout=devnull, stderr=devnull, shell=True)
-            except Exception as e:
-                print "Something went wrong: " + str(e)
+            #except Exception as e:
+            #    print "Something went wrong: " + str(e)
         else:
             print "Unrecognized command"
     
