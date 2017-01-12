@@ -185,15 +185,16 @@ class PrintConfig(MiscCommand):
             self.output.append("{key} = {value}".format(key = key, value = config[key])) 
           
 @logged 
-class Reset(MiscCommand):
+class Reset(ModelCommand):
     @copy_args_to_public_fields
     def __init__(self):
-        MiscCommand.__init__(self)
+        ModelCommand.__init__(self)
     def run(self):
-        MiscCommand.run(self)
+        ModelCommand.run(self)
         e3_io.reset()
+        tap = e3_io.get_current_tap()
         self.output.append("Reset successful")
-        self.output.append("Tap: None")
+        self.output.append("Tap: " + e3_io.get_tap_id_and_name_and_status(tap))
          
 @logged 
 class Bye(MiscCommand):
@@ -445,8 +446,7 @@ class AddChildren(ModelCommand):
     def run(self):
         ModelCommand.run(self)
         
-        taxonomy = self.tap.get_taxonomy(self.taxonomyId)
-        if taxonomy is None:
+        if self.tap.has_taxonomy(self.taxonomyId) is None:
             self.output.append("Taxonomy with id " + self.taxonomyId + " not found.")
             return
         
@@ -455,7 +455,12 @@ class AddChildren(ModelCommand):
             self.output.append("Taxonomy line with one <= 1 node is not valid.")
             return
         
-        taxonomy.add_children(parts[0], parts[1:])
+        try:
+            self.tap.add_children(self.taxonomyId, parts[0], parts[1:])
+        except e3_validation.ValidationException as e:
+            self.output.append(str(e))
+            return
+        
         e3_io.set_current_tap(self.tap)
         e3_io.store_tap(self.tap)
         self.output.append("Tap: " + e3_io.get_tap_id_and_name_and_status(self.tap))
@@ -476,7 +481,12 @@ class RemoveChildren(ModelCommand):
             self.output.append("Taxonomy line with one <= 1 node is not valid.")
             return
         
-        self.tap.remove_children(self.taxonomyId, parts[0], parts[1:])
+        try:
+            self.tap.remove_children(self.taxonomyId, parts[0], parts[1:])
+        except e3_validation.ValidationException as e:
+            self.output.append(str(e))
+            return
+        
         e3_io.set_current_tap(self.tap)
         e3_io.store_tap(self.tap)
         self.output.append("Tap: " + e3_io.get_tap_id_and_name_and_status(self.tap))
@@ -648,7 +658,7 @@ class GraphWorlds(Euler2Command):
         Euler2Command.__init__(self, tap)
     def run(self):
         Euler2Command.run(self)
-        if self.tap.is_underspecified():
+        if not self.tap.is_euler_ready():
             self.output.append("The tap is underspecified")
             return
         
@@ -682,7 +692,7 @@ class IsConsistent(Euler2Command):
         Euler2Command.__init__(self, tap)
     def run(self):
         Euler2Command.run(self)
-        if self.tap.is_underspecified():
+        if not self.tap.is_euler_ready():
             self.output.append("The tap is underspecified")
             return
         stdout, stderr, returnCode = self.run_euler(self.alignConsistencyCommand)
@@ -700,7 +710,7 @@ class MoreWorldsThan(Euler2Command):
         self.maxN = self.more + 1 #adapt from "more than" to "more than equals"
     def run(self):
         Euler2Command.run(self)
-        if self.tap.is_underspecified():
+        if not self.tap.is_euler_ready():
             self.output.append("The tap is underspecified")
             return
         stdout, stderr, returnCode = self.run_euler(self.alignMaxNCommand)
@@ -723,7 +733,7 @@ class PrintFix(Euler2Command):
         Euler2Command.__init__(self, tap)
     def run(self):
         Euler2Command.run(self)
-        if self.tap.is_underspecified():
+        if not self.tap.is_euler_ready():
             self.output.append("The tap is underspecified")
             return
         stdout, stderr, returnCode = self.run_euler(self.alignRepairCommand)
@@ -746,7 +756,7 @@ class GraphInconsistency(Euler2Command):
         Euler2Command.__init__(self, tap)
     def run(self):
         Euler2Command.run(self)
-        if self.tap.is_underspecified():
+        if not self.tap.is_euler_ready():
             self.output.append("The tap is underspecified")
             return       
         stdout, stderr, returnCode = self.run_euler(self.alignCommand)
@@ -768,7 +778,7 @@ class PrintWorlds(Euler2Command):
         Euler2Command.__init__(self, tap)
     def run(self):
         Euler2Command.run(self)
-        if self.tap.is_underspecified():
+        if not self.tap.is_euler_ready():
             self.output.append("The tap is underspecified")
             return
         stdout, stderr, returnCode = self.run_euler(self.alignCommand)        
@@ -796,7 +806,7 @@ class GraphTap(Euler2Command):
         Euler2Command.__init__(self, tap)
     def run(self):
         Euler2Command.run(self)
-        if self.tap.is_underspecified():
+        if not self.tap.is_euler_ready():
             self.output.append("The tap is underspecified")
             return
         stdout, stderr, returnCode = self.run_euler(self.showIVCommand)
@@ -813,7 +823,7 @@ class GraphFourInOne(Euler2Command):
         Euler2Command.__init__(self, tap)
     def run(self):
         Euler2Command.run(self)
-        if self.tap.is_underspecified():
+        if not self.tap.is_euler_ready():
             self.output.append("The tap is underspecified")
             return
         stdout, stderr, returnCode = self.run_euler(self.alignFoundInOneCommand)
@@ -835,7 +845,7 @@ class GraphSummary(Euler2Command):
         Euler2Command.__init__(self, tap)
     def run(self):
         Euler2Command.run(self)
-        if self.tap.is_underspecified():
+        if not self.tap.is_euler_ready():
             self.output.append("The tap is underspecified")
             return
         stdout, stderr, returnCode = self.run_euler(self.alignCommand)
@@ -857,7 +867,7 @@ class GraphAmbiguity(Euler2Command):
         Euler2Command.__init__(self, tap)
     def run(self):
         Euler2Command.run(self)
-        if self.tap.is_underspecified():
+        if not self.tap.is_euler_ready():
             self.output.append("The tap is underspecified")
             return
         

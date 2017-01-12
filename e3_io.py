@@ -15,6 +15,9 @@ import uuid
 def reset():
     shutil.rmtree(get_e3_dir())
     get_config()
+    tap = get_default_tap()
+    store_tap(tap)
+    set_current_tap(tap)
 
 def get_config():
     config = None
@@ -98,9 +101,9 @@ def exists_project(project):
 
 def get_tap_id_and_name_and_status(tap):
     name = get_tap_name(tap.get_id())
-    status = ""
-    if tap.is_underspecified():
-        status = " (underspecified)"
+    status = tap.get_status()
+    if status:
+        status = " (" + status + ")"
     if name:
         return name + " = " + tap.get_id() + status
     else:
@@ -138,21 +141,28 @@ def store_tap_to_cleantax(tap):
         f.write('articulation\n')
         for articulation in tap.articulations:
             f.write(articulation.__str__() + '\n')
-            
-def get_tap(tapId):
+
+def get_default_tap():
     config = get_config()
     isCoverage = config['defaultIsCoverage']
     isSiblingDisjointness = config['defaultIsSiblingDisjointness']
     regions = config['defaultRegions']
-        
+    return e3_model.Tap(isCoverage, isSiblingDisjointness, regions, [], [])
+            
+def get_tap(tapId):    
     if not tapId or tapId is None:
-        return e3_model.Tap(isCoverage, isSiblingDisjointness, regions, [], [])
+        return get_default_tap()
     tapFile = get_tap_file_from_id(tapId)
     if not os.path.isfile(tapFile):
-        return e3_model.Tap(isCoverage, isSiblingDisjointness, regions, [], [])
+        return get_default_tap()
     
     cleantax = []
     with open(tapFile, 'r') as f:
+        config = get_config()
+        isCoverage = config['defaultIsCoverage']
+        isSiblingDisjointness = config['defaultIsSiblingDisjointness']
+        regions = config['defaultRegions']
+    
         for i, line in enumerate(f):
             if i == 0:
                 isCoverage = line.rstrip() == 'True'

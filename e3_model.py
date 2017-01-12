@@ -8,13 +8,25 @@ import networkx as nx
 import numpy as np
 import matplotlib.pyplot as plt
 from compiler.ast import Node
+import copy
+import e3_validation
 
 class Tap(object):
     @copy_args_to_public_fields
     def __init__(self, isCoverage, isSiblingDisjointness, regions, taxonomies, articulations):
         pass
+    def is_euler_ready(self):
+        return not self.get_status()
     def is_underspecified(self):
         return len(self.taxonomies) <= 1 or len(self.articulations) == 0
+    def get_status(self):
+        result = []
+        if self.is_underspecified():
+            result.append("underspecified")
+        for t in self.taxonomies:
+            if not t.is_tree():
+                result.append(t.id + " invalid")
+        return ' and '.join(result)
     def add_taxonomy(self, taxonomy):
         for t in self.taxonomies:
             if t.id == taxonomy.id:
@@ -59,13 +71,25 @@ class Tap(object):
                 if r.split(".")[0] == taxonomyId: newRight.append(newTaxonomyId + "." + r.split(".")[1])
                 else: newRight.append(r)
             a.right = newRight
-                        
     def has_taxonomy(self, id):
         return self.get_taxonomy(id) is not None
+    def add_children(self, taxonomyId, parent, children):
+        taxonomy = self.get_taxonomy(taxonomyId)
+        #original = copy.deepcopy(taxonomy)
+        taxonomy.add_children(parent, children)
+        #if not taxonomy.is_tree():
+        #    self.set_taxonomy(taxonomyId, original)
+        #    raise e3_validation.ValidationException("Adding the children would not lead to a valid taxonomy")
     def remove_children(self, taxonomyId, parent, children):
         taxonomy = self.get_taxonomy(taxonomyId)
+        #original = copy.deepcopy(taxonomy)
         taxonomy.remove_children(parent, children)
+        #if not taxonomy.is_tree():
+        #    self.set_taxonomy(taxonomyId, original)
+        #    raise e3_validation.ValidationException("Removing the children would not lead to a valid taxonomy")
         self.articulations = [a for a in self.articulations if self.nodes_in_tap(a)]
+    def set_taxonomy(self, taxonomyId, taxonomy):
+        self.taxonomies = [taxonomy if t.id == taxonomyId else t for t in self.taxonomies]
     def nodes_in_tap(self, articulation):
         for l in articulation.left:
             id = l.split(".")[0]
@@ -134,6 +158,11 @@ class Taxonomy(object):
     def __init__(self, id, name):
         self.g = nx.DiGraph()
         pass
+    def is_tree(self):
+        #nx returns exception if graph empty
+        if self.g.number_of_nodes() == 0:
+            return False
+        return nx.is_tree(self.g)
     def clear(self):
         self.g.clear()
     def add_children(self, parent, children):
