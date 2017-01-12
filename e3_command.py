@@ -226,7 +226,7 @@ class NameTap(MiscCommand):
     def run(self):
         MiscCommand.run(self)
         e3_io.set_name(self.name, self.tap);
-        self.output.append("Tap: " + e3_io.get_tap_id_and_name(self.tap))
+        self.output.append("Tap: " + e3_io.get_tap_id_and_name_and_status(self.tap))
                 
 class PrintNames(MiscCommand):
     @copy_args_to_public_fields
@@ -418,7 +418,7 @@ class LoadTap(ModelCommand):
             tap = e3_io.get_tap_from_cleantax_file(self.cleantaxFile)
             e3_io.set_current_tap(tap)
             e3_io.store_tap(tap)
-            self.output.append("Tap: " + e3_io.get_tap_id_and_name(tap))
+            self.output.append("Tap: " + e3_io.get_tap_id_and_name_and_status(tap))
         except IOError as e:
             self.output.append("File not found.")
             return
@@ -436,7 +436,7 @@ class ClearTap(ModelCommand):
         tap = e3_model.Tap(config['defaultIsCoverage'], config['defaultIsSiblingDisjointness'], config['defaultRegions'], [], [])
         e3_io.set_current_tap(tap)
         e3_io.store_tap(tap)
-        self.output.append("Tap: " + e3_io.get_tap_id_and_name(tap))
+        self.output.append("Tap: " + e3_io.get_tap_id_and_name_and_status(tap))
 
 class AddChildren(ModelCommand):
     @copy_args_to_public_fields
@@ -458,7 +458,7 @@ class AddChildren(ModelCommand):
         taxonomy.add_children(parts[0], parts[1:])
         e3_io.set_current_tap(self.tap)
         e3_io.store_tap(self.tap)
-        self.output.append("Tap: " + e3_io.get_tap_id_and_name(self.tap))
+        self.output.append("Tap: " + e3_io.get_tap_id_and_name_and_status(self.tap))
 
 class RemoveChildren(ModelCommand):
     @copy_args_to_public_fields
@@ -479,7 +479,7 @@ class RemoveChildren(ModelCommand):
         self.tap.remove_children(self.taxonomyId, parts[0], parts[1:])
         e3_io.set_current_tap(self.tap)
         e3_io.store_tap(self.tap)
-        self.output.append("Tap: " + e3_io.get_tap_id_and_name(self.tap))
+        self.output.append("Tap: " + e3_io.get_tap_id_and_name_and_status(self.tap))
 
 class AddTaxonomy(ModelCommand):
     @copy_args_to_public_fields
@@ -492,7 +492,7 @@ class AddTaxonomy(ModelCommand):
         taxonomy = self.tap.add_taxonomy(e3_model.Taxonomy(self.id, self.name))
         e3_io.set_current_tap(self.tap)
         e3_io.store_tap(self.tap)
-        self.output.append("Tap: " + e3_io.get_tap_id_and_name(self.tap))
+        self.output.append("Tap: " + e3_io.get_tap_id_and_name_and_status(self.tap))
 
 class RemoveTaxonomy(ModelCommand):
     @copy_args_to_public_fields
@@ -506,7 +506,7 @@ class RemoveTaxonomy(ModelCommand):
         taxonomy = self.tap.remove_taxonomy(self.id)
         e3_io.set_current_tap(self.tap)
         e3_io.store_tap(self.tap)
-        self.output.append("Tap: " + e3_io.get_tap_id_and_name(self.tap))
+        self.output.append("Tap: " + e3_io.get_tap_id_and_name_and_status(self.tap))
             
 class ClearTaxonomy(ModelCommand):
     @copy_args_to_public_fields
@@ -520,7 +520,7 @@ class ClearTaxonomy(ModelCommand):
         taxonomy = self.tap.clear_taxonomy(self.id)
         e3_io.set_current_tap(self.tap)
         e3_io.store_tap(self.tap)
-        self.output.append("Tap: " + e3_io.get_tap_id_and_name(self.tap))
+        self.output.append("Tap: " + e3_io.get_tap_id_and_name_and_status(self.tap))
                     
 class ClearArticulations(ModelCommand):
     @copy_args_to_public_fields
@@ -531,7 +531,7 @@ class ClearArticulations(ModelCommand):
         self.tap.articulations.clear()
         e3_io.set_current_tap(self.tap)
         e3_io.store_tap(self.tap)
-        self.output.append("Tap: " + e3_io.get_tap_id_and_name(self.tap))
+        self.output.append("Tap: " + e3_io.get_tap_id_and_name_and_status(self.tap))
             
 class SetTaxonomyInfo(ModelCommand):
     @copy_args_to_public_fields
@@ -542,7 +542,7 @@ class SetTaxonomyInfo(ModelCommand):
         self.tap.set_taxonomy_info(self.id, self.newId, self.newName)
         e3_io.set_current_tap(self.tap)
         e3_io.store_tap(self.tap)
-        self.output.append("Tap: " + e3_io.get_tap_id_and_name(self.tap))
+        self.output.append("Tap: " + e3_io.get_tap_id_and_name_and_status(self.tap))
         
 @logged
 class AddArticulation(ModelCommand):
@@ -575,7 +575,7 @@ class AddArticulation(ModelCommand):
             self.tap.add_articulation(articulation)        
             e3_io.set_current_tap(self.tap)
             e3_io.store_tap(self.tap)
-            self.output.append("Tap: " + e3_io.get_tap_id_and_name(self.tap))
+            self.output.append("Tap: " + e3_io.get_tap_id_and_name_and_status(self.tap))
 
 @logged
 class RemoveArticulation(ModelCommand):
@@ -590,7 +590,7 @@ class RemoveArticulation(ModelCommand):
         self.tap.remove_articulation(self.articulationIndex)
         e3_io.set_current_tap(self.tap)
         e3_io.store_tap(self.tap)
-        self.output.append("Tap: " + e3_io.get_tap_id_and_name(self.tap))
+        self.output.append("Tap: " + e3_io.get_tap_id_and_name_and_status(self.tap))
     
 class UseTap(ModelCommand):
     @copy_args_to_public_fields
@@ -600,7 +600,7 @@ class UseTap(ModelCommand):
         ModelCommand.run(self)
         e3_io.set_current_tap(self.tap)
         if self.tap:
-            self.output.append("Tap: " + e3_io.get_tap_id_and_name(self.tap))
+            self.output.append("Tap: " + e3_io.get_tap_id_and_name_and_status(self.tap))
             
 @logged
 class SetCoverage(ModelCommand):
@@ -612,7 +612,7 @@ class SetCoverage(ModelCommand):
         self.tap.isCoverage = self.value
         e3_io.set_current_tap(self.tap)
         e3_io.store_tap(self.tap)
-        self.output.append("Tap: " + e3_io.get_tap_id_and_name(self.tap))
+        self.output.append("Tap: " + e3_io.get_tap_id_and_name_and_status(self.tap))
 
 @logged 
 class SetRegions(ModelCommand):
@@ -625,7 +625,7 @@ class SetRegions(ModelCommand):
             self.tap.regions = self.value
             e3_io.set_current_tap(self.tap)
             e3_io.store_tap(self.tap)
-            self.output.append("Tap: " + e3_io.get_tap_id_and_name(self.tap))
+            self.output.append("Tap: " + e3_io.get_tap_id_and_name_and_status(self.tap))
         else:
             self.output.append("This is not a valid region")
 
@@ -639,7 +639,7 @@ class SetSiblingDisjointness(ModelCommand):
         self.tap.isSiblingDisjointness = self.value
         e3_io.set_current_tap(self.tap)
         e3_io.store_tap(self.tap)
-        self.output.append("Tap: " + e3_io.get_tap_id_and_name(self.tap))
+        self.output.append("Tap: " + e3_io.get_tap_id_and_name_and_status(self.tap))
     
 @logged 
 class GraphWorlds(Euler2Command):
@@ -648,6 +648,10 @@ class GraphWorlds(Euler2Command):
         Euler2Command.__init__(self, tap)
     def run(self):
         Euler2Command.run(self)
+        if self.tap.is_underspecified():
+            self.output.append("The tap is underspecified")
+            return
+        
         stdout, stderr, returnCode = self.run_euler(self.alignCommand)
         if not self.is_consistent():
             self.output.append("The tap is inconsistent")
@@ -678,6 +682,9 @@ class IsConsistent(Euler2Command):
         Euler2Command.__init__(self, tap)
     def run(self):
         Euler2Command.run(self)
+        if self.tap.is_underspecified():
+            self.output.append("The tap is underspecified")
+            return
         stdout, stderr, returnCode = self.run_euler(self.alignConsistencyCommand)
         
         if self.is_consistent():
@@ -693,6 +700,9 @@ class MoreWorldsThan(Euler2Command):
         self.maxN = self.more + 1 #adapt from "more than" to "more than equals"
     def run(self):
         Euler2Command.run(self)
+        if self.tap.is_underspecified():
+            self.output.append("The tap is underspecified")
+            return
         stdout, stderr, returnCode = self.run_euler(self.alignMaxNCommand)
         if not self.is_consistent():
             self.output.append("Cannot determine if there are more than {more} worlds. The tap is not consistent".format(more = self.more))
@@ -713,6 +723,9 @@ class PrintFix(Euler2Command):
         Euler2Command.__init__(self, tap)
     def run(self):
         Euler2Command.run(self)
+        if self.tap.is_underspecified():
+            self.output.append("The tap is underspecified")
+            return
         stdout, stderr, returnCode = self.run_euler(self.alignRepairCommand)
         if self.is_consistent():
             self.output.append("The tap is not inconsistent. I have nothing to show.")
@@ -732,7 +745,10 @@ class GraphInconsistency(Euler2Command):
     def __init__(self, tap):
         Euler2Command.__init__(self, tap)
     def run(self):
-        Euler2Command.run(self)             
+        Euler2Command.run(self)
+        if self.tap.is_underspecified():
+            self.output.append("The tap is underspecified")
+            return       
         stdout, stderr, returnCode = self.run_euler(self.alignCommand)
         if self.is_consistent():
             self.output.append("The tap is not inconsistent. I have nothing to show.")
@@ -752,6 +768,9 @@ class PrintWorlds(Euler2Command):
         Euler2Command.__init__(self, tap)
     def run(self):
         Euler2Command.run(self)
+        if self.tap.is_underspecified():
+            self.output.append("The tap is underspecified")
+            return
         stdout, stderr, returnCode = self.run_euler(self.alignCommand)        
         if not self.is_consistent():
             self.output.append("The tap is inconsistent")
@@ -777,6 +796,9 @@ class GraphTap(Euler2Command):
         Euler2Command.__init__(self, tap)
     def run(self):
         Euler2Command.run(self)
+        if self.tap.is_underspecified():
+            self.output.append("The tap is underspecified")
+            return
         stdout, stderr, returnCode = self.run_euler(self.showIVCommand)
         self.output.append("Take a look at the graph")
         self.executeOutput = []
@@ -791,6 +813,9 @@ class GraphFourInOne(Euler2Command):
         Euler2Command.__init__(self, tap)
     def run(self):
         Euler2Command.run(self)
+        if self.tap.is_underspecified():
+            self.output.append("The tap is underspecified")
+            return
         stdout, stderr, returnCode = self.run_euler(self.alignFoundInOneCommand)
         stdout, stderr, returnCode = self.run_euler(self.showFourInOneCommand)
         #if "This is a consistent example, no 4-in-1 lattice generated" in stdout:
@@ -810,6 +835,9 @@ class GraphSummary(Euler2Command):
         Euler2Command.__init__(self, tap)
     def run(self):
         Euler2Command.run(self)
+        if self.tap.is_underspecified():
+            self.output.append("The tap is underspecified")
+            return
         stdout, stderr, returnCode = self.run_euler(self.alignCommand)
         if not self.is_consistent():
             self.output.append("The tap is inconsistent")
@@ -829,6 +857,10 @@ class GraphAmbiguity(Euler2Command):
         Euler2Command.__init__(self, tap)
     def run(self):
         Euler2Command.run(self)
+        if self.tap.is_underspecified():
+            self.output.append("The tap is underspecified")
+            return
+        
         self.maxN = 2
         stdout, stderr, returnCode = self.run_euler(self.alignMaxNCommand)
         if not self.is_consistent():

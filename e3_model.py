@@ -13,6 +13,8 @@ class Tap(object):
     @copy_args_to_public_fields
     def __init__(self, isCoverage, isSiblingDisjointness, regions, taxonomies, articulations):
         pass
+    def is_underspecified(self):
+        return len(self.taxonomies) <= 1 or len(self.articulations) == 0
     def add_taxonomy(self, taxonomy):
         for t in self.taxonomies:
             if t.id == taxonomy.id:

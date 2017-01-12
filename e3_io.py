@@ -96,12 +96,15 @@ def create_project(project):
 def exists_project(project):
     return os.path.isdir(get_project_dir(project))
 
-def get_tap_id_and_name(tap):
+def get_tap_id_and_name_and_status(tap):
     name = get_tap_name(tap.get_id())
+    status = ""
+    if tap.is_underspecified():
+        status = " (underspecified)"
     if name:
-        return name + " = " + tap.get_id()
+        return name + " = " + tap.get_id() + status
     else:
-        return tap.get_id()
+        return tap.get_id() + status
 
 def get_current_tap():
     with open(get_current_tap_file(), 'r') as currentTapFile:
@@ -137,15 +140,19 @@ def store_tap_to_cleantax(tap):
             f.write(articulation.__str__() + '\n')
             
 def get_tap(tapId):
+    config = get_config()
+    isCoverage = config['defaultIsCoverage']
+    isSiblingDisjointness = config['defaultIsSiblingDisjointness']
+    regions = config['defaultRegions']
+        
+    if not tapId or tapId is None:
+        return e3_model.Tap(isCoverage, isSiblingDisjointness, regions, [], [])
     tapFile = get_tap_file_from_id(tapId)
     if not os.path.isfile(tapFile):
-        return None
-    config = get_config()
+        return e3_model.Tap(isCoverage, isSiblingDisjointness, regions, [], [])
+    
     cleantax = []
     with open(tapFile, 'r') as f:
-        isCoverage = config['defaultIsCoverage']
-        isSiblingDisjointness = config['defaultIsSiblingDisjointness']
-        regions = config['defaultRegions']
         for i, line in enumerate(f):
             if i == 0:
                 isCoverage = line.rstrip() == 'True'
