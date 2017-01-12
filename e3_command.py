@@ -584,7 +584,7 @@ class RemoveArticulation(ModelCommand):
         ModelCommand.__init__(self)
     def run(self):
         ModelCommand.run(self)
-        if self.articulationIndex > len(self.tap.articulations) or self.articulationIndex < 0:
+        if self.articulationIndex > len(self.tap.articulations) or self.articulationIndex < 1:
             self.output.append("This is not a valid index")
             return
         self.tap.remove_articulation(self.articulationIndex)

@@ -103,7 +103,7 @@ class Tap(object):
                 raise Exception("No taxonomy with id " + id + " found.")        
         self.articulations.append(articulation)
     def remove_articulation(self, articulationIndex):
-        del self.articulations[int(articulationIndex)]
+        del self.articulations[int(articulationIndex) - 1]
     def __str__(self, *args, **kwargs):
         indices = []
         for x in range(1, len(self.articulations) + 1):
