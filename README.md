@@ -40,8 +40,15 @@ load tap \<cleantax file\>				| Loads a tap (taxonomy alignment problem) from a 
 print tap [\<tap\>]					| Prints the current tap, or the optionally provided \<tap\>
 print taxonomies [\<tap\>]				| Prints the input taxonomies of the current tap, or the optionally provided \<tap\>
 print articulations [\<tap\>]				| Prints the input articulations of the current tap, or the optionally provided \<tap\>
-add articulation \<articulation\> [\<tap\>]			| Adds an <articulation> to the current tap, or the optionally provided \<tap\>
-remove articulation \<articulation_index\> [\<tap\>]	| Removes an articulation with index <articulation_index> from the current tap, or the optionally provided \<tap\>
+add taxonomy \<taxonomyId\> \<taxonomyName\> [\<tap\>] | Adds a taxonomy with \<taxonomyId\> and \<taxonomyName\> to the current tap or the optionally provided \<tap\>
+remove taxonomy \<taxonomyId\> [\<tap\>] | Removes the taxonomy with \<taxonomyId\> and ALL referencing articulations from the current tap or the optionally provided \<tap\>
+set taxonomy info \<oldTaxonomyId\> \<newTaxonomyId\> \<newTaxonomyName\> [\<tap\>] | Sets the taxonomy info of the taxonomy with \<oldTaxonomyId\> to \<newTaxonomyId\> and \<newTaxonomyName\> of the current tap or
+add children \<taxonomyId\> \<children\> [\<tap\>] | Adds children to the taxonomy with \<taxonomyId\> of the current tap or the optionally provided \<tap\> 
+remove children \<taxonomyId\> \<children\> [\<tap\>] | Removes children from the taxonomy with \<taxonomyId\> of the current tap or the optionally provided \<tap\>
+clear taxonomy \<taxonomyId\> [\<tap\>] | Clears the taxonomy with \<taxonomyId\> of the current tap or the optionally provided \<tap\>
+add articulation \<articulation\> [\<tap\>] | Adds \<articulation\> to the current tap or the optionally provided \<tap\>
+remove articulation \<articulation_index\> [\<tap\>] | Removes articulation with index \<articulation_index\> from the current tap or the optionally provided \<tap\> 
+clear articulations [\<tap\>] | Clears the articulations of the current tap or the optionally provided \<tap\>
 set sibling disjointness \<true\|false\> [\<tap\>]		| Sets the "sibling disjointness" reasoning constraint for the current tap, or the optionally provided \<tap\>
 set coverage \<true\|false\> [\<tap\>]			| Sets the "coverage" reasoning constraint for the current tap, or the optionally provided \<tap\>
 set regions \<mnpw\|mncb\|mnve\|vrpw\|vrve\> [\<tap\>]		| Sets the "region encoding" constraints for the current tap, or the optionally provided \<tap\>
