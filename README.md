@@ -37,6 +37,7 @@ reset							| Resets e3 to factory settings
 set config \<key\>=\<value\>				| Sets the configuration \<parameter\> with \<value\>
 print config						| Prints the configuration settings
 load tap \<cleantax file\>				| Loads a tap (taxonomy alignment problem) from a CleanTax file
+clear tap | Sets the empty tap as the current tap
 print tap [\<tap\>]					| Prints the current tap, or the optionally provided \<tap\>
 print taxonomies [\<tap\>]				| Prints the input taxonomies of the current tap, or the optionally provided \<tap\>
 print articulations [\<tap\>]				| Prints the input articulations of the current tap, or the optionally provided \<tap\>
