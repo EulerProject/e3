@@ -207,10 +207,10 @@ def get_cleantax_taxonomy_lines(cleantax):
         if line.startswith('#'): continue
         if len(line.strip()) == 0: continue
         if line.startswith('taxonomy') and not len(taxonomy) == 0:
-            taxonomies.append(taxonomy)
+            if len(taxonomy) > 0: taxonomies.append(taxonomy)
             taxonomy = []
         if line.startswith("articulation"):
-            taxonomies.append(taxonomy)
+            if len(taxonomy) > 0: taxonomies.append(taxonomy)
             return taxonomies
         taxonomy.append(line)
     return taxonomies

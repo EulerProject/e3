@@ -467,8 +467,7 @@ class RemoveChildren(ModelCommand):
     def run(self):
         ModelCommand.run(self)
         
-        taxonomy = self.tap.get_taxonomy(self.taxonomyId)
-        if taxonomy is None:
+        if self.tap.has_taxonomy(self.taxonomyId) is None:
             self.output.append("Taxonomy with id " + self.taxonomyId + " not found.")
             return
         
@@ -477,7 +476,7 @@ class RemoveChildren(ModelCommand):
             self.output.append("Taxonomy line with one <= 1 node is not valid.")
             return
         
-        taxonomy.remove_children(parts[0], parts[1:])
+        self.tap.remove_children(self.taxonomyId, parts[0], parts[1:])
         e3_io.set_current_tap(self.tap)
         e3_io.store_tap(self.tap)
         self.output.append("Tap: " + e3_io.get_tap_id_and_name(self.tap))
@@ -518,7 +517,7 @@ class ClearTaxonomy(ModelCommand):
         if not self.tap.has_taxonomy(self.id):
             self.output.append("Taxonomy with id " + self.id + " does not exist")
             return
-        taxonomy = self.tap.get_taxonomy(self.id).clear()
+        taxonomy = self.tap.clear_taxonomy(self.id)
         e3_io.set_current_tap(self.tap)
         e3_io.store_tap(self.tap)
         self.output.append("Tap: " + e3_io.get_tap_id_and_name(self.tap))
@@ -540,9 +539,7 @@ class SetTaxonomyInfo(ModelCommand):
         ModelCommand.__init__(self)
     def run(self):
         ModelCommand.run(self)
-        taxonomy = self.tap.get_taxonomy(id)
-        taxonomy.id = self.newId
-        taxonomy.name = self.newName
+        self.tap.set_taxonomy_info(self.id, self.newId, self.newName)
         e3_io.set_current_tap(self.tap)
         e3_io.store_tap(self.tap)
         self.output.append("Tap: " + e3_io.get_tap_id_and_name(self.tap))

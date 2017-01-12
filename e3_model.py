@@ -22,6 +22,9 @@ class Tap(object):
         self.articulations = [a for a in self.articulations if not self.is_references_taxonomy(a, taxonomyId)]
         self.taxonomies = [t for t in self.taxonomies if not t.id == taxonomyId]
         pass
+    def clear_taxonomy(self, taxonomyId):
+        self.articulations = [a for a in self.articulations if not self.is_references_taxonomy(a, taxonomyId)]
+        self.get_taxonomy(taxonomyId).clear()
     def get_referenced_taxonomies(self, articulation):
         referencedTaxonomies = []
         for l in articulation.left:
@@ -29,7 +32,7 @@ class Tap(object):
             t = self.get_taxonomy(id)
             referencedTaxonomies.append(t)
         for r in articulation.right:
-            id = l.split(".")[0]
+            id = r.split(".")[0]
             t = self.get_taxonomy(id)
             referencedTaxonomies.append(t) 
         return referencedTaxonomies
@@ -39,8 +42,49 @@ class Tap(object):
             if t.id == taxonomyId:
                 return True
         return False
+    def set_taxonomy_info(self, taxonomyId, newTaxonomyId, newName):
+        taxonomy = self.get_taxonomy(taxonomyId)
+        taxonomy.id = newTaxonomyId
+        taxonomy.name = newName
+        for a in self.articulations:
+            newLeft = []
+            for l in a.left:
+                if l.split(".")[0] == taxonomyId: newLeft.append(newTaxonomyId + "." + l.split(".")[1])
+                else: newLeft.append(l)
+            a.left = newLeft
+            newRight = []
+            for r in a.right:
+                if r.split(".")[0] == taxonomyId: newRight.append(newTaxonomyId + "." + r.split(".")[1])
+                else: newRight.append(r)
+            a.right = newRight
+                        
     def has_taxonomy(self, id):
         return self.get_taxonomy(id) is not None
+    def remove_children(self, taxonomyId, parent, children):
+        taxonomy = self.get_taxonomy(taxonomyId)
+        taxonomy.remove_children(parent, children)
+        self.articulations = [a for a in self.articulations if self.nodes_in_tap(a)]
+    def nodes_in_tap(self, articulation):
+        for l in articulation.left:
+            id = l.split(".")[0]
+            node = l.split(".")[1]
+            taxonomy = self.get_taxonomy(id)
+            if not taxonomy is None:
+                if not taxonomy.contains_node(node):
+                    return False
+            else:
+                return False
+        for r in articulation.right:
+            id = r.split(".")[0]
+            node = r.split(".")[1]
+            taxonomy = self.get_taxonomy(id)
+            if not taxonomy is None:
+                if not taxonomy.contains_node(node):
+                    return False
+            else:
+                return False
+        return True
+        
     def get_taxonomy(self, id):
         for t in self.taxonomies:
             if t.id == id:
@@ -53,7 +97,7 @@ class Tap(object):
             if t is None:
                 raise Exception("No taxonomy with id " + id + " found.")
         for r in articulation.right:
-            id = l.split(".")[0]
+            id = r.split(".")[0]
             t = self.get_taxonomy(id)
             if t is None:
                 raise Exception("No taxonomy with id " + id + " found.")        
@@ -94,6 +138,9 @@ class Taxonomy(object):
         self.g.add_edges_from(zip([parent] * len(children), children))
     def remove_children(self, parent, children):
         self.g.remove_edges_from(zip([parent] * len(children), children))
+        self.g.remove_nodes_from(children)
+    def contains_node(self, node):
+        return self.g.has_node(node)
     def add_node(self, parent, child):
         if parent == None:
             self.g.add_node(child)
