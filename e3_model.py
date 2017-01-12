@@ -184,10 +184,23 @@ class Taxonomy(object):
                 roots.append(node)
         return roots
     def __str__(self, *args, **kwargs):
-        edges = []
-        for node in self.get_roots():
-            self.add_cleantax_stringyfied_edges(edges, node)
         result = "taxonomy " + self.id + " " + self.name
+        
+        edges = []
+        roots = self.get_roots()
+        # in case we have a well-formed rooted tree, get logical order
+        if roots:
+            for node in roots:
+                self.add_cleantax_stringyfied_edges(edges, node)
+        # in case we don't, still produce something meaningful
+        else:
+            for node in self.g.nodes():
+                line = "(" + node
+                for successor in self.g.successors(node):
+                    line = line + " " + successor
+                line = line + ")"
+                if len(self.g.successors(node)) > 0:
+                    edges.append(line)
         if len(edges) > 0:
             result = result + '\n' + '\n'.join(edges)
         return result
