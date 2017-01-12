@@ -168,24 +168,15 @@ class Taxonomy(object):
     def add_children(self, parent, children):
         self.g.add_edges_from(zip([parent] * len(children), children))
     def remove_children(self, parent, children):
-        self.g.remove_edges_from(zip([parent] * len(children), children))
-        self.g.remove_nodes_from(children)
+        for c in children:
+            descendants = nx.descendants(self.g, c)
+            descendants.add(c)
+            self.g.remove_nodes_from(descendants)
+        #special case: parent = root; and only 1 left over node
+        if parent == self.get_roots()[0] and self.g.number_of_nodes() == 1:
+            self.g.remove_node(parent)
     def contains_node(self, node):
         return self.g.has_node(node)
-    def add_node(self, parent, child):
-        if parent == None:
-            self.g.add_node(child)
-        else:
-            self.g.add_edge(parent, child)
-    def remove_nodes(self, nodes):
-        for n in nodes:
-            self.remove_node(n)
-    def remove_node(self, node):
-        self.remove_children(node)
-        self.g.remove_node(node)
-    def remove_all_children(self, node):
-        for e in self.g.out_edges(node):
-            self.g.remove_node(e[1])
     def get_roots(self):
         roots = []
         for node in self.g.nodes():
@@ -219,14 +210,4 @@ class Articulation(object):
     def __init__(self, left, right, relation):
         pass
     def __str__(self):
-        return "[" + " ".join(self.left) + " " + self.relation + " " + " ".join(self.right) + "]"
-
-if __name__ == '__main__':
-    ta = Taxonomy("id", "name")
-    ta.add_node(None, "a")
-    ta.add_node("a", "b")
-    ta.add_children("a", ["c", "d", "e"])
-    #ta.remove_children("a")
-    ta.remove_nodes(["c", "e"])
-    pass
-    
+        return "[" + " ".join(self.left) + " " + self.relation + " " + " ".join(self.right) + "]"    
