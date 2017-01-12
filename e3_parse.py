@@ -179,6 +179,20 @@ class LoadTapParser(CommandParser):
     def get_help(self):
         return "load tap <cleantax file>\nLoads a tap from a cleantax file"
 
+class ClearTapParser(CommandParser):
+    def __init__(self):
+        #example:
+        #load tap abstract.txt
+        CommandParser.__init__(self, '^clear tap$')
+    def get_command(self, input):
+        match = self.is_command(input)
+        if match:
+            return e3_command.ClearTap()
+        else:
+            raise Exception('Unrecognized command line')
+    def get_help(self):
+        return "clear tap\nSets the empty tap as the current tap"
+
 class AddChildrenParser(CommandParser):
     def __init__(self):
         CommandParser.__init__(self, '^add children (.+) (\\(.+\\))( (\S*))?$')
@@ -764,6 +778,7 @@ commandParsers = [  ByeParser(),
                     SetConfigParser(),
                     PrintConfigParser(),
                     LoadTapParser(),
+                    ClearTapParser(),
                     PrintTapParser(),
                     PrintTaxonomiesParser(),
                     PrintArticulationsParser(),

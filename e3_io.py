@@ -168,9 +168,9 @@ def get_tap_from_cleantax(isCoverage, isSiblingDisjointness, regions, cleantax):
     tap = e3_model.Tap(isCoverage, isSiblingDisjointness, regions, [], [])
     
     e3_validation.validate_cleantax(cleantax)
-    taxonomyLinesPerTaxonomy = get_taxonomy_lines(cleantax)
+    cleantaxTaxonomyLines = get_cleantax_taxonomy_lines(cleantax)
     taxonomies = []
-    for taxonomyLines in taxonomyLinesPerTaxonomy:
+    for taxonomyLines in cleantaxTaxonomyLines:
         header = taxonomyLines[0]
         taxonomyId = header.split()[1]
         taxonomyName = header.split()[2]
@@ -180,12 +180,12 @@ def get_tap_from_cleantax(isCoverage, isSiblingDisjointness, regions, cleantax):
             taxonomy.add_children(nodes[0], nodes[1:])
         tap.add_taxonomy(taxonomy)
     
-    articulationLines = get_articulation_lines(cleantax)
+    cleantaxArticulationLines = get_cleantax_articulation_lines(cleantax)
     articulations = []
-    for line in articulationLines[1:]:
+    for line in cleantaxArticulationLines[1:]:
         line = line.strip()[1:-1]
         foundRelation = False
-        for validRelation in e3_validation.validRelations:
+        for validRelation in e3_model.relations:
             split = " " + validRelation + " "
             if split in line:
                 parts = line.split(split)
@@ -198,27 +198,24 @@ def get_tap_from_cleantax(isCoverage, isSiblingDisjointness, regions, cleantax):
             
     return tap
 
-def get_taxonomy_lines(cleantax):
+def get_cleantax_taxonomy_lines(cleantax):
     taxonomies = []
     taxonomy = []
     articulations = []
-    taxonomiesComplete = False
     for line in cleantax:
         line = line.strip().rstrip()
         if line.startswith('#'): continue
-        if len(line.strip()) == 0:
-            if not taxonomiesComplete and not len(taxonomy) == 0:
-                taxonomies.append(taxonomy)
-                taxonomy = []
-                continue
-        
+        if len(line.strip()) == 0: continue
+        if line.startswith('taxonomy') and not len(taxonomy) == 0:
+            taxonomies.append(taxonomy)
+            taxonomy = []
         if line.startswith("articulation"):
+            taxonomies.append(taxonomy)
             return taxonomies
-        if not taxonomiesComplete:
-            taxonomy.append(line)
+        taxonomy.append(line)
     return taxonomies
     
-def get_articulation_lines(cleantax):
+def get_cleantax_articulation_lines(cleantax):
     articulations = []
     articulationStarts = False
     for line in cleantax:

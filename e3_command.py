@@ -425,6 +425,19 @@ class LoadTap(ModelCommand):
         except e3_validation.ValidationException as e:
             self.output.append(str(e))
 
+@logged 
+class ClearTap(ModelCommand):
+    @copy_args_to_public_fields
+    def __init__(self):
+        ModelCommand.__init__(self)
+    def run(self):
+        ModelCommand.run(self)
+        config = e3_io.get_config()
+        tap = e3_model.Tap(config['defaultIsCoverage'], config['defaultIsSiblingDisjointness'], config['defaultRegions'], [], [])
+        e3_io.set_current_tap(tap)
+        e3_io.store_tap(tap)
+        self.output.append("Tap: " + e3_io.get_tap_id_and_name(tap))
+
 class AddChildren(ModelCommand):
     @copy_args_to_public_fields
     def __init__(self, tap, taxonomyId, children):
@@ -541,24 +554,31 @@ class AddArticulation(ModelCommand):
         ModelCommand.__init__(self)
     def run(self):
         ModelCommand.run(self)
-        cleantaxArticulation = "[" + self.articulation + "]"
-        try:
-            e3_validation.validate_articulation(cleantaxArticulation, self.tap.taxonomies, self.tap.articulations)
-        except e3_validation.ValidationException as e:
-            self.output.append(str(e))
-            return
         
-        for validRelation in e3_validation.validRelations:
+        articulation = None
+        for validRelation in e3_model.relations:
             split = " " + validRelation + " "
             if split in self.articulation:
                 parts = self.articulation.split(split)
                 left = parts[0].split()
                 right = parts[1].split()
-                self.tap.add_articulation(e3_model.Articulation(left, right, validRelation))
-                
-        e3_io.set_current_tap(self.tap)
-        e3_io.store_tap(self.tap)
-        self.output.append("Tap: " + e3_io.get_tap_id_and_name(self.tap))
+                articulation = e3_model.Articulation(left, right, validRelation)
+                break
+        
+ 
+        if articulation is  None:
+            self.output.append("Not a valid articulation. No valid relation found.")
+        else:
+            try:
+                e3_validation.validate_articulation(articulation, self.tap)
+            except e3_validation.ValidationException as e:
+                self.output.append(str(e))
+                return
+            
+            self.tap.add_articulation(articulation)        
+            e3_io.set_current_tap(self.tap)
+            e3_io.store_tap(self.tap)
+            self.output.append("Tap: " + e3_io.get_tap_id_and_name(self.tap))
 
 @logged
 class RemoveArticulation(ModelCommand):

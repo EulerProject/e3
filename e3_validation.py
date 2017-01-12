@@ -6,25 +6,21 @@ Created on Nov 22, 2016
 import e3_io
 import re
 
-validRelations = [ "lsum", "l3sum", "l4sum", "rsum", "r3sum", "r4sum", "ldiff", "rdiff", "e4sum", "i4sum", "equals", "includes", 
-                      "is_included_in", "overlaps", "disjoint" 
-                      ]
-
 class ValidationException(Exception):
     pass
 
 def validate_cleantax(cleantax):
-    taxonomies = e3_io.get_taxonomy_lines(cleantax)
-    for taxonomy in taxonomies:
-        validate_taxonomy(taxonomy)
-    articulations = e3_io.get_articulation_lines(cleantax)
+    cleantaxTaxonomyLines = e3_io.get_cleantax_taxonomy_lines(cleantax)
+    for taxonomy in cleantaxTaxonomyLines:
+        validate_cleantax_taxonomy(taxonomy)
     
+    cleantaxArticulationLines = e3_io.get_cleantax_articulation_lines(cleantax)
     validated_articulations = []
-    for articulation in articulations[1:]:
-        validate_articulation(articulation, taxonomies, validated_articulations)
+    for articulation in cleantaxArticulationLines[1:]:
+        validate_cleantax_articulation(articulation, cleantaxTaxonomyLines, validated_articulations)
         validated_articulations.append(articulation)
         
-def validate_taxonomy(taxonomy):
+def validate_cleantax_taxonomy(taxonomy):
     if not len(taxonomy[0].split()) == 3:
         raise ValidationException("Taxonomy head must consist of three parts")
     #what are the validation requirements for a taxonomy in the euler context? one or multiple roots possible?
@@ -38,7 +34,17 @@ def validate_taxonomy(taxonomy):
         if len(inside.split()) <= 1:
             raise ValidationException("Taxonomy line has to consist of two or more nodes")
 
-def validate_articulation(articulation, taxonomies, articulations):  
+def validate_articulation(newArticulation, tap):
+    cleantaxTaxonomies = [];
+    for taxonomy in tap.taxonomies:
+        cleantaxTaxonomies.append(taxonomy.__str__().split('\n'))
+    cleantaxArticulations = [];
+    for articulation in tap.articulations:
+        cleantaxArticulations.append(articulation.__str__()) 
+    cleantaxNewArticulation = newArticulation.__str__()   
+    validate_cleantax_articulation(cleantaxNewArticulation, cleantaxTaxonomies, cleantaxArticulations)
+
+def validate_cleantax_articulation(articulation, taxonomies, articulations):  
     if articulation in articulations:
         raise ValidationException("This articulation already exists")
     node = "(.+\..+)"  
@@ -71,12 +77,12 @@ def validate_articulation(articulation, taxonomies, articulations):
         if match:
             valid = True
             for group in match.groups():
-                validate_node(group, taxonomyIdToNodes)
+                validate_cleantax_node(group, taxonomyIdToNodes)
             return 
     raise ValidationException("No valid relation found. The set of supported relations is: {validRelations}.".format(
-        validRelations = ', '.join(validRelations)))
+        validRelations = ', '.join(e3_model.relations)))
         
-def validate_node(node, taxonomyIdToNodes):
+def validate_cleantax_node(node, taxonomyIdToNodes):
     taxonomyIds = ', '.join(taxonomyIdToNodes.keys())
     taxonomyIdNotFoundText = "{taxonomyId} of {node} not found in the list of taxonomies ({taxonomyIds})"
     nodeNotFoundText = "{nodeName} of {node} not found in the nodes of taxonomy {taxonomyId}"

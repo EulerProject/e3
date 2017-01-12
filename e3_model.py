@@ -19,21 +19,23 @@ class Tap(object):
                 raise Exception("Taxonomy id " + t.id + " already exists")
         self.taxonomies.append(taxonomy)
     def remove_taxonomy(self, taxonomyId):
-        self.taxonomies = [t for t in self.taxonomies if not t.id == taxonomyId]
         self.articulations = [a for a in self.articulations if not self.is_references_taxonomy(a, taxonomyId)]
+        self.taxonomies = [t for t in self.taxonomies if not t.id == taxonomyId]
+        pass
     def get_referenced_taxonomies(self, articulation):
-        taxonomies = []
+        referencedTaxonomies = []
         for l in articulation.left:
             id = l.split(".")[0]
             t = self.get_taxonomy(id)
-            taxonomies.append(t)
+            referencedTaxonomies.append(t)
         for r in articulation.right:
             id = l.split(".")[0]
             t = self.get_taxonomy(id)
-            taxonomies.append(t) 
+            referencedTaxonomies.append(t) 
+        return referencedTaxonomies
     def is_references_taxonomy(self, articulation, taxonomyId):
-        taxonomies = self.get_referenced_taxonomies(articulation)
-        for t in self.taxonomies:
+        referencedTaxonomies = self.get_referenced_taxonomies(articulation)
+        for t in referencedTaxonomies:
             if t.id == taxonomyId:
                 return True
         return False
@@ -60,27 +62,21 @@ class Tap(object):
         del self.articulations[int(articulationIndex)]
     def __str__(self, *args, **kwargs):
         indices = []
-        for x in range(1, len(self.articulations)):
+        for x in range(1, len(self.articulations) + 1):
             indices.append(str(x) + ". ")
         articulationLines = [x + y for x, y in zip(indices, [a.__str__() for a in self.articulations])]
         articulationLines.insert(0, 'articulation')     
-        dataLines = []
+        result = []
         for taxonomy in self.taxonomies:
-            taxonomyStringLines = taxonomy.__str__().split('\n')
-            #indices = ['']
-            #for x in range(1, len(taxonomyStringLines)):
-            #    indices.append(str(x) + ". ")
-            #taxonomyLines = [x + y for x, y in zip(indices, taxonomyStringLines)]
-            taxonomyLines = taxonomyStringLines
-            dataLines.append('\n'.join(taxonomyLines))
+            taxonomyLines = taxonomy.__str__().split('\n')
+            result.append('\n'.join(taxonomyLines))
                
-        dataLines.append('\n'.join(articulationLines))
-        value = ('Coverage:' + str(self.isCoverage) + 
+        result.append('\n'.join(articulationLines))
+        result = ('Coverage:' + str(self.isCoverage) + 
                  '\nSibling Disjontness:' + str(self.isSiblingDisjointness) + 
                  '\nRegions:' + self.regions + '\n\n' + 
-                '\n\n'.join(dataLines))
-        #print value
-        return value
+                '\n\n'.join(result))
+        return result
         
     def get_id(self):
         return hashlib.sha1(self.__str__()).hexdigest()
@@ -119,18 +115,25 @@ class Taxonomy(object):
                 roots.append(node)
         return roots
     def __str__(self, *args, **kwargs):
-        result = []
+        edges = []
         for node in self.get_roots():
-            self.addCleantaxStringyfiedEdges(result, node)
-        return "taxonomy " + self.id + " " + self.name + '\n' + '\n'.join(result)
-    def addCleantaxStringyfiedEdges(self, collector, src):
+            self.add_cleantax_stringyfied_edges(edges, node)
+        result = "taxonomy " + self.id + " " + self.name
+        if len(edges) > 0:
+            result = result + '\n' + '\n'.join(edges)
+        return result
+    def add_cleantax_stringyfied_edges(self, collector, src):
         if len(self.g.successors(src)) > 0:
             line = "(" + src
             for successor in self.g.successors(src):
                 line = line + " " + successor
-                self.addCleantaxStringyfiedEdges(collector, successor)
+                self.add_cleantax_stringyfied_edges(collector, successor)
             line = line + ")"
             collector.insert(0, line)
+            
+relations = [ "lsum", "l3sum", "l4sum", "rsum", "r3sum", "r4sum", "ldiff", "rdiff", "e4sum", "i4sum", "equals", "includes", 
+                      "is_included_in", "overlaps", "disjoint" 
+                      ]            
             
 #see Taxonomy comment
 class Articulation(object):
