@@ -218,8 +218,10 @@ def get_cleantax_taxonomy_lines(cleantax):
             taxonomy = []
         if line.startswith("articulation"):
             if len(taxonomy) > 0: taxonomies.append(taxonomy)
+            taxonomy = []
             return taxonomies
         taxonomy.append(line)
+    if len(taxonomy) > 0: taxonomies.append(taxonomy)
     return taxonomies
     
 def get_cleantax_articulation_lines(cleantax):
