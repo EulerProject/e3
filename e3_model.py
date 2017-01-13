@@ -149,6 +149,9 @@ class Tap(object):
         return result
         
     def get_id(self):
+        # todo: sort articulations 
+        # sort taxonomy lines 
+        # to obtain same ids regardless of string output order
         return hashlib.sha1(self.__str__()).hexdigest()
     
 #could be a graph at some point if desired to be able to modify the taxonomy on the fly

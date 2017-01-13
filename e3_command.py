@@ -538,7 +538,7 @@ class ClearArticulations(ModelCommand):
         ModelCommand.__init__(self)
     def run(self):
         ModelCommand.run(self)
-        self.tap.articulations.clear()
+        self.tap.articulations = []
         e3_io.set_current_tap(self.tap)
         e3_io.store_tap(self.tap)
         self.output.append("Tap: " + e3_io.get_tap_id_and_name_and_status(self.tap))
