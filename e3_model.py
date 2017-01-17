@@ -80,10 +80,10 @@ class Tap(object):
         #if not taxonomy.is_tree():
         #    self.set_taxonomy(taxonomyId, original)
         #    raise e3_validation.ValidationException("Adding the children would not lead to a valid taxonomy")
-    def remove_children(self, taxonomyId, parent, children):
+    def remove_children(self, taxonomyId, parent, children, recursive):
         taxonomy = self.get_taxonomy(taxonomyId)
         #original = copy.deepcopy(taxonomy)
-        taxonomy.remove_children(parent, children)
+        taxonomy.remove_children(parent, children, recursive)
         #if not taxonomy.is_tree():
         #    self.set_taxonomy(taxonomyId, original)
         #    raise e3_validation.ValidationException("Removing the children would not lead to a valid taxonomy")
@@ -170,14 +170,33 @@ class Taxonomy(object):
         self.g.clear()
     def add_children(self, parent, children):
         self.g.add_edges_from(zip([parent] * len(children), children))
-    def remove_children(self, parent, children):
+    def remove_children(self, parent, children, recursive):
         for c in children:
-            descendants = nx.descendants(self.g, c)
-            descendants.add(c)
-            self.g.remove_nodes_from(descendants)
+            if self.g.has_edge(parent, c):
+                self.g.remove_edge(parent, c)
+                if recursive:
+                    self.remove_children(c, self.g.successors(c), recursive)
+            roots = self.get_roots()
+            if not self.g.predecessors(c) and roots and not c == roots[0]:
+                self.g.remove_node(c)
+        
         #special case: parent = root; and only 1 left over node
-        if parent == self.get_roots()[0] and self.g.number_of_nodes() == 1:
+        roots = self.get_roots()        
+        if roots and parent == roots[0] and self.g.number_of_nodes() == 1:
             self.g.remove_node(parent)
+    
+        #    self.g.remove_node(parent)
+        #for c in children:
+        #    if self.g.has_edge(parent, c):
+        #        descendants = nx.descendants(self.g, c)
+        #        descendants.add(c)
+        #        for d in descendants:
+        #            if nx.ancestors(self.g, d)
+        #            self.g.remove_nodes_from(descendants)
+        #special case: parent = root; and only 1 left over node
+        #roots = self.get_roots()
+        #if roots and parent == roots[0] and self.g.number_of_nodes() == 1:
+        #    self.g.remove_node(parent)
     def contains_node(self, node):
         return self.g.has_node(node)
     def get_roots(self):

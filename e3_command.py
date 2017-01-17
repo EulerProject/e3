@@ -10,7 +10,7 @@ import os
 import e3_parse
 import e3_validation
 import e3_model
-from wx import NewId
+import git
     
 @logged
 class Command(object):
@@ -195,6 +195,59 @@ class Reset(ModelCommand):
         tap = e3_io.get_current_tap()
         self.output.append("Reset successful")
         self.output.append("Tap: " + e3_io.get_tap_id_and_name_and_status(tap))
+         
+@logged
+class SetGitCredentials(MiscCommand):        
+    @copy_args_to_public_fields
+    def __init__(self, host, user, password):
+        MiscCommand.__init__(self)
+        pass
+    def run(self):
+        MiscCommand.run(self)
+        e3_io.set_git_credencials(self.host, self.user, self.password)
+        
+@logged
+class GitPull(MiscCommand):
+    @copy_args_to_public_fields
+    def __init__(self):
+        MiscCommand.__init__(self)
+        pass
+    def run(self):
+        MiscCommand.run(self)
+        config = e3_io.get_config()
+        g = git.Git(e3_io.get_e3_dir())
+        try:
+            g.status()
+            g.pull()
+        except git.exc.GitCommandError as e:
+            e3_io.clean_e3_dir()
+            g.clone(config['gitRepository'], e3_io.get_e3_dir())
+        self.output.append("Pulled successfully")
+        self.output.append("Tap: " + e3_io.get_tap_id_and_name_and_status(e3_io.get_current_tap()))
+
+@logged
+class GitPush(MiscCommand):
+    @copy_args_to_public_fields
+    def __init__(self, message):
+        MiscCommand.__init__(self)
+        pass
+    def run(self):
+        MiscCommand.run(self)
+        config = e3_io.get_config()
+        try:
+            g = git.Git(e3_io.get_e3_dir())
+            try:
+                g.status()
+            except git.exc.GitCommandError as e:
+                g.init() # can already have a .git folder
+                g.remote("add", "origin", config['gitRepository']) # can already have an "origin"
+            g.fetch() # may not be able to if remote is bogus url
+            g.add(".")
+            g.commit("-m", self.message) #could in theory have empty message
+            g.push("--all")
+            self.output.append("Pushed successfully")
+        except git.exc.GitCommandError as e:
+            self.output.append(str(e))
          
 @logged 
 class Bye(MiscCommand):
@@ -467,7 +520,7 @@ class AddChildren(ModelCommand):
 
 class RemoveChildren(ModelCommand):
     @copy_args_to_public_fields
-    def __init__(self, tap, taxonomyId, children):
+    def __init__(self, tap, taxonomyId, children, recursive):
         ModelCommand.__init__(self)
     def run(self):
         ModelCommand.run(self)
@@ -482,7 +535,7 @@ class RemoveChildren(ModelCommand):
             return
         
         try:
-            self.tap.remove_children(self.taxonomyId, parts[0], parts[1:])
+            self.tap.remove_children(self.taxonomyId, parts[0], parts[1:], self.recursive)
         except e3_validation.ValidationException as e:
             self.output.append(str(e))
             return

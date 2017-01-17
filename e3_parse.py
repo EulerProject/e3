@@ -164,6 +164,48 @@ class HelpParser(CommandParser):
             raise Exception('Unrecognized command line')
     def get_help(self):
         return "help\nShows this help"
+    
+@logged               
+class GitPullParser(CommandParser):
+    def __init__(self):
+        CommandParser.__init__(self, '^git pull$')
+    def get_command(self, input):
+        match = self.is_command(input)
+        if match:
+            return e3_command.GitPull()
+        else:
+            raise Exception('Unrecognized command line')
+    def get_help(self):
+        return "git pull\nClones or pulls the e3 state from the configured git repository"
+    
+@logged               
+class SetGitCredentialsParser(CommandParser):
+    def __init__(self):
+        CommandParser.__init__(self, '^git credentials (.*) (.*) "(.*)"$')
+    def get_command(self, input):
+        match = self.is_command(input)
+        if match:
+            return e3_command.SetGitCredentials(match.group(1), match.group(2), match.group(3))
+        else:
+            raise Exception('Unrecognized command line')
+    def get_help(self):
+        return "git credentials <host> <username> \"<password>\"\nSets the username and password for the git host"
+
+@logged               
+class GitPushParser(CommandParser):
+    def __init__(self):
+        CommandParser.__init__(self, '^git push( (.*))?$')
+    def get_command(self, input):
+        match = self.is_command(input)
+        if match:
+            if match.group(1)and match.group(2):
+                return e3_command.GitPush(match.group(2))
+            else:
+                return e3_command.GitPush("e3 git push") 
+        else:
+            raise Exception('Unrecognized command line')
+    def get_help(self):
+        return "git push <message>\nCommits and pushes the e3 state to the configured git repository"
 
 class LoadTapParser(CommandParser):
     def __init__(self):
@@ -192,43 +234,7 @@ class ClearTapParser(CommandParser):
             raise Exception('Unrecognized command line')
     def get_help(self):
         return "clear tap\nSets the empty tap as the current tap"
-
-class AddChildrenParser(CommandParser):
-    def __init__(self):
-        CommandParser.__init__(self, '^add children (.+) (\\(.+\\))( (\S*))?$')
-    def get_command(self, input):
-        match = self.is_command(input)
-        if match:
-            tap = e3_io.get_current_tap()
-            if match.group(3) and match.group(4):
-                tap = e3_io.get_tap_from_id_or_name(match.group(4))  
-            if tap:   
-                return e3_command.AddChildren(tap, match.group(1), match.group(2))
-            else:
-                raise Exception('Tap %s not found' % match.group(4))
-        else:
-            raise Exception('Unrecognized command line')
-    def get_help(self):
-        return "add taxonomy line <taxonomyId> <line> [<tap>]\nAdds the taxonomy line to the taxonomy with <taxonomyId> of the current tap, or the optionally provided <tap>"
-
-class RemoveChildrenParser(CommandParser):
-    def __init__(self):
-        CommandParser.__init__(self, '^remove children (.+) (\d+)( (\S*))?$')
-    def get_command(self, input):
-        match = self.is_command(input)
-        if match:
-            tap = e3_io.get_current_tap()
-            if match.group(3) and match.group(4):
-                tap = e3_io.get_tap_from_id_or_name(match.group(4))  
-            if tap:   
-                return e3_command.RemoveChildren(tap, match.group(1), match.group(2))
-            else:
-                raise Exception('Tap %s not found' % match.group(4))
-        else:
-            raise Exception('Unrecognized command line')
-    def get_help(self):
-        return "remove taxonomy line <taxonomyId> <lineId> [<tap>]\nRemoves the taxonomy line from the taxonomy with <taxonomyId> of the current tap, or the optionally provided <tap>"
-        
+    
 class AddChildrenParser(CommandParser):
     def __init__(self):
         CommandParser.__init__(self, '^add children (.+) (\\(.+\\))( (\S*))?$')
@@ -249,21 +255,22 @@ class AddChildrenParser(CommandParser):
 
 class RemoveChildrenParser(CommandParser):
     def __init__(self):
-        CommandParser.__init__(self, '^remove children (.+) (\\(.+\\))( (\S*))?$')
+        CommandParser.__init__(self, '^remove children(?: recursive)? (.+) (\\(.+\\))( (\S*))?$')
     def get_command(self, input):
         match = self.is_command(input)
+        recursive = input.startswith("remove children recursive")
         if match:
-            tap = e3_io.get_current_tap()
+            tap = e3_io.get_current_tap()        
             if match.group(3) and match.group(4):
                 tap = e3_io.get_tap_from_id_or_name(match.group(4))  
             if tap:   
-                return e3_command.RemoveChildren(tap, match.group(1), match.group(2))
+                return e3_command.RemoveChildren(tap, match.group(1), match.group(2), recursive)
             else:
                 raise Exception('Tap %s not found' % match.group(4))
         else:
             raise Exception('Unrecognized command line')
     def get_help(self):
-        return "remove children <taxonomyId> <children> [<tap>]\nRemoves children from the taxonomy with <taxonomyId> of the current tap, or the optionally provided <tap>"
+        return "remove children <recrusive> <taxonomyId> <children> [<tap>]\nRemoves children from the taxonomy with <taxonomyId> of the current tap, or the optionally provided <tap>"
 
 class AddTaxonomyParser(CommandParser):
     def __init__(self):
@@ -815,7 +822,10 @@ commandParsers = [  ByeParser(),
                     RemoveProjectParser(),
                     ClearProjectsParser(),
                     PrintProjectHistoryParser(),
-                    RemoveProjectHistoryParser()
+                    RemoveProjectHistoryParser(),
+                    GitPullParser(),
+                    GitPushParser(),
+                    SetGitCredentialsParser()
                 ]              
                                                 
 class CommandProvider(object):

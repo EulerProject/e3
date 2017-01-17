@@ -6,11 +6,18 @@ import logging, sys
 import e3_run
 import e3_parse
 import e3_io
+import os.path
 
 def main():
     logging.basicConfig(level=logging.INFO, stream=sys.stdout, format="%(levelname)s:%(name)s:%(funcName)s:%(message)s")
     config = e3_io.get_config()
     #sys.path.append(config['eulerXPath'])
+    
+    lastArg = sys.argv[-1]
+    if lastArg.startswith("-e3Dir="):
+        if os.path.isdir(lastArg.split("=")[1]):
+            e3_io.e3Dir = lastArg.split("=")[1]
+        sys.argv = sys.argv[0:-1]
     
     run = None
     if len(sys.argv) > 1:

@@ -12,12 +12,26 @@ from os.path import expanduser
 import shutil
 import uuid
 
-def reset():
+e3Dir = os.path.join(expanduser("~"), ".e3")
+
+def clean_e3_dir():
     shutil.rmtree(get_e3_dir())
+    
+def reset():
+    clean_e3_dir()
     get_config()
     tap = get_default_tap()
     store_tap(tap)
     set_current_tap(tap)
+
+def set_git_credencials(host, user, password):
+    config = get_config()
+    netrc_file = os.path.join(get_home_dir(), ".netrc")
+    if not os.path.isfile(netrc_file):
+        with open(netrc_file, 'w') as f:
+            f.write("machine " + host + "\n")
+            f.write("login " + user + "\n")
+            f.write("password " + password + "\n")
 
 def get_config():
     config = None
@@ -34,7 +48,10 @@ def get_config():
                 'defaultIsCoverage': True,
                 'defaultIsSiblingDisjointness': True,
                 'defaultRegions': 'mnpw',
-                'reasoner': 'dlv'
+                'reasoner': 'dlv',
+                'gitRepository': "https://github.com/rodenhausen/my_e3_env.git",
+                #'gitUser': "",
+                #'gitPassword': ""
                 }
     config = defaultConfig
     with open(get_config_file(), 'w') as f:
@@ -400,7 +417,6 @@ def get_project_dir(project):
     return os.path.join(get_projects_dir(), project)
 
 def get_e3_dir():
-    e3Dir = os.path.join(get_home_dir(), ".e3")
     if not os.path.isdir(e3Dir):
         os.makedirs(e3Dir)
     return e3Dir
