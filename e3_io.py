@@ -50,6 +50,7 @@ def get_config():
                 'defaultRegions': 'mnpw',
                 'reasoner': 'dlv',
                 'gitRepository': "https://github.com/rodenhausen/my_e3_env.git",
+                'showOutputFileLocation': False
                 #'gitUser': "",
                 #'gitPassword': ""
                 }

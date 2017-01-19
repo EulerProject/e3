@@ -18,6 +18,7 @@ class Command(object):
     def __init__(self):
         self.config = e3_io.get_config()
         self.output = []
+        self.outputFiles = []
         self.executeOutput = []
         pass
     def run(self):
@@ -26,6 +27,8 @@ class Command(object):
         return self.output
     def get_execute_output(self):
         return self.executeOutput
+    def get_output_files(self):
+        return self.outputFiles
     
 @logged
 class MiscCommand(Command):
@@ -734,9 +737,12 @@ class GraphWorlds(Euler2Command):
         self.executeOutput = []
         openCount = 0
         for filename in os.listdir(self.e2PWsDir):
-            if filename.endswith(".%s" % self.imageFormat) and openCount < self.maxPossibleWorldsToShow:
-                openCount += 1
-                self.executeOutput.append(self.imageViewer.format(file = os.path.join(self.e2PWsDir, filename)))
+            if filename.endswith(".%s" % self.imageFormat):
+                file = os.path.join(self.e2PWsDir, filename)
+                self.outputFiles.append(file)
+                if openCount < self.maxPossibleWorldsToShow:
+                    openCount += 1
+                    self.executeOutput.append(self.imageViewer.format(file = file))
                 
 @logged 
 class IsConsistent(Euler2Command):
@@ -822,7 +828,9 @@ class GraphInconsistency(Euler2Command):
         self.executeOutput = []
         for filename in os.listdir(self.e2LatticesDir):
             if filename.endswith(".%s" % self.imageFormat):
-                self.executeOutput.append(self.imageViewer.format(file = os.path.join(self.e2LatticesDir, filename))) 
+                file = os.path.join(self.e2LatticesDir, filename)
+                self.executeOutput.append(self.imageViewer.format(file = file)) 
+                self.outputFiles.append(file)
             
 @logged
 class PrintWorlds(Euler2Command):
@@ -867,8 +875,9 @@ class GraphTap(Euler2Command):
         self.executeOutput = []
         for filename in os.listdir(self.e2InputDir):
             if filename.endswith(".%s" % self.imageFormat):
-                self.executeOutput.append(self.imageViewer.format(file = os.path.join(self.e2InputDir, filename)))
-                
+                file = os.path.join(self.e2InputDir, filename)
+                self.executeOutput.append(self.imageViewer.format(file = file))
+                self.outputFile.append(file)
 @logged 
 class GraphFourInOne(Euler2Command):
     @copy_args_to_public_fields
@@ -889,8 +898,9 @@ class GraphFourInOne(Euler2Command):
         self.executeOutput = []
         for filename in os.listdir(self.e2LatticesDir):
             if filename.endswith(".%s" % self.imageFormat):
-                self.executeOutput.append(self.imageViewer.format(file = os.path.join(self.e2LatticesDir, filename)))
-                
+                file = os.path.join(self.e2LatticesDir, filename)
+                self.executeOutput.append(self.imageViewer.format(file = file))
+                self.outputFiles.append(file)
 @logged 
 class GraphSummary(Euler2Command):
     @copy_args_to_public_fields
@@ -911,8 +921,9 @@ class GraphSummary(Euler2Command):
         self.executeOutput = []
         for filename in os.listdir(self.e2AggregatesDir):
             if filename.endswith(".%s" % self.imageFormat):
-                self.executeOutput.append(self.imageViewer.format(file = os.path.join(self.e2AggregatesDir, filename)))
-                        
+                file = os.path.join(self.e2AggregatesDir, filename)
+                self.executeOutput.append(self.imageViewer.format(file = file))
+                self.outputFiles.append(file)
 @logged
 class GraphAmbiguity(Euler2Command):
     @copy_args_to_public_fields
@@ -944,4 +955,6 @@ class GraphAmbiguity(Euler2Command):
         self.executeOutput = []
         for filename in os.listdir(self.e2LatticesDir):
             if filename.endswith(".%s" % self.imageFormat):
-                self.executeOutput.append(self.imageViewer.format(file = os.path.join(self.e2LatticesDir, filename)))
+                file = os.path.join(self.e2LatticesDir, filename)
+                self.executeOutput.append(self.imageViewer.format(file = file))
+                self.outputFiles.append(file)

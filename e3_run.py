@@ -19,6 +19,7 @@ class Run(object):
         pass
     def executeCommand(self, input, command):
         import e3_io
+        config = e3_io.get_config()
         if command != None:
             #try:
                 command.run()
@@ -26,6 +27,10 @@ class Run(object):
                 if command.get_output():
                     for output in command.get_output():
                         print output
+                if config['showOutputFileLocation'] and command.get_output_files():
+                    print "Files:"
+                    for outputFile in command.get_output_files():
+                        print outputFile
                 if command.get_execute_output():
                     with open(os.devnull, 'w') as devnull:
                         for execute in command.get_execute_output():

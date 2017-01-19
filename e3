@@ -14,7 +14,7 @@ def main():
     #sys.path.append(config['eulerXPath'])
     
     lastArg = sys.argv[-1]
-    if lastArg.startswith("-e3Dir="):
+    if lastArg.startswith("--e3Dir="):
         if os.path.isdir(lastArg.split("=")[1]):
             e3_io.e3Dir = lastArg.split("=")[1]
         sys.argv = sys.argv[0:-1]
