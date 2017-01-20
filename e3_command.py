@@ -877,7 +877,7 @@ class GraphTap(Euler2Command):
             if filename.endswith(".%s" % self.imageFormat):
                 file = os.path.join(self.e2InputDir, filename)
                 self.executeOutput.append(self.imageViewer.format(file = file))
-                self.outputFile.append(file)
+                self.outputFiles.append(file)
 @logged 
 class GraphFourInOne(Euler2Command):
     @copy_args_to_public_fields
