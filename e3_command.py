@@ -131,6 +131,8 @@ class Euler2Command(Command):
                     out.write(stdout)
                     err.write(stderr)
                     rc.write('%s' % p.returncode)
+                    if os.path.isfile('report.csv'):
+                        os.remove('report.csv')
                     return stdout, stderr, p.returncode
     def is_consistent(self):
         return self.isConsistent
