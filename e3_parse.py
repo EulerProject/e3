@@ -142,7 +142,7 @@ class ClearProjectsParser(CommandParser):
 @logged               
 class ByeParser(CommandParser):
     def __init__(self):
-        CommandParser.__init__(self, '^bye$')
+        CommandParser.__init__(self, '^(?:bye|exit)$')
     def get_command(self, input):
         match = self.is_command(input)
         if match:
