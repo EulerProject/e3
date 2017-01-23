@@ -66,7 +66,9 @@ def store_config(config):
         
 def set_name(name, tap):
     oldName = get_name(tap.get_id())
-    oldTapDir = get_tap_dir(tap.get_id())
+    oldTapDir = None
+    if oldName is not None:
+        oldTapDir = get_tap_dir(tap.get_id())
     names = { }
     with open(get_names_file(), "r") as namesFile:
         doc = yaml.load(namesFile)
@@ -78,9 +80,10 @@ def set_name(name, tap):
     names[name] = tap.get_id()
     with open(get_names_file(), "w") as namesFile:
         yaml.dump(names, namesFile, default_flow_style=False)
-    for filename in os.listdir(oldTapDir):
-        shutil.move(os.path.join(oldTapDir, filename), get_tap_dir(tap.get_id()))
-    shutil.rmtree(oldTapDir)
+    if oldTapDir is not None:
+        for filename in os.listdir(oldTapDir):
+            shutil.move(os.path.join(oldTapDir, filename), get_tap_dir(tap.get_id()))
+        shutil.rmtree(oldTapDir)
 
 def get_names():
     names = []
@@ -128,10 +131,11 @@ def exists_project(project):
 
 def get_tap_id_and_name(tapId):
     name = get_name(tapId)
-    if name:
-        return name + " = " + tapId
-    else:
-        return tapId
+    return name
+    #if name:
+    #    return name + " = " + tapId
+    #else:
+    #    return tapId
 
 def get_tap_id_and_name_and_status(tap):
     tap_id_and_name = get_tap_id_and_name(tap.get_id())
@@ -360,7 +364,7 @@ def get_tap_file(tap):
     return get_tap_file_from_id(tap.get_id())
 
 def get_cleantax_file(tap):
-    tap_id_and_name = get_tap_id_and_name(tap.get_id())
+    tap_id_and_name = get_tap_id_and_name(tap.get_id()).replace(" ", "")
     cleantax_file = os.path.join(get_taps_dir(), tap_id_and_name, ".cleantax")
     if not os.path.isfile(cleantax_file):
         with open(cleantax_file, 'w') as f:
@@ -368,25 +372,25 @@ def get_cleantax_file(tap):
     return cleantax_file
 
 def get_0_input_dir(tap):
-    return os.path.join(get_taps_dir(), get_tap_id_and_name(tap.get_id()), "0-Input")
+    return os.path.join(get_taps_dir(), get_tap_id_and_name(tap.get_id()).replace(" ", ""), "0-Input")
 
 def get_1_asp_input_dir(tap):
-    return os.path.join(get_taps_dir(), get_tap_id_and_name(tap.get_id()), "1-ASP-input-code")
+    return os.path.join(get_taps_dir(), get_tap_id_and_name(tap.get_id()).replace(" ", ""), "1-ASP-input-code")
 
 def get_2_asp_output_dir(tap):
-    return os.path.join(get_taps_dir(), get_tap_id_and_name(tap.get_id()), "2-ASP-output")
+    return os.path.join(get_taps_dir(), get_tap_id_and_name(tap.get_id()).replace(" ", ""), "2-ASP-output")
 
 def get_3_mir_dir(tap):
-    return os.path.join(get_taps_dir(), get_tap_id_and_name(tap.get_id()), "3-MIR")
+    return os.path.join(get_taps_dir(), get_tap_id_and_name(tap.get_id()).replace(" ", ""), "3-MIR")
 
 def get_4_pws_dir(tap):
-    return os.path.join(get_taps_dir(), get_tap_id_and_name(tap.get_id()), "4-PWs")
+    return os.path.join(get_taps_dir(), get_tap_id_and_name(tap.get_id()).replace(" ", ""), "4-PWs")
 
 def get_5_aggregates_dir(tap):
-    return os.path.join(get_taps_dir(), get_tap_id_and_name(tap.get_id()), "5-Aggregates")
+    return os.path.join(get_taps_dir(), get_tap_id_and_name(tap.get_id()).replace(" ", ""), "5-Aggregates")
 
 def get_6_lattices_dir(tap):
-    return os.path.join(get_taps_dir(), get_tap_id_and_name(tap.get_id()), "6-Lattices")
+    return os.path.join(get_taps_dir(), get_tap_id_and_name(tap.get_id()).replace(" ", ""), "6-Lattices")
 
 def get_current_project_file():
     current_project_file = os.path.join(get_e3_dir(), ".current_project")
@@ -405,7 +409,7 @@ def get_history_file(project):
     
 
 def get_tap_dir(tapId):
-    tap_id_and_name = get_tap_id_and_name(tapId)
+    tap_id_and_name = get_tap_id_and_name(tapId).replace(" ", "")
     tap_dir = os.path.join(get_e3_dir(), "taps", tap_id_and_name)
     if not os.path.isdir(tap_dir):
         os.makedirs(tap_dir)
