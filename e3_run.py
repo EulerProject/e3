@@ -51,6 +51,7 @@ class OneShot(Run):
     def run(self):
         import e3_io
         input = ' '.join(sys.argv[1:])
+        input = input.replace('\\', '')
         command = self.commandProvider.provide(input)
         self.executeCommand(input, command)
         
