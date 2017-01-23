@@ -368,25 +368,25 @@ def get_cleantax_file(tap):
     return cleantax_file
 
 def get_0_input_dir(tap):
-    return os.path.join(get_taps_dir(), tap.get_id(), "0-Input")
+    return os.path.join(get_taps_dir(), get_tap_id_and_name(tap.get_id()), "0-Input")
 
 def get_1_asp_input_dir(tap):
-    return os.path.join(get_taps_dir(), tap.get_id(), "1-ASP-input-code")
+    return os.path.join(get_taps_dir(), get_tap_id_and_name(tap.get_id()), "1-ASP-input-code")
 
 def get_2_asp_output_dir(tap):
-    return os.path.join(get_taps_dir(), tap.get_id(), "2-ASP-output")
+    return os.path.join(get_taps_dir(), get_tap_id_and_name(tap.get_id()), "2-ASP-output")
 
 def get_3_mir_dir(tap):
-    return os.path.join(get_taps_dir(), tap.get_id(), "3-MIR")
+    return os.path.join(get_taps_dir(), get_tap_id_and_name(tap.get_id()), "3-MIR")
 
 def get_4_pws_dir(tap):
-    return os.path.join(get_taps_dir(), tap.get_id(), "4-PWs")
+    return os.path.join(get_taps_dir(), get_tap_id_and_name(tap.get_id()), "4-PWs")
 
 def get_5_aggregates_dir(tap):
-    return os.path.join(get_taps_dir(), tap.get_id(), "5-Aggregates")
+    return os.path.join(get_taps_dir(), get_tap_id_and_name(tap.get_id()), "5-Aggregates")
 
 def get_6_lattices_dir(tap):
-    return os.path.join(get_taps_dir(), tap.get_id(), "6-Lattices")
+    return os.path.join(get_taps_dir(), get_tap_id_and_name(tap.get_id()), "6-Lattices")
 
 def get_current_project_file():
     current_project_file = os.path.join(get_e3_dir(), ".current_project")
