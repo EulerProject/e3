@@ -11,6 +11,7 @@ import e3_validation
 from os.path import expanduser
 import shutil
 import uuid
+import e3_name_generator
 
 e3Dir = os.path.join(expanduser("~"), ".e3")
 
@@ -62,16 +63,24 @@ def get_config():
 def store_config(config):
     with open(get_config_file(), 'w') as f:
         yaml.dump(config, f, default_flow_style=False)
-
+        
 def set_name(name, tap):
+    oldName = get_name(tap.get_id())
+    oldTapDir = get_tap_dir(tap.get_id())
     names = { }
-    with open(get_names_file(), "r+") as namesFile:
+    with open(get_names_file(), "r") as namesFile:
         doc = yaml.load(namesFile)
         if doc:
             for key, value in doc.iteritems():
                 names[key] = value
-        names[name] = tap.get_id()
+    if oldName in names:
+        del names[oldName]
+    names[name] = tap.get_id()
+    with open(get_names_file(), "w") as namesFile:
         yaml.dump(names, namesFile, default_flow_style=False)
+    for filename in os.listdir(oldTapDir):
+        shutil.move(os.path.join(oldTapDir, filename), get_tap_dir(tap.get_id()))
+    shutil.rmtree(oldTapDir)
 
 def get_names():
     names = []
@@ -117,26 +126,41 @@ def create_project(project):
 def exists_project(project):
     return os.path.isdir(get_project_dir(project))
 
+def get_tap_id_and_name(tapId):
+    name = get_name(tapId)
+    if name:
+        return name + " = " + tapId
+    else:
+        return tapId
+
 def get_tap_id_and_name_and_status(tap):
-    name = get_tap_name(tap.get_id())
+    tap_id_and_name = get_tap_id_and_name(tap.get_id())
     status = tap.get_status()
     if status:
-        status = " (" + status + ")"
-    if name:
-        return name + " = " + tap.get_id() + status
-    else:
-        return tap.get_id() + status
+        return tap_id_and_name + " (" + status + ")"
+    return tap_id_and_name
 
 def get_current_tap():
     with open(get_current_tap_file(), 'r') as currentTapFile:
         return get_tap(currentTapFile.readline())
-        
+    
 def set_current_tap(tap):
     with open(get_current_tap_file(), 'w') as currentTapfile:
         currentTapfile.write(tap.get_id())
 
 def store_tap(tap):
-    tapFile = get_tap_file(tap)
+    existingName = get_name(tap.get_id())
+    if existingName is None:
+        randomName = e3_name_generator.get_random_name(None, None)
+        names = get_names()
+        name = randomName
+        id = 1
+        while name in names:
+            name = randomName + "_" + id
+            id = id + 1
+        set_name(name, tap)
+    
+    tapFile = get_tap_file(tap)        
     with open(tapFile, 'w') as f:
         f.write(str(tap.isCoverage) + '\n')
         f.write(str(tap.isSiblingDisjointness) + '\n')
@@ -169,10 +193,14 @@ def get_default_tap():
             
 def get_tap(tapId):    
     if not tapId or tapId is None:
-        return get_default_tap()
+        tap = get_default_tap()
+        store_tap(tap)
+        return tap
     tapFile = get_tap_file_from_id(tapId)
     if not os.path.isfile(tapFile):
-        return get_default_tap()
+        tap = get_default_tap()
+        store_tap(tap)
+        return tap
     
     cleantax = []
     with open(tapFile, 'r') as f:
@@ -284,11 +312,11 @@ def get_tap_id(name):
     with open(get_names_file(), 'r') as namesFile:
         doc = yaml.load(namesFile)
         if doc:
-            if doc[name]:
+            if name in doc:
                 return doc[name]
     return None
 
-def get_tap_name(id):
+def get_name(id):
     with open(get_names_file(), 'r') as namesFile:
         doc = yaml.load(namesFile)
         if doc:
@@ -330,9 +358,10 @@ def get_tap_file_from_id(tapId):
 
 def get_tap_file(tap):
     return get_tap_file_from_id(tap.get_id())
-                    
+
 def get_cleantax_file(tap):
-    cleantax_file = os.path.join(get_taps_dir(), tap.get_id(), ".cleantax")
+    tap_id_and_name = get_tap_id_and_name(tap.get_id())
+    cleantax_file = os.path.join(get_taps_dir(), tap_id_and_name, ".cleantax")
     if not os.path.isfile(cleantax_file):
         with open(cleantax_file, 'w') as f:
             pass
@@ -376,7 +405,8 @@ def get_history_file(project):
     
 
 def get_tap_dir(tapId):
-    tap_dir = os.path.join(get_e3_dir(), "taps", tapId)
+    tap_id_and_name = get_tap_id_and_name(tapId)
+    tap_dir = os.path.join(get_e3_dir(), "taps", tap_id_and_name)
     if not os.path.isdir(tap_dir):
         os.makedirs(tap_dir)
     return tap_dir
@@ -395,11 +425,11 @@ def get_current_tap_file():
     return current_tap_file
     
 def get_names_file():
-    names_file = os.path.join(get_e3_dir(), ".names")
-    if not os.path.isfile(names_file):
-        with open(names_file, 'w') as f:
+    namesFile = os.path.join(get_e3_dir(), ".names")
+    if not os.path.isfile(namesFile):
+        with open(namesFile, 'w') as f:
             pass
-    return names_file
+    return namesFile
 
 def get_config_file():
     config_file = os.path.join(get_e3_dir(), ".config")
@@ -423,4 +453,4 @@ def get_e3_dir():
     return e3Dir
 
 def get_home_dir():
-    return expanduser("~")
+    return expanduser("~")    
