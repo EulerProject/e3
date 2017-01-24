@@ -34,7 +34,7 @@ def validate_cleantax_taxonomy(taxonomy):
         if len(inside.split()) <= 1:
             raise ValidationException("Taxonomy line has to consist of two or more nodes")
 
-def validate_articulation(newArticulation, tap):
+def validate_new_articulation(newArticulation, tap):
     cleantaxTaxonomies = [];
     for taxonomy in tap.taxonomies:
         cleantaxTaxonomies.append(taxonomy.__str__().split('\n'))

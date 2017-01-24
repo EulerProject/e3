@@ -300,14 +300,14 @@ class PrintNames(MiscCommand):
         else:
             self.output.append('No names stored.')
     
-class ClearNames(MiscCommand):
-    @copy_args_to_public_fields
-    def __init__(self):
-        MiscCommand.__init__(self)
-    def run(self):
-        MiscCommand.run(self)
-        e3_io.clear_names()
-        self.output.append("Names are cleared")
+#class ClearNames(MiscCommand):
+#    @copy_args_to_public_fields
+#    def __init__(self):
+#        MiscCommand.__init__(self)
+#    def run(self):
+#        MiscCommand.run(self)
+#        e3_io.clear_names()
+#        self.output.append("Names are cleared")
     
 class PrintTap(MiscCommand):
     @copy_args_to_public_fields
@@ -636,7 +636,7 @@ class AddArticulation(ModelCommand):
             self.output.append("Not a valid articulation. No valid relation found.")
         else:
             try:
-                e3_validation.validate_articulation(articulation, self.tap)
+                e3_validation.validate_new_articulation(articulation, self.tap)
             except e3_validation.ValidationException as e:
                 self.output.append(str(e))
                 return

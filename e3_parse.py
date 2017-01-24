@@ -517,17 +517,17 @@ class PrintNamesParser(CommandParser):
     def get_help(self):
         return "print names\nShows all stored names and their corresponding taps"
 
-class ClearNamesParser(CommandParser):
-    def __init__(self):
-        CommandParser.__init__(self, '^clear names$')
-    def get_command(self, input):
-        match = self.is_command(input);
-        if match:
-            return e3_command.ClearNames()
-        else:
-            raise Exception('Unrecognized command line')
-    def get_help(self):
-        return "clear names\nRemoves all stored named"
+#class ClearNamesParser(CommandParser):
+#    def __init__(self):
+#        CommandParser.__init__(self, '^clear names$')
+#    def get_command(self, input):
+#        match = self.is_command(input);
+#        if match:
+#            return e3_command.ClearNames()
+#        else:
+#            raise Exception('Unrecognized command line')
+#    def get_help(self):
+#        return "clear names\nRemoves all stored named"
 
 class UseTapParser(CommandParser):
     def __init__(self):
@@ -802,7 +802,7 @@ commandParsers = [  ByeParser(),
                     SetCoverageParser(),
                     SetRegionsParser(),
                     NameTapParser(),
-                    ClearNamesParser(),
+                    #ClearNamesParser(),
                     PrintNamesParser(),
                     UseTapParser(), 
                     GraphTapParser(), 

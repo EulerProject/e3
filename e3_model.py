@@ -24,7 +24,7 @@ class Tap(object):
         if self.is_underspecified():
             result.append("underspecified")
         for t in self.taxonomies:
-            if not t.is_tree():
+            if not t.is_dag():
                 result.append(t.id + " invalid")
         return ' and '.join(result)
     def add_taxonomy(self, taxonomy):
@@ -77,14 +77,14 @@ class Tap(object):
         taxonomy = self.get_taxonomy(taxonomyId)
         #original = copy.deepcopy(taxonomy)
         taxonomy.add_children(parent, children)
-        #if not taxonomy.is_tree():
+        #if not taxonomy.is_dag():
         #    self.set_taxonomy(taxonomyId, original)
         #    raise e3_validation.ValidationException("Adding the children would not lead to a valid taxonomy")
     def remove_children(self, taxonomyId, parent, children, recursive):
         taxonomy = self.get_taxonomy(taxonomyId)
         #original = copy.deepcopy(taxonomy)
         taxonomy.remove_children(parent, children, recursive)
-        #if not taxonomy.is_tree():
+        #if not taxonomy.is_dag():
         #    self.set_taxonomy(taxonomyId, original)
         #    raise e3_validation.ValidationException("Removing the children would not lead to a valid taxonomy")
         self.articulations = [a for a in self.articulations if self.nodes_in_tap(a)]
@@ -161,6 +161,10 @@ class Taxonomy(object):
     def __init__(self, id, name):
         self.g = nx.DiGraph()
         pass
+    def is_dag(self):
+        if self.g.number_of_nodes() == 0:
+            return False
+        return nx.is_directed_acyclic_graph(self.g)
     def is_tree(self):
         #nx returns exception if graph empty
         if self.g.number_of_nodes() == 0:
