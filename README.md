@@ -54,7 +54,6 @@ set sibling disjointness \<true\|false\> [\<tap\>]		| Sets the "sibling disjoint
 set coverage \<true\|false\> [\<tap\>]			| Sets the "coverage" reasoning constraint for the current tap, or the optionally provided \<tap\>
 set regions \<mnpw\|mncb\|mnve\|vrpw\|vrve\> [\<tap\>]		| Sets the "region encoding" constraints for the current tap, or the optionally provided \<tap\>
 name tap \<name\> [\<tap\>]					| Names the current tap, or the optionally provided \<tap\> as \<name\>
-clear names						| Removes all stored names
 print names						| Shows all stored names and their corresponding taps
 use tap \<tap\>						| Makes \<tap\> the current tap
 graph tap [\<tap\>]					| Creates an input graph visualization of the current tap, or the optionally provided \<tap\>
