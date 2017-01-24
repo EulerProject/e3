@@ -76,7 +76,9 @@ clear projects						| Clears all projects
 print project history					| Prints the project's command history
 remove project history \<index\>				| Removes command with \<index\> and all dependent commands from the project's command history
 git pull | Clones or pulls the e3 state from the configured git repository
-git push <message> | Commits with <message> and pushes the e3 state to the configured git repository
+git push \<message\> | Commits with \<message\> and pushes the e3 state to the configured git repository
+git credentials \<host\> \<username\> "\<password\>" | Sets the \<username\> and \<password\> for the git \<host\>
+
 
 ### Prerequisites
 * Python 2.7.x
