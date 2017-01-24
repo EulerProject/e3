@@ -12,6 +12,7 @@ from os.path import expanduser
 import shutil
 import uuid
 import e3_name_generator
+from subprocess import Popen, PIPE, call
 
 e3Dir = os.path.join(expanduser("~"), ".e3")
 
@@ -26,6 +27,12 @@ def reset():
     set_current_tap(tap)
 
 def set_git_credencials(host, user, password):
+    p = Popen("git config --global user.email \"" + user + "\"", stdout=PIPE, stderr=PIPE, shell=True)
+    stdout, stderr = p.communicate()
+    
+    p = Popen("git config --global user.name \"" + user + "\"", stdout=PIPE, stderr=PIPE, shell=True)
+    stdout, stderr = p.communicate()
+    
     config = get_config()
     netrc_file = os.path.join(get_home_dir(), ".netrc")
     if not os.path.isfile(netrc_file):
@@ -33,6 +40,7 @@ def set_git_credencials(host, user, password):
             f.write("machine " + host + "\n")
             f.write("login " + user + "\n")
             f.write("password " + password + "\n")
+            
 
 def get_config():
     config = None
