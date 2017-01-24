@@ -210,6 +210,7 @@ class SetGitCredentials(MiscCommand):
     def run(self):
         MiscCommand.run(self)
         e3_io.set_git_credencials(self.host, self.user, self.password)
+        self.output.append("git credentials set successfully")
         
 @logged
 class GitPull(MiscCommand):
