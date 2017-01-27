@@ -22,9 +22,21 @@ def clean_e3_dir():
 def reset():
     clean_e3_dir()
     get_config()
+    load_demo_taps()
     tap = get_default_tap()
     store_tap(tap)
     set_current_tap(tap)
+
+def load_demo_taps():
+    demosDir= os.path.join(os.path.dirname(os.path.abspath(__file__)), "demos")
+    for root, dirs, files in os.walk(demosDir):
+        for dir in dirs:
+            cleantaxFile = os.path.join(demosDir, os.path.join(dir, os.listdir(os.path.join(demosDir, dir))[0]))
+            loadTap = e3_command.LoadTap(cleantaxFile)
+            loadTap.run()
+            tap = get_current_tap()
+            nameTap = e3_command.NameTap(tap, "demo_" + dir)
+            nameTap.run()
 
 def set_git_credencials(host, user, password):
     p = Popen("git config --global user.email \"" + user + "\"", stdout=PIPE, stderr=PIPE, shell=True)
@@ -100,7 +112,7 @@ def get_names():
         if doc:
             for key, value in doc.items():
                 names.append(key + " = " + value)
-    return names
+    return sorted(names)
 
 def clear_names():
     with open(get_names_file(), 'w'): pass

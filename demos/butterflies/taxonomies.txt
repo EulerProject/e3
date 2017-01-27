@@ -1,0 +1,11 @@
+taxonomy 1997 D’Abrera
+(Amauris_damocles)
+(Amauris_hyalites Amauris_hyalites_subsp_hyalites Amauris_hyalites_subsp_makuyensis)
+
+taxonomy 1995 AckeryEtAl
+(Amauris_damocles Amauris_damocles_subsp_damocles Amauris_damocles_subsp_hyalites Amauris_damocles_subsp_makuyensis)
+
+articulation 1997-1995 D’Abrera-AckeryEtAl
+[1997.Amauris_damocles equals 1995.Amauris_damocles_subsp_damocles]
+[1997.Amauris_hyalites_subsp_hyalites is_included_in 1995.Amauris_damocles_subsp_hyalites]
+[1997.Amauris_hyalites_subsp_makuyensis equals 1995.Amauris_damocles_subsp_makuyensis]

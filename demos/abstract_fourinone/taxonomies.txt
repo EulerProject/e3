@@ -1,0 +1,14 @@
+taxonomy 1 Taxonomy1
+(A B F)
+(F G H)
+
+taxonomy 2 Taxonomy2
+(A B F)
+(F G H)
+
+articulation abs abstract
+[1.A is_included_in 2.A]
+[1.B equals 2.B]
+[1.F is_included_in 2.F]
+[1.G equals 2.G]
+[1.H equals 2.H]

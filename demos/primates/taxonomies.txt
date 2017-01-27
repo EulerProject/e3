@@ -1,0 +1,59 @@
+taxonomy 2005 Groves
+(Callitrichinae Callimico Callithrix Leontopithecus Saguinus)
+(Callimico Callimico_goeldii)
+(Callithrix Callithrix_acariensis Callithrix_argentata Callithrix_aurita Callithrix_chrysoleuca Callithrix_emiliae Callithrix_flaviceps Callithrix_geoffroyi Callithrix_humeralifera Callithrix_humilis Callithrix_intermedia Callithrix_jacchus Callithrix_kuhlii Callithrix_leucippe Callithrix_manicorensis Callithrix_marcai Callithrix_mauesi Callithrix_melanura Callithrix_nigriceps Callithrix_penicillata Callithrix_pygmaea Callithrix_saterei)
+(Leontopithecus Leontopithecus_caissara Leontopithecus_chrysomelas Leontopithecus_chrysopygus Leontopithecus_rosalia)
+(Saguinus Saguinus_bicolor Saguinus_fuscicollis Saguinus_geoffroyi Saguinus_graellsi Saguinus_imperator Saguinus_inustus Saguinus_labiatus Saguinus_leucopus Saguinus_martinsi Saguinus_melanoleucus Saguinus_midas Saguinus_mystax Saguinus_niger Saguinus_nigricollis Saguinus_oedipus Saguinus_pileatus Saguinus_tripartitus)
+
+taxonomy 1993 Groves
+(Callitrichidae Callimico Callithrix Leontopithecus Saguinus)
+(Callimico Callimico_goeldii)
+(Callithrix Callithrix_argentata Callithrix_aurita Callithrix_flaviceps Callithrix_geoffroyi Callithrix_humeralifera Callithrix_jacchus Callithrix_kuhlii Callithrix_penicillata Callithrix_pygmaea)
+(Leontopithecus Leontopithecus_caissara Leontopithecus_chrysomelas Leontopithecus_chrysopygus Leontopithecus_rosalia)
+(Saguinus Saguinus_bicolor Saguinus_fuscicollis Saguinus_geoffroyi Saguinus_imperator Saguinus_inustus Saguinus_labiatus Saguinus_leucopus Saguinus_midas Saguinus_mystax Saguinus_nigricollis Saguinus_oedipus Saguinus_tripartitus)
+
+articulation 2005-1993 Groves-Groves
+[2005.Callitrichinae equals 1993.Callitrichidae]
+[2005.Callimico_goeldii equals 1993.Callimico_goeldii]
+[2005.Callithrix_acariensis disjoint 1993.Callitrichidae]
+[2005.Callithrix_argentata is_included_in 1993.Callithrix_argentata]
+[2005.Callithrix_aurita equals 1993.Callithrix_aurita]
+[2005.Callithrix_chrysoleuca is_included_in 1993.Callithrix_humeralifera]
+[2005.Callithrix_emiliae is_included_in 1993.Callithrix_argentata]
+[2005.Callithrix_flaviceps equals 1993.Callithrix_flaviceps]
+[2005.Callithrix_geoffroyi equals 1993.Callithrix_geoffroyi]
+[2005.Callithrix_humeralifera is_included_in 1993.Callithrix_humeralifera]
+[2005.Callithrix_humilis disjoint 1993.Callitrichidae]
+[2005.Callithrix_intermedia is_included_in 1993.Callithrix_humeralifera]
+[2005.Callithrix_jacchus equals 1993.Callithrix_jacchus]
+[2005.Callithrix_kuhlii equals 1993.Callithrix_kuhlii]
+[2005.Callithrix_leucippe is_included_in 1993.Callithrix_argentata]
+[2005.Callithrix_manicorensis disjoint 1993.Callitrichidae]
+[2005.Callithrix_marcai disjoint 1993.Callitrichidae]
+[2005.Callithrix_mauesi disjoint 1993.Callitrichidae]
+[2005.Callithrix_melanura is_included_in 1993.Callithrix_argentata]
+[2005.Callithrix_nigriceps disjoint 1993.Callitrichidae]
+[2005.Callithrix_penicillata equals 1993.Callithrix_penicillata]
+[2005.Callithrix_pygmaea equals 1993.Callithrix_pygmaea]
+[2005.Callithrix_saterei disjoint 1993.Callitrichidae]
+[2005.Leontopithecus_caissara equals 1993.Leontopithecus_caissara]
+[2005.Leontopithecus_chrysomelas equals 1993.Leontopithecus_chrysomelas]
+[2005.Leontopithecus_chrysopygus equals 1993.Leontopithecus_chrysopygus]
+[2005.Leontopithecus_rosalia equals 1993.Leontopithecus_rosalia]
+[2005.Saguinus_bicolor is_included_in 1993.Saguinus_bicolor]
+[2005.Saguinus_fuscicollis is_included_in 1993.Saguinus_fuscicollis]
+[2005.Saguinus_geoffroyi equals 1993.Saguinus_geoffroyi]
+[2005.Saguinus_graellsi is_included_in 1993.Saguinus_nigricollis]
+[2005.Saguinus_imperator equals 1993.Saguinus_imperator]
+[2005.Saguinus_inustus equals 1993.Saguinus_inustus]
+[2005.Saguinus_labiatus equals 1993.Saguinus_labiatus]
+[2005.Saguinus_leucopus equals 1993.Saguinus_leucopus]
+[2005.Saguinus_martinsi is_included_in 1993.Saguinus_bicolor]
+[2005.Saguinus_melanoleucus is_included_in 1993.Saguinus_fuscicollis]
+[2005.Saguinus_midas is_included_in 1993.Saguinus_midas]
+[2005.Saguinus_mystax is_included_in 1993.Saguinus_mystax]
+[2005.Saguinus_niger is_included_in 1993.Saguinus_midas]
+[2005.Saguinus_nigricollis is_included_in 1993.Saguinus_nigricollis]
+[2005.Saguinus_oedipus equals 1993.Saguinus_oedipus]
+[2005.Saguinus_pileatus is_included_in 1993.Saguinus_mystax]
+[2005.Saguinus_tripartitus equals 1993.Saguinus_tripartitus]

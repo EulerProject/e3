@@ -4,6 +4,7 @@ Created on Nov 22, 2016
 @author: Thomas
 '''
 import e3_io
+import e3_model
 import re
 
 class ValidationException(Exception):

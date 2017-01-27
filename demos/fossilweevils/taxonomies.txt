@@ -1,0 +1,111 @@
+taxonomy 2016 FranzZhang
+(Diaprepes Diaprepes_anticus nc_Diaprepes)
+
+taxonomy 2012 Franz
+(Diaprepes Diaprepes_abbreviatus Diaprepes_balloui Diaprepes_comma Diaprepes_doublierii Diaprepes_famelicus Diaprepes_marginicollis Diaprepes_maugei Diaprepes_rohrii nc_Diaprepes)
+
+taxonomy 2001 OBrienKovarik
+(Diaprepes Diaprepes_abbreviatus Diaprepes_balloui Diaprepes_boxi Diaprepes_comma Diaprepes_doublierii Diaprepes_excavatus Diaprepes_famelicus Diaprepes_glaucus Diaprepes_marginatus Diaprepes_maugei Diaprepes_reticulatus Diaprepes_revestitus Diaprepes_rohrii Diaprepes_rufescens Diaprepes_sommeri Diaprepes_variegatus)
+
+taxonomy 1999 Morrone
+(Diaprepes Diaprepes_abbreviatus Diaprepes_albofasciatus Diaprepes_balloui Diaprepes_barbadensis Diaprepes_boxi Diaprepes_comma Diaprepes_doublierii Diaprepes_elegantulus Diaprepes_esuriens Diaprepes_excavatus Diaprepes_famelicus Diaprepes_glaucus Diaprepes_marginatus Diaprepes_maugei Diaprepes_pulverulentus Diaprepes_reticulatus Diaprepes_revestitus Diaprepes_rohrii Diaprepes_rufescens Diaprepes_sommeri Diaprepes_spengleri Diaprepes_variegatus)
+
+taxonomy 1982 OBrienWibmer
+(Diaprepes Diaprepes_abbreviatus Diaprepes_albofasciatus Diaprepes_balloui Diaprepes_boxi Diaprepes_doublierii Diaprepes_excavatus Diaprepes_famelicus Diaprepes_glaucus Diaprepes_marginatus Diaprepes_maugei Diaprepes_pulverulentus Diaprepes_reticulatus Diaprepes_revestitus Diaprepes_rohrii Diaprepes_rufescens Diaprepes_sommeri Diaprepes_spengleri Diaprepes_variegatus Diaprepes_viridans)
+
+articulation 2016-2012 FranzZhang-Franz
+[2016.nc_Diaprepes equals 2012.Diaprepes]
+
+articulation 2016-1999 FranzZhang-Morrone
+[2016.Diaprepes_anticus disjoint 1999.Diaprepes]
+[2016.Diaprepes disjoint 1999.Diaprepes_albofasciatus]
+[2016.Diaprepes disjoint 1999.Diaprepes_pulverulentus]
+
+articulation 2016-1982 FranzZhang-OBrienWibmer
+[2016.Diaprepes_anticus disjoint 1982.Diaprepes]
+[2016.Diaprepes disjoint 1982.Diaprepes_viridans]
+
+articulation 2012-2001 Franz-OBrienKovarik
+[2012.Diaprepes_abbreviatus equals 2001.Diaprepes_abbreviatus]
+[2012.Diaprepes_balloui equals 2001.Diaprepes_balloui]
+[2012.nc_Diaprepes includes 2001.Diaprepes_boxi]
+[2012.Diaprepes_comma equals 2001.Diaprepes_comma]
+[2012.Diaprepes_doublierii equals 2001.Diaprepes_doublierii]
+[2012.nc_Diaprepes includes 2001.Diaprepes_excavatus]
+[2012.Diaprepes_famelicus equals 2001.Diaprepes_famelicus]
+[2012.nc_Diaprepes includes 2001.Diaprepes_glaucus]
+[2012.nc_Diaprepes includes 2001.Diaprepes_marginatus]
+#[2012.Diaprepes_marginicollis equals 2001.Exophthalmus_marginicollis]
+[2012.Diaprepes_maugei equals 2001.Diaprepes_maugei]
+[2012.nc_Diaprepes includes 2001.Diaprepes_reticulatus]
+[2012.nc_Diaprepes includes 2001.Diaprepes_revestitus]
+[2012.Diaprepes_rohrii equals 2001.Diaprepes_rohrii]
+[2012.nc_Diaprepes includes 2001.Diaprepes_rufescens]
+[2012.nc_Diaprepes includes 2001.Diaprepes_sommeri]
+[2012.nc_Diaprepes includes 2001.Diaprepes_variegatus]
+# Added to remove one additional possible world (><)
+[2012.nc_Diaprepes is_included_in 2001.Diaprepes]
+
+articulation 2012-1999 Franz-Morrone
+[2012.Diaprepes disjoint 1999.Diaprepes_albofasciatus]
+[2012.Diaprepes disjoint 1999.Diaprepes_pulverulentus]
+[2012.Diaprepes_marginicollis disjoint 1999.Diaprepes]
+
+articulation 2012-1982 Franz-OBrienWibmer
+[2012.Diaprepes disjoint 1982.Diaprepes_viridans]
+[2012.Diaprepes_marginicollis disjoint 1982.Diaprepes]		
+
+articulation 2001-1999 OBrienKovarik-Morrone
+[2001.Diaprepes_abbreviatus includes 1999.Diaprepes_abbreviatus]
+[2001.Diaprepes_balloui equals 1999.Diaprepes_balloui]
+[2001.Diaprepes_famelicus includes 1999.Diaprepes_barbadensis]
+[2001.Diaprepes_boxi equals 1999.Diaprepes_boxi]
+[2001.Diaprepes_comma equals 1999.Diaprepes_comma]
+[2001.Diaprepes_comma equals 1999.Diaprepes_comma]
+[2001.Diaprepes_doublierii equals 1999.Diaprepes_doublierii]
+[2001.Diaprepes_famelicus includes 1999.Diaprepes_elegantulus]
+[2001.Diaprepes_famelicus includes 1999.Diaprepes_esuriens]
+[2001.Diaprepes_excavatus equals 1999.Diaprepes_excavatus]
+[2001.Diaprepes_famelicus includes 1999.Diaprepes_famelicus]
+[2001.Diaprepes_glaucus equals 1999.Diaprepes_glaucus]
+[2001.Diaprepes_marginatus equals 1999.Diaprepes_marginatus]
+[2001.Diaprepes_maugei equals 1999.Diaprepes_maugei]
+[2001.Diaprepes_reticulatus equals 1999.Diaprepes_reticulatus]
+[2001.Diaprepes_revestitus equals 1999.Diaprepes_revestitus]
+[2001.Diaprepes_rohrii equals 1999.Diaprepes_rohrii]
+[2001.Diaprepes_rufescens equals 1999.Diaprepes_rufescens]
+[2001.Diaprepes_sommeri equals 1999.Diaprepes_sommeri]
+[2001.Diaprepes_abbreviatus includes 1999.Diaprepes_spengleri]
+[2001.Diaprepes_variegatus equals 1999.Diaprepes_variegatus]
+# Added to eliminate 3 PWs
+[2001.Diaprepes is_included_in 1999.Diaprepes]
+# Added to "reduced" version
+[2001.Diaprepes disjoint 1999.Diaprepes_albofasciatus]
+[2001.Diaprepes disjoint 1999.Diaprepes_pulverulentus]
+
+articulation 1999-1982 Morrone-OBrienWibmer
+[1999.Diaprepes_abbreviatus equals 1982.Diaprepes_abbreviatus]
+[1999.Diaprepes_albofasciatus equals 1982.Diaprepes_albofasciatus]
+[1999.Diaprepes_balloui equals 1982.Diaprepes_balloui]
+[1999.Diaprepes_barbadensis is_included_in 1982.Diaprepes_famelicus]
+[1999.Diaprepes_boxi equals 1982.Diaprepes_boxi]
+[1999.Diaprepes_comma is_included_in 1982.Diaprepes_doublierii]
+[1999.Diaprepes_doublierii is_included_in 1982.Diaprepes_doublierii]
+[1999.Diaprepes_elegantulus is_included_in 1982.Diaprepes_famelicus]
+[1999.Diaprepes_esuriens is_included_in 1982.Diaprepes_famelicus]
+[1999.Diaprepes_excavatus equals 1982.Diaprepes_excavatus]
+[1999.Diaprepes_famelicus is_included_in 1982.Diaprepes_famelicus]
+[1999.Diaprepes_glaucus equals 1982.Diaprepes_glaucus]
+[1999.Diaprepes_marginatus equals 1982.Diaprepes_marginatus]
+[1999.Diaprepes_maugei equals 1982.Diaprepes_maugei]
+[1999.Diaprepes_pulverulentus equals 1982.Diaprepes_pulverulentus]
+[1999.Diaprepes_reticulatus equals 1982.Diaprepes_reticulatus]
+[1999.Diaprepes_revestitus equals 1982.Diaprepes_revestitus]
+[1999.Diaprepes_rohrii equals 1982.Diaprepes_rohrii]
+[1999.Diaprepes_rufescens equals 1982.Diaprepes_rufescens]
+[1999.Diaprepes_sommeri equals 1982.Diaprepes_sommeri]
+[1999.Diaprepes_spengleri equals 1982.Diaprepes_spengleri]
+[1999.Diaprepes_variegatus equals 1982.Diaprepes_variegatus]
+# Added to achieve 4 PWs => 1 PWs
+[1999.Diaprepes includes 1982.Diaprepes_doublierii]
+[1999.Diaprepes includes 1982.Diaprepes_famelicus]
