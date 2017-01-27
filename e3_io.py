@@ -217,9 +217,7 @@ def get_default_tap():
             
 def get_tap(tapId):    
     if not tapId or tapId is None:
-        tap = get_default_tap()
-        store_tap(tap)
-        return tap
+        return None
     tapFile = get_tap_file_from_id(tapId)
     if not os.path.isfile(tapFile):
         tap = get_default_tap()
@@ -264,7 +262,10 @@ def get_tap_from_cleantax(isCoverage, isSiblingDisjointness, regions, cleantax):
         taxonomy = e3_model.Taxonomy(taxonomyId, taxonomyName)
         for line in taxonomyLines[1:]:
             nodes = line[1:-1].split()
-            taxonomy.add_children(nodes[0], nodes[1:])
+            if len(nodes) > 1:
+                taxonomy.add_children(nodes[0], nodes[1:])
+            elif len(nodes) == 1:
+                taxonomy.add_node(nodes[0])
         tap.add_taxonomy(taxonomy)
     
     cleantaxArticulationLines = get_cleantax_articulation_lines(cleantax)

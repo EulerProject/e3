@@ -32,8 +32,6 @@ def validate_cleantax_taxonomy(taxonomy):
         if not line[0] == '(' or not line[-1] == ')':
              raise ValidationException("Taxonomy line has to start with '(' and end with ')'")
         inside = line[1:-1]
-        if len(inside.split()) <= 1:
-            raise ValidationException("Taxonomy line has to consist of two or more nodes")
 
 def validate_new_articulation(newArticulation, tap):
     cleantaxTaxonomies = [];

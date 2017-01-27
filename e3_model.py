@@ -73,6 +73,9 @@ class Tap(object):
             a.right = newRight
     def has_taxonomy(self, id):
         return self.get_taxonomy(id) is not None
+    def add_node(self, taxonomyId, node):
+        taxonomy = self.get_taxonomy(taxonomyId)
+        taxonomy.add_node(node);
     def add_children(self, taxonomyId, parent, children):
         taxonomy = self.get_taxonomy(taxonomyId)
         #original = copy.deepcopy(taxonomy)
@@ -153,9 +156,7 @@ class Tap(object):
         # sort taxonomy lines 
         # to obtain same ids regardless of string output order
         return hashlib.sha1(self.__str__()).hexdigest()
-    
-#could be a graph at some point if desired to be able to modify the taxonomy on the fly
-#e.g. adding a new child somewhere
+
 class Taxonomy(object):
     @copy_args_to_public_fields
     def __init__(self, id, name):
@@ -172,6 +173,8 @@ class Taxonomy(object):
         return nx.is_tree(self.g)
     def clear(self):
         self.g.clear()
+    def add_node(self, node):
+        self.g.add_node(node)
     def add_children(self, parent, children):
         self.g.add_edges_from(zip([parent] * len(children), children))
     def remove_children(self, parent, children, recursive):
@@ -225,19 +228,17 @@ class Taxonomy(object):
                 for successor in self.g.successors(node):
                     line = line + " " + successor
                 line = line + ")"
-                if len(self.g.successors(node)) > 0:
-                    edges.append(line)
+                edges.append(line)
         if len(edges) > 0:
             result = result + '\n' + '\n'.join(edges)
         return result
     def add_cleantax_stringyfied_edges(self, collector, src):
-        if len(self.g.successors(src)) > 0:
-            line = "(" + src
-            for successor in self.g.successors(src):
-                line = line + " " + successor
-                self.add_cleantax_stringyfied_edges(collector, successor)
-            line = line + ")"
-            collector.insert(0, line)
+        line = "(" + src
+        for successor in self.g.successors(src):
+            line = line + " " + successor
+            self.add_cleantax_stringyfied_edges(collector, successor)
+        line = line + ")"
+        collector.insert(0, line)
             
 relations = [ "lsum", "l3sum", "l4sum", "rsum", "r3sum", "r4sum", "ldiff", "rdiff", "e4sum", "i4sum", "equals", "includes", 
                       "is_included_in", "overlaps", "disjoint" 

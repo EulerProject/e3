@@ -63,6 +63,10 @@ class Interactive(Run):
     def run(self):
         import e3_io
         current_tap = e3_io.get_current_tap()
+        if current_tap is None:
+            e3_io.reset()
+        
+        current_tap = e3_io.get_current_tap()
         if current_tap:
             print "Tap: %s" % e3_io.get_tap_id_and_name_and_status(current_tap)
         else:
