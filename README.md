@@ -85,6 +85,7 @@ git credentials \<host\> \<username\> "\<password\>" | Sets the \<username\> and
  * autologging
  * pinject
  * pyyaml
+ * networkx
 * [EulerX](https://github.com/EulerProject/EulerX) 
 
 ### Setup
