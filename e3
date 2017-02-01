@@ -3,14 +3,12 @@
 @author: Thomas
 '''
 import logging, sys
-import e3_run
-import e3_parse
-import e3_io
 import os.path
 
 def main():
-    logging.basicConfig(level=logging.INFO, stream=sys.stdout, format="%(levelname)s:%(name)s:%(funcName)s:%(message)s")
-    config = e3_io.get_config()
+    logging.basicConfig(level=logging.WARN, stream=sys.stdout, format="%(levelname)s:%(name)s:%(funcName)s:%(message)s") 
+    import e3_io
+    config = e3_io.ConfigManager().get_config()
     #sys.path.append(config['eulerXPath'])
     
     lastArg = sys.argv[-1]
@@ -20,6 +18,8 @@ def main():
         sys.argv = sys.argv[0:-1]
     
     run = None
+    import e3_run
+    import e3_parse
     if len(sys.argv) > 1:
         run = e3_run.OneShot(e3_parse.CommandProvider())
     else:
@@ -37,5 +37,6 @@ if __name__ == '__main__':
     #     ('B', 'H'), ('B', 'G'), ('B', 'F'), ('C', 'G')])
     #nx.draw(G, cmap = plt.get_cmap('jet'),)
     #plt.show()
+    
     
     main()

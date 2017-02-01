@@ -3,20 +3,17 @@
 '''
 from autologging import logged
 from pinject import copy_args_to_public_fields
-import e3_io
-#from e3_io import set_name, get_tap_from_cleantax, get_tap, store_tap, set_current_tap, get_config, get_tap_id_and_name, get_names, clear_names
 from subprocess import Popen, PIPE, call
 import os
-import e3_parse
-import e3_validation
-import e3_model
-import git
     
 @logged
 class Command(object):
     @copy_args_to_public_fields
     def __init__(self):
-        self.config = e3_io.get_config()
+        import e3_io
+        self.tapManager = e3_io.TapManager()
+        self.configManager = e3_io.ConfigManager()
+        self.projectManager = e3_io.ProjectManager()
         self.output = []
         self.outputFiles = []
         self.executeOutput = []
@@ -57,29 +54,30 @@ class Euler2Command(Command):
         self.showFourInOneCommand = '{euler2Executable} show -o {outputDir} fourinone {imageFormat}'
         self.showSummaryCommand = '{euler2Executable} show -o {outputDir} sv {imageFormat}'
         self.showAmbLatCommand = '{euler2Executable} show -o {outputDir} ambLat {imageFormat}'
-        self.euler2Executable = self.config['euler2Executable']
-        self.reasoner = self.config['reasoner']
-        self.imageViewer = self.config['imageViewer']
-        self.maxPossibleWorldsToShow = self.config['maxPossibleWorldsToShow']
-        self.imageFormat = self.config['imageFormat']
-        self.repairMethod = self.config['repairMethod']
+        config = self.configManager.get_config()
+        self.euler2Executable = config['euler2Executable']
+        self.reasoner = config['reasoner']
+        self.imageViewer = config['imageViewer']
+        self.maxPossibleWorldsToShow = config['maxPossibleWorldsToShow']
+        self.imageFormat = config['imageFormat']
+        self.repairMethod = config['repairMethod']
         self.isCoverage = self.tap.isCoverage
         self.isSiblingDisjointness = self.tap.isSiblingDisjointness
         self.regions = self.tap.regions
-        self.defaultIsSiblingDisjointness = self.config['defaultIsSiblingDisjointness']
-        self.defaultIsCoverage = self.config['defaultIsCoverage']
-        self.defaultRegions = self.config['defaultRegions']
+        self.defaultIsSiblingDisjointness = config['defaultIsSiblingDisjointness']
+        self.defaultIsCoverage = config['defaultIsCoverage']
+        self.defaultRegions = config['defaultRegions']
         self.tapId = self.tap.get_id()
-        self.cleantaxFile = e3_io.get_cleantax_file(self.tap)
-        self.outputDir = e3_io.get_tap_dir(self.tapId)
+        self.cleantaxFile = self.tapManager.get_cleantax_file(self.tap)
+        self.outputDir = self.tapManager.get_tap_dir(self.tapId)
         self.name = self.__class__.__name__
-        self.e2InputDir = e3_io.get_0_input_dir(self.tap)
-        self.e2AspInputDir = e3_io.get_1_asp_input_dir(self.tap)
-        self.e2AspOutputDir = e3_io.get_2_asp_output_dir(self.tap)
-        self.e2MirDir = e3_io.get_3_mir_dir(self.tap)
-        self.e2PWsDir = e3_io.get_4_pws_dir(self.tap)
-        self.e2AggregatesDir = e3_io.get_5_aggregates_dir(self.tap)
-        self.e2LatticesDir = e3_io.get_6_lattices_dir(self.tap)
+        self.e2InputDir = self.tapManager.get_0_input_dir(self.tap)
+        self.e2AspInputDir = self.tapManager.get_1_asp_input_dir(self.tap)
+        self.e2AspOutputDir = self.tapManager.get_2_asp_output_dir(self.tap)
+        self.e2MirDir = self.tapManager.get_3_mir_dir(self.tap)
+        self.e2PWsDir = self.tapManager.get_4_pws_dir(self.tap)
+        self.e2AggregatesDir = self.tapManager.get_5_aggregates_dir(self.tap)
+        self.e2LatticesDir = self.tapManager.get_6_lattices_dir(self.tap)
         self.isConsistent = True
         if not hasattr(self, 'maxN'):
             self.maxN = None
@@ -165,7 +163,7 @@ class SetConfig(MiscCommand):
         MiscCommand.__init__(self)
     def run(self):
         MiscCommand.run(self)
-        config = e3_io.get_config()
+        config = self.configManager.get_config()
         if not self.key in config:
             self.output.append("Configuration parameter " + self.key + " does not exist.")
             return 
@@ -176,7 +174,7 @@ class SetConfig(MiscCommand):
         if type(config[self.key]) is str:
             self.value = str(self.value)
         config[self.key] = self.value
-        e3_io.store_config(config)
+        self.configManager.store_config(config)
         self.output.append("Configuration updated: " + self.key + " = " + str(self.value))
 
 class PrintConfig(MiscCommand):
@@ -185,7 +183,7 @@ class PrintConfig(MiscCommand):
         MiscCommand.__init__(self)
     def run(self):
         MiscCommand.run(self)
-        config = e3_io.get_config()
+        config = self.configManager.get_config()
         for key in config:
             self.output.append("{key} = {value}".format(key = key, value = config[key])) 
           
@@ -196,10 +194,11 @@ class Reset(ModelCommand):
         ModelCommand.__init__(self)
     def run(self):
         ModelCommand.run(self)
+        import e3_io
         e3_io.reset()
-        tap = e3_io.get_current_tap()
+        tap = self.tapManager.get_current_tap()
         self.output.append("Reset successful")
-        self.output.append("Tap: " + e3_io.get_tap_id_and_name_and_status(tap))
+        self.output.append("Tap: " + self.tapManager.get_tap_id_and_name_and_status(tap))
          
 @logged
 class SetGitCredentials(MiscCommand):        
@@ -209,6 +208,7 @@ class SetGitCredentials(MiscCommand):
         pass
     def run(self):
         MiscCommand.run(self)
+        import e3_io
         e3_io.set_git_credencials(self.host, self.user, self.password)
         self.output.append("git credentials set successfully")
         
@@ -220,7 +220,9 @@ class GitPull(MiscCommand):
         pass
     def run(self):
         MiscCommand.run(self)
-        config = e3_io.get_config()
+        config = self.configManager.get_config()
+        import git
+        import e3_io
         g = git.Git(e3_io.get_e3_dir())
         try:
             g.status()
@@ -229,7 +231,7 @@ class GitPull(MiscCommand):
             e3_io.clean_e3_dir()
             g.clone(config['gitRepository'], e3_io.get_e3_dir())
         self.output.append("Pulled successfully")
-        self.output.append("Tap: " + e3_io.get_tap_id_and_name_and_status(e3_io.get_current_tap()))
+        self.output.append("Tap: " + self.tapManager.get_tap_id_and_name_and_status(self.tapManager.get_current_tap()))
 
 @logged
 class GitPush(MiscCommand):
@@ -239,7 +241,9 @@ class GitPush(MiscCommand):
         pass
     def run(self):
         MiscCommand.run(self)
-        config = e3_io.get_config()
+        config = self.configManager.get_config()
+        import git
+        import e3_io
         try:
             g = git.Git(e3_io.get_e3_dir())
             try:
@@ -272,6 +276,7 @@ class Help(MiscCommand):
         MiscCommand.__init__(self)
     def run(self):
         MiscCommand.run(self)
+        import e3_parse
         for commandParser in e3_parse.commandParsers:
             help = commandParser.get_help()
             if help:
@@ -285,8 +290,8 @@ class NameTap(MiscCommand):
         MiscCommand.__init__(self)
     def run(self):
         MiscCommand.run(self)
-        e3_io.set_name(self.name, self.tap);
-        self.output.append("Tap: " + e3_io.get_tap_id_and_name_and_status(self.tap))
+        self.tapManager.set_name(self.name, self.tap);
+        self.output.append("Tap: " + self.tapManager.get_tap_id_and_name_and_status(self.tap))
                 
 class PrintNames(MiscCommand):
     @copy_args_to_public_fields
@@ -294,7 +299,7 @@ class PrintNames(MiscCommand):
         MiscCommand.__init__(self)
     def run(self):
         MiscCommand.run(self)
-        names = e3_io.get_names()
+        names = self.tapManager.get_names()
         if names:
             self.output.append('\n'.join(names))
         else:
@@ -306,7 +311,7 @@ class PrintNames(MiscCommand):
 #        MiscCommand.__init__(self)
 #    def run(self):
 #        MiscCommand.run(self)
-#        e3_io.clear_names()
+#        self.tapManager.clear_names()
 #        self.output.append("Names are cleared")
     
 class PrintTap(MiscCommand):
@@ -349,12 +354,12 @@ class CreateProject(MiscCommand):
         MiscCommand.__init__(self)
     def run(self):
         MiscCommand.run(self)
-        if e3_io.exists_project(self.name):
+        if self.projectManager.exists_project(self.name):
             self.output.append('A project with name ' + self.name + ' already exists')
             return
-        e3_io.create_project(self.name)
-        e3_io.set_history(self.name, "")
-        e3_io.set_current_project(self.name)
+        self.projectManager.create_project(self.name)
+        self.projectManager.set_history(self.name, "")
+        self.projectManager.set_current_project(self.name)
 
 @logged
 class OpenProject(MiscCommand):
@@ -363,10 +368,10 @@ class OpenProject(MiscCommand):
         MiscCommand.__init__(self)
     def run(self):
         MiscCommand.run(self)
-        if not e3_io.exists_project(self.name):
+        if not self.projectManager.exists_project(self.name):
             self.output.append('A project with name ' + self.name + ' does not exist')
             return
-        e3_io.set_current_project(self.name)
+        self.projectManager.set_current_project(self.name)
 
 @logged
 class PrintProjectHistory(MiscCommand):
@@ -375,14 +380,14 @@ class PrintProjectHistory(MiscCommand):
         MiscCommand.__init__(self)
     def run(self):
         MiscCommand.run(self)
-        name = e3_io.get_current_project()
+        name = self.projectManager.get_current_project()
         if not name:
             self.output.append('No project open')
             return
-        if not e3_io.exists_project(name):
+        if not self.projectManager.exists_project(name):
             self.output.append('Project has been removed')
             return
-        with open(e3_io.get_history_file(name), 'r') as historyFile:
+        with open(self.projectManager.get_history_file(name), 'r') as historyFile:
             for i, line in enumerate(historyFile):
                 line = line.rstrip()
                 uuidPart = line.split(' ', 1)[0]
@@ -402,15 +407,15 @@ class RemoveProjectHistory(MiscCommand):
         MiscCommand.__init__(self)
     def run(self):
         MiscCommand.run(self)
-        name = e3_io.get_current_project()
+        name = self.projectManager.get_current_project()
         if not name:
             self.output.append('No project open')
             return
-        if not e3_io.exists_project(name):
+        if not self.projectManager.exists_project(name):
             self.output.append('Project has been removed')
             return
         lines = []
-        with open(e3_io.get_project_history(name), 'r') as historyFile:
+        with open(self.projectManager.get_project_history(name), 'r') as historyFile:
             lines = historyFile.readlines()
             if self.index >= len(lines) or self.index < 0:
                 self.output.append("This is not a valid index")
@@ -422,7 +427,7 @@ class RemoveProjectHistory(MiscCommand):
                     del newLines[self.index]
             else:
                 del newLines[self.index]
-        e3_io.set_history(name, ''.join(newLines))
+        self.projectManager.set_history(name, ''.join(newLines))
     
 @logged
 class CloseProject(MiscCommand):
@@ -431,7 +436,7 @@ class CloseProject(MiscCommand):
         MiscCommand.__init__(self)
     def run(self):
         MiscCommand.run(self)
-        e3_io.set_current_project(None) 
+        self.projectManager.set_current_project(None) 
     
 @logged
 class ClearProjects(MiscCommand):
@@ -440,8 +445,8 @@ class ClearProjects(MiscCommand):
         MiscCommand.__init__(self)
     def run(self):
         MiscCommand.run(self)
-        e3_io.clear_projects()
-        e3_io.set_current_project(None) 
+        self.projectManager.clear_projects()
+        self.projectManager.set_current_project(None) 
     
 @logged
 class RemoveProject(MiscCommand):
@@ -450,9 +455,9 @@ class RemoveProject(MiscCommand):
         MiscCommand.__init__(self)
     def run(self):
         MiscCommand.run(self)
-        if e3_io.get_current_project() == self.name:
-            e3_io.set_current_project(None)
-        e3_io.remove_project(self.name)
+        if self.projectManager.get_current_project() == self.name:
+            self.projectManager.set_current_project(None)
+        self.projectManager.remove_project(self.name)
         
 @logged
 class PrintProjects(MiscCommand):
@@ -461,7 +466,7 @@ class PrintProjects(MiscCommand):
         MiscCommand.__init__(self)
     def run(self):
         MiscCommand.run(self)
-        projects = e3_io.get_projects()
+        projects = self.projectManager.get_projects()
         if projects:
             self.output.append('\n'.join(projects))
         else:
@@ -474,11 +479,13 @@ class LoadTap(ModelCommand):
         ModelCommand.__init__(self)
     def run(self):
         ModelCommand.run(self)
+        import e3_validation
         try:
-            tap = e3_io.get_tap_from_cleantax_file(self.cleantaxFile)
-            e3_io.set_current_tap(tap)
-            e3_io.store_tap(tap)
-            self.output.append("Tap: " + e3_io.get_tap_id_and_name_and_status(tap))
+            import e3_io
+            tap = e3_io.CleantaxReader().get_tap_from_cleantax_file(self.cleantaxFile)
+            self.tapManager.set_current_tap(tap)
+            self.tapManager.store_tap(tap)
+            self.output.append("Tap: " + self.tapManager.get_tap_id_and_name_and_status(tap))
         except IOError as e:
             self.output.append("File not found.")
             return
@@ -492,11 +499,12 @@ class ClearTap(ModelCommand):
         ModelCommand.__init__(self)
     def run(self):
         ModelCommand.run(self)
-        config = e3_io.get_config()
+        config = self.configManager.get_config()
+        import e3_model
         tap = e3_model.Tap(config['defaultIsCoverage'], config['defaultIsSiblingDisjointness'], config['defaultRegions'], [], [])
-        e3_io.set_current_tap(tap)
-        e3_io.store_tap(tap)
-        self.output.append("Tap: " + e3_io.get_tap_id_and_name_and_status(tap))
+        self.tapManager.set_current_tap(tap)
+        self.tapManager.store_tap(tap)
+        self.output.append("Tap: " + self.tapManager.get_tap_id_and_name_and_status(tap))
 
 class AddChildren(ModelCommand):
     @copy_args_to_public_fields
@@ -514,15 +522,16 @@ class AddChildren(ModelCommand):
             self.output.append("Taxonomy line with one <= 1 node is not valid.")
             return
         
+        import e3_validation
         try:
             self.tap.add_children(self.taxonomyId, parts[0], parts[1:])
         except e3_validation.ValidationException as e:
             self.output.append(str(e))
             return
         
-        e3_io.set_current_tap(self.tap)
-        e3_io.store_tap(self.tap)
-        self.output.append("Tap: " + e3_io.get_tap_id_and_name_and_status(self.tap))
+        self.tapManager.set_current_tap(self.tap)
+        self.tapManager.store_tap(self.tap)
+        self.output.append("Tap: " + self.tapManager.get_tap_id_and_name_and_status(self.tap))
 
 class RemoveChildren(ModelCommand):
     @copy_args_to_public_fields
@@ -540,15 +549,16 @@ class RemoveChildren(ModelCommand):
             self.output.append("Taxonomy line with one <= 1 node is not valid.")
             return
         
+        import e3_validation
         try:
             self.tap.remove_children(self.taxonomyId, parts[0], parts[1:], self.recursive)
         except e3_validation.ValidationException as e:
             self.output.append(str(e))
             return
         
-        e3_io.set_current_tap(self.tap)
-        e3_io.store_tap(self.tap)
-        self.output.append("Tap: " + e3_io.get_tap_id_and_name_and_status(self.tap))
+        self.tapManager.set_current_tap(self.tap)
+        self.tapManager.store_tap(self.tap)
+        self.output.append("Tap: " + self.tapManager.get_tap_id_and_name_and_status(self.tap))
 
 class AddTaxonomy(ModelCommand):
     @copy_args_to_public_fields
@@ -558,10 +568,11 @@ class AddTaxonomy(ModelCommand):
         ModelCommand.run(self)
         if self.tap.has_taxonomy(self.id):
             self.output.append("Taxonomy with id: " + self.id + " already exists")
+        import e3_model
         taxonomy = self.tap.add_taxonomy(e3_model.Taxonomy(self.id, self.name))
-        e3_io.set_current_tap(self.tap)
-        e3_io.store_tap(self.tap)
-        self.output.append("Tap: " + e3_io.get_tap_id_and_name_and_status(self.tap))
+        self.tapManager.set_current_tap(self.tap)
+        self.tapManager.store_tap(self.tap)
+        self.output.append("Tap: " + self.tapManager.get_tap_id_and_name_and_status(self.tap))
 
 class RemoveTaxonomy(ModelCommand):
     @copy_args_to_public_fields
@@ -573,9 +584,9 @@ class RemoveTaxonomy(ModelCommand):
             self.output.append("Taxonomy with id " + self.id + " does not exist")
             return
         taxonomy = self.tap.remove_taxonomy(self.id)
-        e3_io.set_current_tap(self.tap)
-        e3_io.store_tap(self.tap)
-        self.output.append("Tap: " + e3_io.get_tap_id_and_name_and_status(self.tap))
+        self.tapManager.set_current_tap(self.tap)
+        self.tapManager.store_tap(self.tap)
+        self.output.append("Tap: " + self.tapManager.get_tap_id_and_name_and_status(self.tap))
             
 class ClearTaxonomy(ModelCommand):
     @copy_args_to_public_fields
@@ -587,9 +598,9 @@ class ClearTaxonomy(ModelCommand):
             self.output.append("Taxonomy with id " + self.id + " does not exist")
             return
         taxonomy = self.tap.clear_taxonomy(self.id)
-        e3_io.set_current_tap(self.tap)
-        e3_io.store_tap(self.tap)
-        self.output.append("Tap: " + e3_io.get_tap_id_and_name_and_status(self.tap))
+        self.tapManager.set_current_tap(self.tap)
+        self.tapManager.store_tap(self.tap)
+        self.output.append("Tap: " + self.tapManager.get_tap_id_and_name_and_status(self.tap))
                     
 class ClearArticulations(ModelCommand):
     @copy_args_to_public_fields
@@ -598,9 +609,9 @@ class ClearArticulations(ModelCommand):
     def run(self):
         ModelCommand.run(self)
         self.tap.articulations = []
-        e3_io.set_current_tap(self.tap)
-        e3_io.store_tap(self.tap)
-        self.output.append("Tap: " + e3_io.get_tap_id_and_name_and_status(self.tap))
+        self.tapManager.set_current_tap(self.tap)
+        self.tapManager.store_tap(self.tap)
+        self.output.append("Tap: " + self.tapManager.get_tap_id_and_name_and_status(self.tap))
             
 class SetTaxonomyInfo(ModelCommand):
     @copy_args_to_public_fields
@@ -609,42 +620,31 @@ class SetTaxonomyInfo(ModelCommand):
     def run(self):
         ModelCommand.run(self)
         self.tap.set_taxonomy_info(self.id, self.newId, self.newName)
-        e3_io.set_current_tap(self.tap)
-        e3_io.store_tap(self.tap)
-        self.output.append("Tap: " + e3_io.get_tap_id_and_name_and_status(self.tap))
+        self.tapManager.set_current_tap(self.tap)
+        self.tapManager.store_tap(self.tap)
+        self.output.append("Tap: " + self.tapManager.get_tap_id_and_name_and_status(self.tap))
         
 @logged
 class AddArticulation(ModelCommand):
     @copy_args_to_public_fields
-    def __init__(self, tap, articulation):
+    def __init__(self, tap, articulationLine):
         ModelCommand.__init__(self)
     def run(self):
         ModelCommand.run(self)
         
-        articulation = None
-        for validRelation in e3_model.relations:
-            split = " " + validRelation + " "
-            if split in self.articulation:
-                parts = self.articulation.split(split)
-                left = parts[0].split()
-                right = parts[1].split()
-                articulation = e3_model.Articulation(left, right, validRelation)
-                break
-        
- 
+        import e3_io
+        articulation = e3_io.CleantaxReader().get_articulation_from_cleantax(self.articulationLine)
         if articulation is  None:
             self.output.append("Not a valid articulation. No valid relation found.")
         else:
-            try:
-                e3_validation.validate_new_articulation(articulation, self.tap)
-            except e3_validation.ValidationException as e:
-                self.output.append(str(e))
-                return
-            
-            self.tap.add_articulation(articulation)        
-            e3_io.set_current_tap(self.tap)
-            e3_io.store_tap(self.tap)
-            self.output.append("Tap: " + e3_io.get_tap_id_and_name_and_status(self.tap))
+            import e3_validation
+            if e3_validation.ModelValidator().is_valid_new_articulation(articulation, self.tap):
+                self.tap.add_articulation(articulation)        
+                self.tapManager.set_current_tap(self.tap)
+                self.tapManager.store_tap(self.tap)
+                self.output.append("Tap: " + self.tapManager.get_tap_id_and_name_and_status(self.tap))
+            else:
+                self.output.append("This articulation already exists: " + newArticulation)
 
 @logged
 class RemoveArticulation(ModelCommand):
@@ -657,9 +657,9 @@ class RemoveArticulation(ModelCommand):
             self.output.append("This is not a valid index")
             return
         self.tap.remove_articulation(self.articulationIndex)
-        e3_io.set_current_tap(self.tap)
-        e3_io.store_tap(self.tap)
-        self.output.append("Tap: " + e3_io.get_tap_id_and_name_and_status(self.tap))
+        self.tapManager.set_current_tap(self.tap)
+        self.tapManager.store_tap(self.tap)
+        self.output.append("Tap: " + self.tapManager.get_tap_id_and_name_and_status(self.tap))
     
 class UseTap(ModelCommand):
     @copy_args_to_public_fields
@@ -667,9 +667,9 @@ class UseTap(ModelCommand):
         ModelCommand.__init__(self)
     def run(self):
         ModelCommand.run(self)
-        e3_io.set_current_tap(self.tap)
+        self.tapManager.set_current_tap(self.tap)
         if self.tap:
-            self.output.append("Tap: " + e3_io.get_tap_id_and_name_and_status(self.tap))
+            self.output.append("Tap: " + self.tapManager.get_tap_id_and_name_and_status(self.tap))
             
 @logged
 class SetCoverage(ModelCommand):
@@ -679,9 +679,9 @@ class SetCoverage(ModelCommand):
     def run(self):
         ModelCommand.run(self)
         self.tap.isCoverage = self.value
-        e3_io.set_current_tap(self.tap)
-        e3_io.store_tap(self.tap)
-        self.output.append("Tap: " + e3_io.get_tap_id_and_name_and_status(self.tap))
+        self.tapManager.set_current_tap(self.tap)
+        self.tapManager.store_tap(self.tap)
+        self.output.append("Tap: " + self.tapManager.get_tap_id_and_name_and_status(self.tap))
 
 @logged 
 class SetRegions(ModelCommand):
@@ -692,9 +692,9 @@ class SetRegions(ModelCommand):
         ModelCommand.run(self)
         if self.value == "mnpw" or self.value == "mncb" or self.value == "mnve" or self.value == "vrpw" or self.value == "vrve":
             self.tap.regions = self.value
-            e3_io.set_current_tap(self.tap)
-            e3_io.store_tap(self.tap)
-            self.output.append("Tap: " + e3_io.get_tap_id_and_name_and_status(self.tap))
+            self.tapManager.set_current_tap(self.tap)
+            self.tapManager.store_tap(self.tap)
+            self.output.append("Tap: " + self.tapManager.get_tap_id_and_name_and_status(self.tap))
         else:
             self.output.append("This is not a valid region")
 
@@ -706,9 +706,9 @@ class SetSiblingDisjointness(ModelCommand):
     def run(self):
         ModelCommand.run(self)
         self.tap.isSiblingDisjointness = self.value
-        e3_io.set_current_tap(self.tap)
-        e3_io.store_tap(self.tap)
-        self.output.append("Tap: " + e3_io.get_tap_id_and_name_and_status(self.tap))
+        self.tapManager.set_current_tap(self.tap)
+        self.tapManager.store_tap(self.tap)
+        self.output.append("Tap: " + self.tapManager.get_tap_id_and_name_and_status(self.tap))
     
 @logged 
 class GraphWorlds(Euler2Command):

@@ -14,16 +14,19 @@ from subprocess import Popen, PIPE, call
 @logged
 class Run(object):
     def __init__(self):
+        import e3_io
+        self.configManager = e3_io.ConfigManager()
+        self.tapManager = e3_io.TapManager()
+        self.projectManager = e3_io.ProjectManager()
         pass
     def run(self):
         pass
     def executeCommand(self, input, command):
-        import e3_io
-        config = e3_io.get_config()
+        config = self.configManager.get_config()
         if command != None:
             #try:
                 command.run()
-                e3_io.append_project_history(input, command)
+                self.projectManager.append_project_history(input, command)
                 if command.get_output():
                     for output in command.get_output():
                         print output
@@ -49,7 +52,6 @@ class OneShot(Run):
     def __init__(self, commandProvider):
         Run.__init__(self)
     def run(self):
-        import e3_io
         input = ' '.join(sys.argv[1:])
         input = input.replace('\\', '')
         command = self.commandProvider.provide(input)
@@ -61,14 +63,14 @@ class Interactive(Run):
     def __init__(self, commandProvider):
         Run.__init__(self)
     def run(self):
-        import e3_io
-        current_tap = e3_io.get_current_tap()
+        current_tap = self.tapManager.get_current_tap()
         if current_tap is None:
+            import e3_io
             e3_io.reset()
         
-        current_tap = e3_io.get_current_tap()
+        current_tap = self.tapManager.get_current_tap()
         if current_tap:
-            print "Tap: %s" % e3_io.get_tap_id_and_name_and_status(current_tap)
+            print "Tap: %s" % self.tapManager.get_tap_id_and_name_and_status(current_tap)
         else:
             print "Tap: None"
         while True:

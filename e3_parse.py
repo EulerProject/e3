@@ -6,15 +6,15 @@ Created on Nov 22, 2016
 from autologging import logged
 from pinject import copy_args_to_public_fields
 import e3_command
-import e3_io
 
 @logged               
 class CommandParser(object):
     @copy_args_to_public_fields
     def __init__(self, pattern):
         import re
+        import e3_io
         self.re = re.compile(pattern, re.IGNORECASE)
-        self.config = e3_io.get_config()
+        self.tapManager = e3_io.TapManager()
         pass
     def is_command(self, input):
         return self.re.match(input)
@@ -241,9 +241,9 @@ class AddChildrenParser(CommandParser):
     def get_command(self, input):
         match = self.is_command(input)
         if match:
-            tap = e3_io.get_current_tap()
+            tap = self.tapManager.get_current_tap()
             if match.group(3) and match.group(4):
-                tap = e3_io.get_tap_from_id_or_name(match.group(4))  
+                tap = self.tapManager.get_tap_from_id_or_name(match.group(4))  
             if tap:   
                 return e3_command.AddChildren(tap, match.group(1), match.group(2))
             else:
@@ -260,9 +260,9 @@ class RemoveChildrenParser(CommandParser):
         match = self.is_command(input)
         recursive = input.startswith("remove children recursive")
         if match:
-            tap = e3_io.get_current_tap()        
+            tap = self.tapManager.get_current_tap()        
             if match.group(3) and match.group(4):
-                tap = e3_io.get_tap_from_id_or_name(match.group(4))  
+                tap = self.tapManager.get_tap_from_id_or_name(match.group(4))  
             if tap:   
                 return e3_command.RemoveChildren(tap, match.group(1), match.group(2), recursive)
             else:
@@ -278,9 +278,9 @@ class AddTaxonomyParser(CommandParser):
     def get_command(self, input):
         match = self.is_command(input)
         if match:
-            tap = e3_io.get_current_tap()
+            tap = self.tapManager.get_current_tap()
             if match.group(3) and match.group(4):
-                tap = e3_io.get_tap_from_id_or_name(match.group(4))  
+                tap = self.tapManager.get_tap_from_id_or_name(match.group(4))  
             if tap:   
                 return e3_command.AddTaxonomy(tap, match.group(1), match.group(2))
             else:
@@ -296,9 +296,9 @@ class RemoveTaxonomyParser(CommandParser):
     def get_command(self, input):
         match = self.is_command(input)
         if match:
-            tap = e3_io.get_current_tap()
+            tap = self.tapManager.get_current_tap()
             if match.group(2) and match.group(3):
-                tap = e3_io.get_tap_from_id_or_name(match.group(3))  
+                tap = self.tapManager.get_tap_from_id_or_name(match.group(3))  
             if tap:   
                 return e3_command.RemoveTaxonomy(tap, match.group(1))
             else:
@@ -314,9 +314,9 @@ class ClearTaxonomyParser(CommandParser):
     def get_command(self, input):
         match = self.is_command(input)
         if match:
-            tap = e3_io.get_current_tap()
+            tap = self.tapManager.get_current_tap()
             if match.group(2) and match.group(3):
-                tap = e3_io.get_tap_from_id_or_name(match.group(3))  
+                tap = self.tapManager.get_tap_from_id_or_name(match.group(3))  
             if tap:   
                 return e3_command.ClearTaxonomy(tap, match.group(1))
             else:
@@ -332,9 +332,9 @@ class ClearArticulationsParser(CommandParser):
     def get_command(self, input):
         match = self.is_command(input)
         if match:
-            tap = e3_io.get_current_tap()
+            tap = self.tapManager.get_current_tap()
             if match.group(1) and match.group(2):
-                tap = e3_io.get_tap_from_id_or_name(match.group(2))  
+                tap = self.tapManager.get_tap_from_id_or_name(match.group(2))  
             if tap:   
                 return e3_command.ClearArticulations(tap)
             else:
@@ -350,9 +350,9 @@ class SetTaxonomyInfoParser(CommandParser):
     def get_command(self, input):
         match = self.is_command(input)
         if match:
-            tap = e3_io.get_current_tap()
+            tap = self.tapManager.get_current_tap()
             if match.group(4) and match.group(5):
-                tap = e3_io.get_tap_from_id_or_name(match.group(5))  
+                tap = self.tapManager.get_tap_from_id_or_name(match.group(5))  
             if tap:
                 return e3_command.SetTaxonomyInfo(tap, match.group(1), match.group(2), match.group(3))
             else:
@@ -372,9 +372,9 @@ class AddArticulationParser(CommandParser):
     def get_command(self, input):
         match = self.is_command(input)
         if match:
-            tap = e3_io.get_current_tap()
+            tap = self.tapManager.get_current_tap()
             if match.group(2) and match.group(3):
-                tap = e3_io.get_tap_from_id_or_name(match.group(3))  
+                tap = self.tapManager.get_tap_from_id_or_name(match.group(3))  
             if tap:          
                 return e3_command.AddArticulation(tap, match.group(1))
             else:
@@ -394,9 +394,9 @@ class RemoveArticulationParser(CommandParser):
     def get_command(self, input):
         match = self.is_command(input)
         if match:
-            tap = e3_io.get_current_tap()
+            tap = self.tapManager.get_current_tap()
             if match.group(2) and match.group(3):
-                tap = e3_io.get_tap_from_id_or_name(match.group(3))
+                tap = self.tapManager.get_tap_from_id_or_name(match.group(3))
             if tap:
                 return e3_command.RemoveArticulation(tap, int(match.group(1)))
             else:
@@ -412,9 +412,9 @@ class SetCoverageParser(CommandParser):
     def get_command(self, input):
         match = self.is_command(input)
         if match:
-            tap = e3_io.get_current_tap()
+            tap = self.tapManager.get_current_tap()
             if match.group(2) and match.group(3):
-                tap = e3_io.get_tap_from_id_or_name(match.group(3))
+                tap = self.tapManager.get_tap_from_id_or_name(match.group(3))
             if tap:
                 value = match.group(1)
                 return e3_command.SetCoverage(tap, True if not (value == 'false' or value == 'False') else False)
@@ -455,9 +455,9 @@ class SetSiblingDisjointnessParser(CommandParser):
     def get_command(self, input):
         match = self.is_command(input)
         if match:
-            tap = e3_io.get_current_tap()
+            tap = self.tapManager.get_current_tap()
             if match.group(2) and match.group(3):
-                tap = e3_io.get_tap_from_id_or_name(match.group(3))
+                tap = self.tapManager.get_tap_from_id_or_name(match.group(3))
             if tap:
                 value = match.group(1)
                 return e3_command.SetSiblingDisjointness(tap, True if not (value == 'false' or value == 'False') else False)
@@ -474,9 +474,9 @@ class SetRegionsParser(CommandParser):
     def get_command(self, input):
         match = self.is_command(input)
         if match:
-            tap = e3_io.get_current_tap()
+            tap = self.tapManager.get_current_tap()
             if match.group(2) and match.group(3):
-                tap = e3_io.get_tap_from_id_or_name(match.group(3))
+                tap = self.tapManager.get_tap_from_id_or_name(match.group(3))
             if tap:
                 return e3_command.SetRegions(tap, match.group(1))
             else:
@@ -493,9 +493,9 @@ class NameTapParser(CommandParser):
     def get_command(self, input):
         match = self.is_command(input);
         if match:
-            tap = e3_io.get_current_tap()
+            tap = self.tapManager.get_current_tap()
             if match.group(2) and match.group(3):
-                tap = e3_io.get_tap_from_id_or_name(match.group(3))
+                tap = self.tapManager.get_tap_from_id_or_name(match.group(3))
             if tap:
                 return e3_command.NameTap(tap, match.group(1))
             else:
@@ -535,7 +535,7 @@ class UseTapParser(CommandParser):
     def get_command(self, input):
         match = self.is_command(input);
         if match:
-            tap = e3_io.get_tap_from_id_or_name(match.group(1))
+            tap = self.tapManager.get_tap_from_id_or_name(match.group(1))
             if tap:
                 return e3_command.UseTap(tap)
             else:
@@ -551,9 +551,9 @@ class PrintTapParser(CommandParser):
     def get_command(self, input):
         match = self.is_command(input)
         if match:
-            tap = e3_io.get_current_tap()
+            tap = self.tapManager.get_current_tap()
             if match.group(1) and match.group(2):
-                tap = e3_io.get_tap_from_id_or_name(match.group(2))
+                tap = self.tapManager.get_tap_from_id_or_name(match.group(2))
             if tap:
                 return e3_command.PrintTap(tap)
             else:
@@ -569,9 +569,9 @@ class PrintTaxonomiesParser(CommandParser):
     def get_command(self, input):
         match = self.is_command(input)
         if match:
-            tap = e3_io.get_current_tap()
+            tap = self.tapManager.get_current_tap()
             if match.group(1) and match.group(2):
-                tap = e3_io.get_tap_from_id_or_name(match.group(2))
+                tap = self.tapManager.get_tap_from_id_or_name(match.group(2))
             if tap:
                 return e3_command.PrintTaxonomies(tap)
             else:
@@ -587,9 +587,9 @@ class PrintArticulationsParser(CommandParser):
     def get_command(self, input):
         match = self.is_command(input)    
         if match:
-            tap = e3_io.get_current_tap()
+            tap = self.tapManager.get_current_tap()
             if match.group(1) and match.group(2):
-                tap = e3_io.get_tap_from_id_or_name(match.group(2))
+                tap = self.tapManager.get_tap_from_id_or_name(match.group(2))
             if tap:
                 return e3_command.PrintArticulations(tap)
             else:
@@ -605,9 +605,9 @@ class MoreWorldsThanParser(CommandParser):
     def get_command(self, input):
         match = self.is_command(input)
         if match:
-            tap = e3_io.get_current_tap()
+            tap = self.tapManager.get_current_tap()
             if match.group(2) and match.group(3):
-                tap = e3_io.get_tap_from_id_or_name(match.group(3))
+                tap = self.tapManager.get_tap_from_id_or_name(match.group(3))
             if tap:
                 return e3_command.MoreWorldsThan(tap, int(match.group(1)))
             else:
@@ -623,9 +623,9 @@ class GraphWorldsParser(CommandParser):
     def get_command(self, input):
         match = self.is_command(input)
         if match:
-            tap = e3_io.get_current_tap()
+            tap = self.tapManager.get_current_tap()
             if match.group(1) and match.group(2):
-                tap = e3_io.get_tap_from_id_or_name(match.group(2))
+                tap = self.tapManager.get_tap_from_id_or_name(match.group(2))
             if tap:
                 return e3_command.GraphWorlds(tap)
             else:
@@ -641,9 +641,9 @@ class GraphTapParser(CommandParser):
     def get_command(self, input):
         match = self.is_command(input)
         if match:
-            tap = e3_io.get_current_tap()
+            tap = self.tapManager.get_current_tap()
             if match.group(1) and match.group(2):
-                tap = e3_io.get_tap_from_id_or_name(match.group(2))
+                tap = self.tapManager.get_tap_from_id_or_name(match.group(2))
             if tap:
                 return e3_command.GraphTap(tap)
             else:
@@ -659,9 +659,9 @@ class GraphFourInOneParser(CommandParser):
     def get_command(self, input):
         match = self.is_command(input)
         if match:
-            tap = e3_io.get_current_tap()
+            tap = self.tapManager.get_current_tap()
             if match.group(1) and match.group(2):
-                tap = e3_io.get_tap_from_id_or_name(match.group(2))
+                tap = self.tapManager.get_tap_from_id_or_name(match.group(2))
             if tap:
                 return e3_command.GraphFourInOne(tap)
             else:
@@ -677,9 +677,9 @@ class GraphSummaryParser(CommandParser):
     def get_command(self, input):
         match = self.is_command(input)
         if match:
-            tap = e3_io.get_current_tap()
+            tap = self.tapManager.get_current_tap()
             if match.group(1) and match.group(2):
-                tap = e3_io.get_tap_from_id_or_name(match.group(2))
+                tap = self.tapManager.get_tap_from_id_or_name(match.group(2))
             if tap:
                 return e3_command.GraphSummary(tap)
             else:
@@ -695,9 +695,9 @@ class GraphAmbiguityParser(CommandParser):
     def get_command(self, input):
         match = self.is_command(input)
         if match:
-            tap = e3_io.get_current_tap()
+            tap = self.tapManager.get_current_tap()
             if match.group(1) and match.group(2):
-                tap = e3_io.get_tap_from_id_or_name(match.group(2))
+                tap = self.tapManager.get_tap_from_id_or_name(match.group(2))
             if tap:
                 return e3_command.GraphAmbiguity(tap)
             else:
@@ -713,9 +713,9 @@ class IsConsistentParser(CommandParser):
     def get_command(self, input):
         match = self.is_command(input)
         if match:
-            tap = e3_io.get_current_tap()
+            tap = self.tapManager.get_current_tap()
             if match.group(1) and match.group(2):
-                tap = e3_io.get_tap_from_id_or_name(match.group(2))
+                tap = self.tapManager.get_tap_from_id_or_name(match.group(2))
             if tap:
                 return e3_command.IsConsistent(tap)
             else:
@@ -731,9 +731,9 @@ class PrintWorldsParser(CommandParser):
     def get_command(self, input):
         match = self.is_command(input)
         if match:
-            tap = e3_io.get_current_tap()
+            tap = self.tapManager.get_current_tap()
             if match.group(1) and match.group(2):
-                tap = e3_io.get_tap_from_id_or_name(match.group(2))
+                tap = self.tapManager.get_tap_from_id_or_name(match.group(2))
             if tap:
                 return e3_command.PrintWorlds(tap)
             else:
@@ -749,9 +749,9 @@ class GraphInconsistencyParser(CommandParser):
     def get_command(self, input):
         match = self.is_command(input)
         if match:
-            tap = e3_io.get_current_tap()
+            tap = self.tapManager.get_current_tap()
             if match.group(1) and match.group(2):
-                tap = e3_io.get_tap_from_id_or_name(match.group(2))
+                tap = self.tapManager.get_tap_from_id_or_name(match.group(2))
             if tap:
                 return e3_command.GraphInconsistency(tap)
             else:
@@ -767,9 +767,9 @@ class PrintFixParser(CommandParser):
     def get_command(self, input):
         match = self.is_command(input)
         if match:
-            tap = e3_io.get_current_tap()
+            tap = self.tapManager.get_current_tap()
             if match.group(1) and match.group(2):
-                tap = e3_io.get_tap_from_id_or_name(match.group(2))
+                tap = self.tapManager.get_tap_from_id_or_name(match.group(2))
             if tap:
                 return e3_command.PrintFix(tap)
             else:
