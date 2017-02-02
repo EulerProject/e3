@@ -14,18 +14,31 @@ class Tap(object):
     def __init__(self, isCoverage, isSiblingDisjointness, regions, taxonomies, articulations):
         pass
     def is_euler_ready(self):
-        return not self.get_status()
+        error, note = self.get_status()
+        return not error
     def is_underspecified(self):
         return len(self.taxonomies) <= 1 or len(self.articulations) == 0
     def get_status(self):
-        result = []
+        error = []
+        note = []
         if self.is_underspecified():
-            result.append("underspecified")
+            error.append("underspecified")
         for t in self.taxonomies:
             import e3_validation
             if not e3_validation.ModelValidator().is_dag(t):
-                result.append(t.id + " invalid")
-        return ' and '.join(result)
+                error.append(t.id + " not a dag")
+            if len(t.get_roots()) > 1:
+                note.append(t.id + " has multiple roots (" + str(len(t.get_roots())) + ")")
+        return error, note
+    def get_status_message(self):
+        error, note = self.get_status()
+        if error and note:
+            return "Invalid tap: " + ' and '.join(error) + ". Note: " + ' and '.join(note)
+        if error:
+            return "Invalid tap: " + ' and '.join(error);
+        if note:
+            return "Note: " + ' and '.join(note)
+        return None
     def add_taxonomy(self, taxonomy):
         for t in self.taxonomies:
             if t.id == taxonomy.id:
@@ -77,18 +90,22 @@ class Tap(object):
         taxonomy.add_node(node);
     def add_children(self, taxonomyId, parent, children):
         taxonomy = self.get_taxonomy(taxonomyId)
-        #original = copy.deepcopy(taxonomy)
-        taxonomy.add_children(parent, children)
-        #if not taxonomy.is_dag():
-        #    self.set_taxonomy(taxonomyId, original)
-        #    raise e3_validation.ValidationException("Adding the children would not lead to a valid taxonomy")
+        if taxonomy:
+            #original = copy.deepcopy(taxonomy)
+            taxonomy.add_children(parent, children)
+            #if not taxonomy.is_dag():
+            #    self.set_taxonomy(taxonomyId, original)
+            #    raise e3_validation.ValidationException("Adding the children would not lead to a valid taxonomy")
+        else: raise ValueError("Taxonomy with id " + taxonomyId + " not found.")
     def remove_children(self, taxonomyId, parent, children, recursive):
         taxonomy = self.get_taxonomy(taxonomyId)
-        #original = copy.deepcopy(taxonomy)
-        taxonomy.remove_children(parent, children, recursive)
-        #if not taxonomy.is_dag():
-        #    self.set_taxonomy(taxonomyId, original)
-        #    raise e3_validation.ValidationException("Removing the children would not lead to a valid taxonomy")
+        if taxonomy:
+            #original = copy.deepcopy(taxonomy)
+            taxonomy.remove_children(parent, children, recursive)
+            #if not taxonomy.is_dag():
+            #    self.set_taxonomy(taxonomyId, original)
+            #    raise e3_validation.ValidationException("Removing the children would not lead to a valid taxonomy")
+        else: raise ValueError("Taxonomy with id " + taxonomyId + " not found.")
         self.articulations = [a for a in self.articulations if self.nodes_in_tap(a)]
     def set_taxonomy(self, taxonomyId, taxonomy):
         self.taxonomies = [taxonomy if t.id == taxonomyId else t for t in self.taxonomies]

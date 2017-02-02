@@ -509,10 +509,6 @@ class AddChildren(ModelCommand):
     def run(self):
         ModelCommand.run(self)
         
-        if self.tap.has_taxonomy(self.taxonomyId) is None:
-            self.output.append("Taxonomy with id " + self.taxonomyId + " not found.")
-            return
-        
         parts = self.children[1:-1].split()
         if len(parts) <= 1:
             self.output.append("Taxonomy line with one <= 1 node is not valid.")
@@ -521,6 +517,9 @@ class AddChildren(ModelCommand):
         import e3_validation
         try:
             self.tap.add_children(self.taxonomyId, parts[0], parts[1:])
+        except ValueError as e:
+            self.output.append(str(e))
+            return
         except e3_validation.ValidationException as e:
             self.output.append(str(e))
             return
@@ -536,10 +535,6 @@ class RemoveChildren(ModelCommand):
     def run(self):
         ModelCommand.run(self)
         
-        if self.tap.has_taxonomy(self.taxonomyId) is None:
-            self.output.append("Taxonomy with id " + self.taxonomyId + " not found.")
-            return
-        
         parts = self.children[1:-1].split()
         if len(parts) <= 1:
             self.output.append("Taxonomy line with one <= 1 node is not valid.")
@@ -548,6 +543,9 @@ class RemoveChildren(ModelCommand):
         import e3_validation
         try:
             self.tap.remove_children(self.taxonomyId, parts[0], parts[1:], self.recursive)
+        except ValueError as e:
+            self.output.append(str(e))
+            return
         except e3_validation.ValidationException as e:
             self.output.append(str(e))
             return
@@ -714,7 +712,7 @@ class GraphWorlds(Euler2Command):
     def run(self):
         Euler2Command.run(self)
         if not self.tap.is_euler_ready():
-            self.output.append("The tap is not ready: " + self.tap.get_status())
+            self.output.append("The tap is not ready: " + self.tap.get_status_message())
             return
         
         stdout, stderr, returnCode = self.run_euler(self.alignCommand)
@@ -751,7 +749,7 @@ class IsConsistent(Euler2Command):
     def run(self):
         Euler2Command.run(self)
         if not self.tap.is_euler_ready():
-            self.output.append("The tap is not ready: " + self.tap.get_status())
+            self.output.append("The tap is not ready: " + self.tap.get_status_message())
             return
         stdout, stderr, returnCode = self.run_euler(self.alignConsistencyCommand)
         
@@ -769,7 +767,7 @@ class MoreWorldsThan(Euler2Command):
     def run(self):
         Euler2Command.run(self)
         if not self.tap.is_euler_ready():
-            self.output.append("The tap is not ready: " + self.tap.get_status())
+            self.output.append("The tap is not ready: " + self.tap.get_status_message())
             return
         stdout, stderr, returnCode = self.run_euler(self.alignMaxNCommand)
         if not self.is_consistent():
@@ -792,7 +790,7 @@ class PrintFix(Euler2Command):
     def run(self):
         Euler2Command.run(self)
         if not self.tap.is_euler_ready():
-            self.output.append("The tap is not ready: " + self.tap.get_status())
+            self.output.append("The tap is not ready: " + self.tap.get_status_message())
             return
         stdout, stderr, returnCode = self.run_euler(self.alignRepairCommand)
         if self.is_consistent():
@@ -815,7 +813,7 @@ class GraphInconsistency(Euler2Command):
     def run(self):
         Euler2Command.run(self)
         if not self.tap.is_euler_ready():
-            self.output.append("The tap is not ready: " + self.tap.get_status())
+            self.output.append("The tap is not ready: " + self.tap.get_status_message())
             return       
         stdout, stderr, returnCode = self.run_euler(self.alignCommand)
         if self.is_consistent():
@@ -839,7 +837,7 @@ class PrintWorlds(Euler2Command):
     def run(self):
         Euler2Command.run(self)
         if not self.tap.is_euler_ready():
-            self.output.append("The tap is not ready: " + self.tap.get_status())
+            self.output.append("The tap is not ready: " + self.tap.get_status_message())
             return
         stdout, stderr, returnCode = self.run_euler(self.alignCommand)        
         if not self.is_consistent():
@@ -867,7 +865,7 @@ class GraphTap(Euler2Command):
     def run(self):
         Euler2Command.run(self)
         if not self.tap.is_euler_ready():
-            self.output.append("The tap is not ready: " + self.tap.get_status())
+            self.output.append("The tap is not ready: " + self.tap.get_status_message())
             return
         stdout, stderr, returnCode = self.run_euler(self.showIVCommand)
         self.output.append("Take a look at the graph")
@@ -885,7 +883,7 @@ class GraphFourInOne(Euler2Command):
     def run(self):
         Euler2Command.run(self)
         if not self.tap.is_euler_ready():
-            self.output.append("The tap is not ready: " + self.tap.get_status())
+            self.output.append("The tap is not ready: " + self.tap.get_status_message())
             return
         stdout, stderr, returnCode = self.run_euler(self.alignFoundInOneCommand)
         stdout, stderr, returnCode = self.run_euler(self.showFourInOneCommand)
@@ -908,7 +906,7 @@ class GraphSummary(Euler2Command):
     def run(self):
         Euler2Command.run(self)
         if not self.tap.is_euler_ready():
-            self.output.append("The tap is not ready: " + self.tap.get_status())
+            self.output.append("The tap is not ready: " + self.tap.get_status_message())
             return
         stdout, stderr, returnCode = self.run_euler(self.alignCommand)
         if not self.is_consistent():
@@ -931,7 +929,7 @@ class GraphAmbiguity(Euler2Command):
     def run(self):
         Euler2Command.run(self)
         if not self.tap.is_euler_ready():
-            self.output.append("The tap is not ready: " + self.tap.get_status())
+            self.output.append("The tap is not ready: " + self.tap.get_status_message())
             return
         
         self.maxN = 2

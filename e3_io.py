@@ -171,7 +171,7 @@ class TapManager(object):
     
     def get_tap_id_and_name_and_status(self, tap):
         tap_id_and_name = self.get_tap_id_and_name(tap.get_id())
-        status = tap.get_status()
+        status = tap.get_status_message()
         if status:
             return tap_id_and_name + " (" + status + ")"
         return tap_id_and_name
