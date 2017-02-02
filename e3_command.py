@@ -329,22 +329,18 @@ class PrintTaxonomies(MiscCommand):
     def run(self):
         MiscCommand.run(self)
         for taxonomy in self.tap.taxonomies:
-            indices = ['']
-            for x in range(1, len(taxonomy)):
-                indices.append(str(x) + ". ")
-            taxonomyLines = [x + y for x, y in zip(indices, taxonomy)]
-            self.output.append('\n'.join(taxonomyLines))
+            self.output.append(taxonomy.__str__() + "\n")
             
 class PrintArticulations(MiscCommand):
     @copy_args_to_public_fields
     def __init__(self, tap):
         MiscCommand.__init__(self)
     def run(self):
-        MiscCommand.run(self)        
-        indices = ['']
-        for x in range(1, len(self.tap.articulations)):
+        MiscCommand.run(self)
+        indices = []
+        for x in range(1, len(self.tap.articulations) + 1):
             indices.append(str(x) + ". ")
-        articulationLines = [x + y for x, y in zip(indices, self.tap.articulations)]
+        articulationLines = [x + y for x, y in zip(indices, [a.__str__() for a in self.tap.articulations])]
         self.output.append('\n'.join(articulationLines))
     
 @logged

@@ -140,8 +140,7 @@ class Tap(object):
         articulationLines.insert(0, 'articulation')     
         result = []
         for taxonomy in self.taxonomies:
-            taxonomyLines = taxonomy.__str__().split('\n')
-            result.append('\n'.join(taxonomyLines))
+            result.append(taxonomy.__str__())
                
         result.append('\n'.join(articulationLines))
         result = ('Coverage:' + str(self.isCoverage) + 
