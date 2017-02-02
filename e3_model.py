@@ -225,14 +225,14 @@ class Taxonomy(object):
         roots = self.get_roots()
         # in case we have a well-formed rooted tree, get logical order
         if roots:
-            for node in roots:
+            for node in sorted(roots):
                 self.add_cleantax_stringyfied_edges(edges, node)
         # in case we don't, still produce something meaningful
         else:
             for node in self.g.nodes():
                 line = "(" + node
                 if self.g.successors(node):
-                    for successor in self.g.successors(node):
+                    for successor in sorted(self.g.successors(node)):
                         line = line + " " + successor
                     line = line + ")"
                     edges.append(line)
@@ -242,7 +242,7 @@ class Taxonomy(object):
     def add_cleantax_stringyfied_edges(self, collector, src):
         line = "(" + src
         if self.g.successors(src):
-            for successor in self.g.successors(src):
+            for successor in sorted(self.g.successors(src)):
                 line = line + " " + successor
                 self.add_cleantax_stringyfied_edges(collector, successor)
             line = line + ")"
