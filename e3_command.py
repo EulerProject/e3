@@ -715,11 +715,12 @@ class GraphWorlds(Euler2Command):
             self.output.append("The tap is not ready: " + self.tap.get_status_message())
             return
         
-        stdout, stderr, returnCode = self.run_euler(self.alignCommand)
+        stdout, stderr, returnCode = self.run_euler(self.alignConsistencyCommand)
         if not self.is_consistent():
-            self.output.append("The tap is inconsistent")
+            self.output.append("The tap is inconsistent. I have nothing to show")
             return
-        
+            
+        stdout, stderr, returnCode = self.run_euler(self.alignCommand)
         stdout, stderr, returnCode = self.run_euler(self.showPWCommand)
         possibleWorldsCount = len(self.get_possible_worlds())
         if possibleWorldsCount == 0:
@@ -769,11 +770,13 @@ class MoreWorldsThan(Euler2Command):
         if not self.tap.is_euler_ready():
             self.output.append("The tap is not ready: " + self.tap.get_status_message())
             return
-        stdout, stderr, returnCode = self.run_euler(self.alignMaxNCommand)
+        
+        stdout, stderr, returnCode = self.run_euler(self.alignConsistencyCommand)
         if not self.is_consistent():
             self.output.append("Cannot determine if there are more than {more} worlds. The tap is not consistent".format(more = self.more))
             return
-               
+        
+        stdout, stderr, returnCode = self.run_euler(self.alignMaxNCommand)
         possibleWorldsCount = len(self.get_possible_worlds())
         if possibleWorldsCount < self.maxN:
             self.output.append("There are less than or equal to {more} possible worlds. There are {count}.".format(
@@ -792,10 +795,13 @@ class PrintFix(Euler2Command):
         if not self.tap.is_euler_ready():
             self.output.append("The tap is not ready: " + self.tap.get_status_message())
             return
-        stdout, stderr, returnCode = self.run_euler(self.alignRepairCommand)
+        
+        stdout, stderr, returnCode = self.run_euler(self.alignConsistencyCommand)
         if self.is_consistent():
             self.output.append("The tap is not inconsistent. I have nothing to show.")
             return
+        
+        stdout, stderr, returnCode = self.run_euler(self.alignRepairCommand)
         self.output.append("Suggested repair options")
         for line in stdout.splitlines():
             if line.startswith('Repair option'):
@@ -814,12 +820,14 @@ class GraphInconsistency(Euler2Command):
         Euler2Command.run(self)
         if not self.tap.is_euler_ready():
             self.output.append("The tap is not ready: " + self.tap.get_status_message())
-            return       
-        stdout, stderr, returnCode = self.run_euler(self.alignCommand)
+            return 
+                
+        stdout, stderr, returnCode = self.run_euler(self.alignConsistencyCommand)
         if self.is_consistent():
             self.output.append("The tap is not inconsistent. I have nothing to show.")
             return
         
+        stdout, stderr, returnCode = self.run_euler(self.alignCommand)        
         stdout, stderr, returnCode = self.run_euler(self.showInconLatCommand)
         self.output.append("Take a look at the graph")
         self.executeOutput = []
@@ -839,11 +847,13 @@ class PrintWorlds(Euler2Command):
         if not self.tap.is_euler_ready():
             self.output.append("The tap is not ready: " + self.tap.get_status_message())
             return
-        stdout, stderr, returnCode = self.run_euler(self.alignCommand)        
+        
+        stdout, stderr, returnCode = self.run_euler(self.alignConsistencyCommand)
         if not self.is_consistent():
-            self.output.append("The tap is inconsistent")
+            self.output.append("The tap is inconsistent. I have nothing to show.")
             return
         
+        stdout, stderr, returnCode = self.run_euler(self.alignCommand)
         possibleWorlds = self.get_possible_worlds()
         possibleWorldsCount = len(possibleWorlds)
         if possibleWorldsCount == 0:
@@ -885,6 +895,7 @@ class GraphFourInOne(Euler2Command):
         if not self.tap.is_euler_ready():
             self.output.append("The tap is not ready: " + self.tap.get_status_message())
             return
+        # This can be executed on consistent and inconsistent taps!
         stdout, stderr, returnCode = self.run_euler(self.alignFoundInOneCommand)
         stdout, stderr, returnCode = self.run_euler(self.showFourInOneCommand)
         #if "This is a consistent example, no 4-in-1 lattice generated" in stdout:
@@ -908,10 +919,13 @@ class GraphSummary(Euler2Command):
         if not self.tap.is_euler_ready():
             self.output.append("The tap is not ready: " + self.tap.get_status_message())
             return
-        stdout, stderr, returnCode = self.run_euler(self.alignCommand)
+        
+        stdout, stderr, returnCode = self.run_euler(self.alignConsistencyCommand)
         if not self.is_consistent():
-            self.output.append("The tap is inconsistent")
+            self.output.append("The tap is inconsistent. I have nothing to show.")
             return
+        
+        stdout, stderr, returnCode = self.run_euler(self.alignCommand)
         stdout, stderr, returnCode = self.run_euler(self.showPWCommand)
         stdout, stderr, returnCode = self.run_euler(self.showSummaryCommand)
         self.output.append("Take a look at the graph")
@@ -932,12 +946,13 @@ class GraphAmbiguity(Euler2Command):
             self.output.append("The tap is not ready: " + self.tap.get_status_message())
             return
         
-        self.maxN = 2
-        stdout, stderr, returnCode = self.run_euler(self.alignMaxNCommand)
+        stdout, stderr, returnCode = self.run_euler(self.alignConsistencyCommand)
         if not self.is_consistent():
-            self.output.append("The tap is inconsistent")
+            self.output.append("The tap is inconsistent. I have nothing to show.")
             return
         
+        self.maxN = 2
+        stdout, stderr, returnCode = self.run_euler(self.alignMaxNCommand)
         possibleWorldsCount = len(self.get_possible_worlds())
         if possibleWorldsCount == self.maxN:
             self.output.append("The tap is ambiguous. There is more than one possible worlds")
