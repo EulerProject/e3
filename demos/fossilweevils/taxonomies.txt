@@ -61,7 +61,6 @@ articulation 2001-1999 OBrienKovarik-Morrone
 [2001.Diaprepes_famelicus includes 1999.Diaprepes_barbadensis]
 [2001.Diaprepes_boxi equals 1999.Diaprepes_boxi]
 [2001.Diaprepes_comma equals 1999.Diaprepes_comma]
-[2001.Diaprepes_comma equals 1999.Diaprepes_comma]
 [2001.Diaprepes_doublierii equals 1999.Diaprepes_doublierii]
 [2001.Diaprepes_famelicus includes 1999.Diaprepes_elegantulus]
 [2001.Diaprepes_famelicus includes 1999.Diaprepes_esuriens]
