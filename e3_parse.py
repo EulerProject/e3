@@ -745,15 +745,17 @@ class PrintWorldsParser(CommandParser):
                        
 class GraphInconsistencyParser(CommandParser):
     def __init__(self):
-        CommandParser.__init__(self, '^graph inconsistency( (\S*))?$')
+        CommandParser.__init__(self, '^graph\s+(?:(?P<type>full|reduced)\s+)?inconsistency( (?P<tapName>\S+))?$')
     def get_command(self, input):
         match = self.is_command(input)
         if match:
             tap = self.tapManager.get_current_tap()
-            if match.group(1) and match.group(2):
-                tap = self.tapManager.get_tap_from_id_or_name(match.group(2))
+            type = match.group("type")
+            tapName = match.group("tapName")
+            if tapName:
+                tap = self.tapManager.get_tap_from_id_or_name(tapName)
             if tap:
-                return e3_command.GraphInconsistency(tap)
+                return e3_command.GraphInconsistency(tap, type)
             else:
                 raise Exception('Tap %s not found' % match.group(2))
         else:

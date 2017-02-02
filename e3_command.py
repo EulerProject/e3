@@ -51,6 +51,8 @@ class Euler2Command(Command):
         self.showIVCommand = '{euler2Executable} show iv {cleantaxFile} -o {outputDir} {imageFormat}';
         self.showPWCommand = '{euler2Executable} show -o {outputDir} pw {imageFormat}'
         self.showInconLatCommand = '{euler2Executable} show -o {outputDir} inconLat {imageFormat}'
+        self.showInconLatFullCommand = '{euler2Executable} show -o {outputDir} inconLat --full {imageFormat} --full'
+        self.showInconLatReducedCommand = '{euler2Executable} show -o {outputDir} inconLat {imageFormat} --reduced'
         self.showFourInOneCommand = '{euler2Executable} show -o {outputDir} fourinone {imageFormat}'
         self.showSummaryCommand = '{euler2Executable} show -o {outputDir} sv {imageFormat}'
         self.showAmbLatCommand = '{euler2Executable} show -o {outputDir} ambLat {imageFormat}'
@@ -814,7 +816,7 @@ class PrintFix(Euler2Command):
 @logged
 class GraphInconsistency(Euler2Command):
     @copy_args_to_public_fields
-    def __init__(self, tap):
+    def __init__(self, tap, type):
         Euler2Command.__init__(self, tap)
     def run(self):
         Euler2Command.run(self)
@@ -827,8 +829,14 @@ class GraphInconsistency(Euler2Command):
             self.output.append("The tap is not inconsistent. I have nothing to show.")
             return
         
-        stdout, stderr, returnCode = self.run_euler(self.alignCommand)        
-        stdout, stderr, returnCode = self.run_euler(self.showInconLatCommand)
+        stdout, stderr, returnCode = self.run_euler(self.alignCommand)
+        if self.type == "reduced":
+            stdout, stderr, returnCode = self.run_euler(self.showInconLatReducedCommand)
+        elif self.type == "full":
+            stdout, stderr, returnCode = self.run_euler(self.showInconLatFullCommand)
+        else:
+            stdout, stderr, returnCode = self.run_euler(self.showInconLatCommand)
+        
         self.output.append("Take a look at the graph")
         self.executeOutput = []
         for filename in os.listdir(self.e2LatticesDir):
