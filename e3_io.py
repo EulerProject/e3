@@ -102,8 +102,6 @@ class CleantaxReader(object):
                 import e3_validation
                 if e3_validation.ModelValidator().is_valid_new_articulation(articulation, tap):
                     tap.add_articulation(articulation)
-                else:
-                    self.__log.warn("Articulation already exists: " + line)
         return tap
     
     def get_normalized_cleantax(self, cleantax):

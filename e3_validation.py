@@ -42,7 +42,6 @@ class ModelValidator(object):
     def is_valid_new_articulation(self, newArticulation, tap):
         for a in tap.articulations:
             if a.leftNodes == newArticulation.leftNodes and a.rightNodes == newArticulation.rightNodes and a.relation == newArticulation.relation:
-                self.__log.warn("This articulation already exists: " + newArticulation.__str__())
                 return False
         return True
     def is_dag(self, taxonomy):
