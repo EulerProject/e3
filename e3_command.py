@@ -198,9 +198,20 @@ class Reset(ModelCommand):
         ModelCommand.run(self)
         import e3_io
         e3_io.reset()
-        tap = self.tapManager.get_current_tap()
         self.output.append("Reset successful")
-        self.output.append("Tap: " + self.tapManager.get_tap_id_and_name_and_status(tap))
+        self.output.append("Tap: " + self.tapManager.get_current_tap_id_and_name_and_status())
+        
+@logged 
+class Clear(ModelCommand):
+    @copy_args_to_public_fields
+    def __init__(self):
+        ModelCommand.__init__(self)
+    def run(self):
+        ModelCommand.run(self)
+        import e3_io
+        e3_io.clear()
+        self.output.append("Clear successful")
+        self.output.append("Tap: " + self.tapManager.get_current_tap_id_and_name_and_status())
          
 @logged
 class SetGitCredentials(MiscCommand):        
@@ -233,7 +244,7 @@ class GitPull(MiscCommand):
             e3_io.clean_e3_dir()
             g.clone(config['gitRepository'], e3_io.get_e3_dir())
         self.output.append("Pulled successfully")
-        self.output.append("Tap: " + self.tapManager.get_tap_id_and_name_and_status(self.tapManager.get_current_tap()))
+        self.output.append("Tap: " + self.tapManager.get_current_tap_id_and_name_and_status())
 
 @logged
 class GitPush(MiscCommand):

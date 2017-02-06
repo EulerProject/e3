@@ -33,6 +33,17 @@ def reset():
     tapManager.store_tap(tap)
     tapManager.set_current_tap(tap)
     
+def clear():
+    configManager = ConfigManager()
+    config = configManager.get_config()
+    clean_e3_dir()
+    tapManager = TapManager()
+    tapManager.load_demo_taps()
+    tap = tapManager.get_default_tap()
+    tapManager.store_tap(tap)
+    tapManager.set_current_tap(tap)
+    configManager.store_config(config)
+    
 def set_git_credencials(host, user, password):
     p = Popen("git config --global user.email \"" + user + "\"", stdout=PIPE, stderr=PIPE, shell=True)
     stdout, stderr = p.communicate()
@@ -160,7 +171,14 @@ class TapManager(object):
                 if tap:
                     nameTap = e3_command.NameTap(tap, "demo_" + dir)
                     nameTap.run()
-                    
+    def get_current_tap_id_and_name(self):
+        tap = self.get_current_tap()
+        return self.get_tap_id_and_name(tap.get_id())
+    
+    def get_current_tap_id_and_name_and_status(self):
+        tap = self.get_current_tap()
+        return self.get_tap_id_and_name_and_status(tap)
+    
     def get_tap_id_and_name(self, tapId):
         name = self.get_name(tapId)
         return name
@@ -187,14 +205,17 @@ class TapManager(object):
     def store_tap(self, tap):
         existingName = self.get_name(tap.get_id())
         if existingName is None:
-            import e3_name_generator
-            randomName = e3_name_generator.get_random_name(None, None)
-            names = self.get_names()
-            name = randomName
-            id = 1
-            while name in names:
-                name = randomName + "_" + id
-                id = id + 1
+            defaultTap = self.get_default_tap()
+            name = "empty_tap"
+            if tap.get_id() != defaultTap.get_id():
+                import e3_name_generator
+                randomName = e3_name_generator.get_random_name(None, None)
+                names = self.get_names()
+                name = randomName
+                id = 1
+                while name in names:
+                    name = randomName + "_" + id
+                    id = id + 1
             self.set_name(name, tap)
         
         tapFile = self.get_tap_file(tap)        

@@ -10,6 +10,7 @@ from pinject import copy_args_to_public_fields
 import readline
 import os
 from subprocess import Popen, PIPE, call
+import shutil
 
 @logged
 class Run(object):
@@ -30,6 +31,14 @@ class Run(object):
                 if command.get_output():
                     for output in command.get_output():
                         print output
+                
+                if command.get_output_files():
+                    tapId = self.tapManager.get_current_tap_id_and_name()
+                    if not os.path.isdir(os.path.join("e3_data", tapId, input)):
+                        os.makedirs(os.path.join("e3_data", tapId, input))
+                    for outputFile in command.get_output_files():
+                        shutil.copy(outputFile, os.path.join("e3_data", tapId, input))
+                
                 if config['showOutputFileLocation'] and command.get_output_files():
                     print "Files:"
                     for outputFile in command.get_output_files():

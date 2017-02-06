@@ -37,6 +37,19 @@ class ResetParser(CommandParser):
         return "reset\nResets e3 to factory settings"
     
 @logged
+class ClearParser(CommandParser):
+    def __init__(self):
+        CommandParser.__init__(self, '^clear$')
+    def get_command(self, input):
+        match = self.is_command(input)
+        if match:
+            return e3_command.Clear()
+        else:
+            raise Exception('Unrecognized command line')
+    def get_help(self):
+        return "empty\nClears e3 taps"
+    
+@logged
 class CreateProjectParser(CommandParser):
     def __init__(self):
         CommandParser.__init__(self, '^create project (\S*)$')
@@ -784,6 +797,7 @@ class PrintFixParser(CommandParser):
 commandParsers = [  ByeParser(),
                     HelpParser(), 
                     ResetParser(),
+                    ClearParser(),
                     SetConfigParser(),
                     PrintConfigParser(),
                     LoadTapParser(),
