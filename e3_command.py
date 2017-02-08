@@ -266,7 +266,11 @@ class GitPush(MiscCommand):
                 g.remote("add", "origin", config['gitRepository']) # can already have an "origin"
             g.fetch() # may not be able to if remote is bogus url
             g.add(".")
-            g.commit("-m", self.message) #could in theory have empty message
+            try: 
+                g.commit("-m", self.message) #could fail if nothing to commit anymore locally, but push missing
+            except git.exc.GitCommandError as e:
+                self.output.append(str(e))
+            #could in theory have empty message 
             g.push("--all")
             self.output.append("Pushed successfully")
         except git.exc.GitCommandError as e:
