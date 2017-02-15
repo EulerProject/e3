@@ -165,6 +165,15 @@ class Tap(object):
                  '\nRegions:' + self.regions + '\n\n' + 
                 '\n\n'.join(result))
         return result
+    
+    def get_cleantax(self):
+        result = []
+        for taxonomy in self.taxonomies:      
+            result.append(taxonomy.__str__() + '\n\n')
+        result.append('articulation\n')
+        for articulation in self.articulations:
+            result.append(articulation.__str__() + '\n')
+        return "".join(result)
         
     def get_id(self):
         # todo: sort articulations 

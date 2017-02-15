@@ -18,14 +18,23 @@ def get_e3_dir():
         os.makedirs(e3Dir)
     return e3Dir
 
+def get_working_dir():
+    return os.path.join(os.getcwd(), "e3_data")
+
 def get_home_dir():
     return expanduser("~")
 
 def clean_e3_dir():
     shutil.rmtree(get_e3_dir())
     
+def clean_working_dir():
+    workingDir = get_working_dir()
+    if os.path.isdir(workingDir):
+        shutil.rmtree(workingDir)
+    
 def reset():
     clean_e3_dir()
+    clean_working_dir()
     ConfigManager().get_config()
     tapManager = TapManager()
     tapManager.load_demo_taps()
@@ -37,6 +46,7 @@ def clear():
     configManager = ConfigManager()
     config = configManager.get_config()
     clean_e3_dir()
+    clean_working_dir()
     tapManager = TapManager()
     tapManager.load_demo_taps()
     tap = tapManager.get_default_tap()
@@ -235,12 +245,7 @@ class TapManager(object):
     def store_tap_to_cleantax(self, tap):
         cleantaxFile = self.get_cleantax_file(tap)
         with open(cleantaxFile, 'w') as f:  
-            for taxonomy in tap.taxonomies:      
-                f.write(taxonomy.__str__())
-                f.write('\n\n')
-            f.write('articulation\n')
-            for articulation in tap.articulations:
-                f.write(articulation.__str__() + '\n')
+            f.write(tap.get_cleantax())
 
     def get_default_tap(self):
         config = ConfigManager().get_config()

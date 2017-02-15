@@ -11,6 +11,8 @@ import readline
 import os
 from subprocess import Popen, PIPE, call
 import shutil
+import yaml
+import e3_io
 
 @logged
 class Run(object):
@@ -32,17 +34,50 @@ class Run(object):
                     for output in command.get_output():
                         print output
                 
+                tap = self.tapManager.get_current_tap()
+                tapId = self.tapManager.get_current_tap_id_and_name()
+                runDir = os.path.join(e3_io.get_working_dir(), "_".join(tapId.split()), "_".join(input.split()))
+                runDirOutputFiles = []
                 if command.get_output_files():
-                    tapId = self.tapManager.get_current_tap_id_and_name()
-                    if not os.path.isdir(os.path.join("e3_data", tapId, input)):
-                        os.makedirs(os.path.join("e3_data", tapId, input))
+                    if not os.path.isdir(runDir):
+                        os.makedirs(runDir)
+                    
+                    tapDir = os.path.abspath(os.path.join(runDir, os.pardir))
+                    with open(os.path.join(tapDir, "input.txt"), 'w+') as i:
+                        i.write(tap.get_cleantax())
+                    with open(os.path.join(tapDir, "config.txt"), 'w+') as cfg:
+                        cfg.write("isCoverage: " + str(tap.isCoverage))
+                        cfg.write("isSiblingDisjointness: " + str(tap.isSiblingDisjointness))
+                        cfg.write("regions: " + tap.regions)
+                        yaml.dump(config, cfg, default_flow_style=False)
+                        
                     for outputFile in command.get_output_files():
-                        shutil.copy(outputFile, os.path.join("e3_data", tapId, input))
-                
+                        newName = input
+                        if(len(command.get_output_files()) > 1):
+                            newName = os.path.basename(outputFile)
+                            if ".cleantax" in newName:
+                                newName = newName.replace(".cleantax", input)
+                            else:
+                                newName = input + "_" + newName
+                        newName = "_".join(newName.split())
+                        if not newName.endswith("." + config['imageFormat']):
+                            newName = newName  + "." + config['imageFormat']
+                        newFile = os.path.join(runDir, newName)
+                        shutil.copy(outputFile, newFile)
+                        runDirOutputFiles.append(newFile)
+                        
+                        newExecuteOutput = []
+                        for execute in command.get_execute_output():
+                            if outputFile in execute:
+                                execute = execute.replace(outputFile, newFile)
+                            newExecuteOutput.append(execute)
+                        command.executeOutput = newExecuteOutput
+                            
                 if config['showOutputFileLocation'] and command.get_output_files():
                     print "Files:"
-                    for outputFile in command.get_output_files():
+                    for outputFile in runDirOutputFiles:
                         print outputFile
+                
                 if command.get_execute_output():
                     with open(os.devnull, 'w') as devnull:
                         for execute in command.get_execute_output():
