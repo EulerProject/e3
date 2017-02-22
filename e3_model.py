@@ -8,7 +8,23 @@ import networkx as nx
 import matplotlib.pyplot as plt
 from compiler.ast import Node
 import copy
+from networkx.readwrite import json_graph
+import json
 
+class History(object):
+    @copy_args_to_public_fields
+    def __init__(self, g):
+        if g is None:
+            self.g = nx.DiGraph()
+    def add_edge(self, fromNode, toNode, attributesDict):
+        self.g.add_edge(fromNode, toNode, attributesDict)
+    def add_node(self, node, attributesDict):
+        self.g.add_node(node, attributesDict)
+    def clear(self):
+        self.g.clear()
+    def __str__(self, *args, **kwargs):
+        return json_graph.node_link.node_link_data(self.g)
+    
 class Tap(object):
     @copy_args_to_public_fields
     def __init__(self, isCoverage, isSiblingDisjointness, regions, taxonomies, articulations):

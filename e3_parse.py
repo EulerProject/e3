@@ -16,7 +16,7 @@ class CommandParser(object):
         self.re = re.compile(pattern, re.IGNORECASE)
         self.tapManager = e3_io.TapManager()
         pass
-    def is_command(self, input):
+    def is_input(self, input):
         return self.re.match(input)
     def get_command(self, input):
         pass
@@ -28,7 +28,7 @@ class ResetParser(CommandParser):
     def __init__(self):
         CommandParser.__init__(self, '^reset$')
     def get_command(self, input):
-        match = self.is_command(input)
+        match = self.is_input(input)
         if match:
             return e3_command.Reset()
         else:
@@ -41,7 +41,7 @@ class ClearParser(CommandParser):
     def __init__(self):
         CommandParser.__init__(self, '^clear$')
     def get_command(self, input):
-        match = self.is_command(input)
+        match = self.is_input(input)
         if match:
             return e3_command.Clear()
         else:
@@ -54,7 +54,7 @@ class CreateProjectParser(CommandParser):
     def __init__(self):
         CommandParser.__init__(self, '^create project (\S*)$')
     def get_command(self, input):
-        match = self.is_command(input)
+        match = self.is_input(input)
         if match:
             return e3_command.CreateProject(match.group(1))
         else:
@@ -67,7 +67,7 @@ class OpenProjectParser(CommandParser):
     def __init__(self):
         CommandParser.__init__(self, '^open project (\S*)$')
     def get_command(self, input):
-        match = self.is_command(input)
+        match = self.is_input(input)
         if match:
             return e3_command.OpenProject(match.group(1))
         else:
@@ -80,7 +80,7 @@ class PrintProjectHistoryParser(CommandParser):
     def __init__(self):
         CommandParser.__init__(self, '^print project history$')
     def get_command(self, input):
-        match = self.is_command(input)
+        match = self.is_input(input)
         if match:
             return e3_command.PrintProjectHistory(CommandProvider())
         else:
@@ -93,7 +93,7 @@ class RemoveProjectHistoryParser(CommandParser):
     def __init__(self):
         CommandParser.__init__(self, '^remove project history (\d+)$')
     def get_command(self, input):
-        match = self.is_command(input)
+        match = self.is_input(input)
         if match:
             return e3_command.RemoveProjectHistory(CommandProvider(), int(match.group(1)))
         else:
@@ -106,7 +106,7 @@ class CloseProjectParser(CommandParser):
     def __init__(self):
         CommandParser.__init__(self, '^close project$')
     def get_command(self, input):
-        match = self.is_command(input)
+        match = self.is_input(input)
         if match:
             return e3_command.CloseProject()
         else:
@@ -118,7 +118,7 @@ class RemoveProjectParser(CommandParser):
     def __init__(self):
         CommandParser.__init__(self, '^remove project (\S*)$')
     def get_command(self, input):
-        match = self.is_command(input)
+        match = self.is_input(input)
         if match:
             return e3_command.RemoveProject(match.group(1))
         else:
@@ -131,7 +131,7 @@ class PrintProjectsParser(CommandParser):
     def __init__(self):
         CommandParser.__init__(self, '^print projects$')
     def get_command(self, input):
-        match = self.is_command(input)
+        match = self.is_input(input)
         if match:
             return e3_command.PrintProjects()
         else:
@@ -144,7 +144,7 @@ class ClearProjectsParser(CommandParser):
     def __init__(self):
         CommandParser.__init__(self, '^clear projects')
     def get_command(self, input):
-        match = self.is_command(input)
+        match = self.is_input(input)
         if match:
             return e3_command.ClearProjects()
         else:
@@ -157,7 +157,7 @@ class ByeParser(CommandParser):
     def __init__(self):
         CommandParser.__init__(self, '^(?:bye|exit|quit)$')
     def get_command(self, input):
-        match = self.is_command(input)
+        match = self.is_input(input)
         if match:
             return e3_command.Bye()
         else:
@@ -170,7 +170,7 @@ class HelpParser(CommandParser):
     def __init__(self):
         CommandParser.__init__(self, '^help$')
     def get_command(self, input):
-        match = self.is_command(input)
+        match = self.is_input(input)
         if match:
             return e3_command.Help()
         else:
@@ -183,7 +183,7 @@ class GitPullParser(CommandParser):
     def __init__(self):
         CommandParser.__init__(self, '^git pull$')
     def get_command(self, input):
-        match = self.is_command(input)
+        match = self.is_input(input)
         if match:
             return e3_command.GitPull()
         else:
@@ -196,7 +196,7 @@ class SetGitCredentialsParser(CommandParser):
     def __init__(self):
         CommandParser.__init__(self, '^git credentials (.*) (.*) "(.*)"$')
     def get_command(self, input):
-        match = self.is_command(input)
+        match = self.is_input(input)
         if match:
             return e3_command.SetGitCredentials(match.group(1), match.group(2), match.group(3))
         else:
@@ -209,7 +209,7 @@ class GitPushParser(CommandParser):
     def __init__(self):
         CommandParser.__init__(self, '^git push( (.*))?$')
     def get_command(self, input):
-        match = self.is_command(input)
+        match = self.is_input(input)
         if match:
             if match.group(1)and match.group(2):
                 return e3_command.GitPush(match.group(2))
@@ -226,7 +226,7 @@ class LoadTapParser(CommandParser):
         #load tap abstract.txt
         CommandParser.__init__(self, '^load tap (\S*)$')
     def get_command(self, input):
-        match = self.is_command(input)
+        match = self.is_input(input)
         if match:
             return e3_command.LoadTap(match.group(1))
         else:
@@ -240,7 +240,7 @@ class ClearTapParser(CommandParser):
         #load tap abstract.txt
         CommandParser.__init__(self, '^clear tap$')
     def get_command(self, input):
-        match = self.is_command(input)
+        match = self.is_input(input)
         if match:
             return e3_command.ClearTap()
         else:
@@ -252,7 +252,7 @@ class AddChildrenParser(CommandParser):
     def __init__(self):
         CommandParser.__init__(self, '^add children (.+) (\\(.+\\))( (\S*))?$')
     def get_command(self, input):
-        match = self.is_command(input)
+        match = self.is_input(input)
         if match:
             tap = self.tapManager.get_current_tap()
             if match.group(3) and match.group(4):
@@ -270,7 +270,7 @@ class RemoveChildrenParser(CommandParser):
     def __init__(self):
         CommandParser.__init__(self, '^remove children(?: recursive)? (.+) (\\(.+\\))( (\S*))?$')
     def get_command(self, input):
-        match = self.is_command(input)
+        match = self.is_input(input)
         recursive = input.startswith("remove children recursive")
         if match:
             tap = self.tapManager.get_current_tap()        
@@ -289,7 +289,7 @@ class AddTaxonomyParser(CommandParser):
     def __init__(self):
         CommandParser.__init__(self, '^add taxonomy (.+) (.+)( (\S*))?$')
     def get_command(self, input):
-        match = self.is_command(input)
+        match = self.is_input(input)
         if match:
             tap = self.tapManager.get_current_tap()
             if match.group(3) and match.group(4):
@@ -307,7 +307,7 @@ class RemoveTaxonomyParser(CommandParser):
     def __init__(self):
         CommandParser.__init__(self, '^remove taxonomy (.+)( (\S*))?$')
     def get_command(self, input):
-        match = self.is_command(input)
+        match = self.is_input(input)
         if match:
             tap = self.tapManager.get_current_tap()
             if match.group(2) and match.group(3):
@@ -325,7 +325,7 @@ class ClearTaxonomyParser(CommandParser):
     def __init__(self):
         CommandParser.__init__(self, '^clear taxonomy (.+)( (\S*))?$')
     def get_command(self, input):
-        match = self.is_command(input)
+        match = self.is_input(input)
         if match:
             tap = self.tapManager.get_current_tap()
             if match.group(2) and match.group(3):
@@ -343,7 +343,7 @@ class ClearArticulationsParser(CommandParser):
     def __init__(self):
         CommandParser.__init__(self, '^clear articulations( (\S*))?$')
     def get_command(self, input):
-        match = self.is_command(input)
+        match = self.is_input(input)
         if match:
             tap = self.tapManager.get_current_tap()
             if match.group(1) and match.group(2):
@@ -361,7 +361,7 @@ class SetTaxonomyInfoParser(CommandParser):
     def __init__(self):
         CommandParser.__init__(self, '^set taxonomy info (.+) (.+) (.+)( (\S*))?$$')
     def get_command(self, input):
-        match = self.is_command(input)
+        match = self.is_input(input)
         if match:
             tap = self.tapManager.get_current_tap()
             if match.group(4) and match.group(5):
@@ -383,7 +383,7 @@ class AddArticulationParser(CommandParser):
         #add articulation [1.A equals 2.B] my_tap_name
         CommandParser.__init__(self, '^add articulation (.+)( (\S*))?$')
     def get_command(self, input):
-        match = self.is_command(input)
+        match = self.is_input(input)
         if match:
             tap = self.tapManager.get_current_tap()
             if match.group(2) and match.group(3):
@@ -405,7 +405,7 @@ class RemoveArticulationParser(CommandParser):
         #remove articulation 1 my_tap_name
         CommandParser.__init__(self, '^remove articulation (\d+)( (\S*))?$')
     def get_command(self, input):
-        match = self.is_command(input)
+        match = self.is_input(input)
         if match:
             tap = self.tapManager.get_current_tap()
             if match.group(2) and match.group(3):
@@ -423,7 +423,7 @@ class SetCoverageParser(CommandParser):
     def __init__(self):
         CommandParser.__init__(self, '^set coverage (\S+)( (\S*))?$')
     def get_command(self, input):
-        match = self.is_command(input)
+        match = self.is_input(input)
         if match:
             tap = self.tapManager.get_current_tap()
             if match.group(2) and match.group(3):
@@ -442,7 +442,7 @@ class SetConfigParser(CommandParser):
     def __init__(self):
         CommandParser.__init__(self, '^set config (\S+)\s*=\s*(.*)$')
     def get_command(self, input):
-        match = self.is_command(input)
+        match = self.is_input(input)
         if match:
             return e3_command.SetConfig(match.group(1), match.group(2))
         else:
@@ -454,7 +454,7 @@ class PrintConfigParser(CommandParser):
     def __init__(self):
         CommandParser.__init__(self, '^print config$')
     def get_command(self, input):
-        match = self.is_command(input)
+        match = self.is_input(input)
         if match:
             return e3_command.PrintConfig()
         else:
@@ -466,7 +466,7 @@ class SetSiblingDisjointnessParser(CommandParser):
     def __init__(self):
         CommandParser.__init__(self, '^set sibling disjointness (\S+)( (\S*))?$')
     def get_command(self, input):
-        match = self.is_command(input)
+        match = self.is_input(input)
         if match:
             tap = self.tapManager.get_current_tap()
             if match.group(2) and match.group(3):
@@ -485,7 +485,7 @@ class SetRegionsParser(CommandParser):
     def __init__(self):
         CommandParser.__init__(self, '^set regions (\S+)( (\S*))?$')
     def get_command(self, input):
-        match = self.is_command(input)
+        match = self.is_input(input)
         if match:
             tap = self.tapManager.get_current_tap()
             if match.group(2) and match.group(3):
@@ -504,7 +504,7 @@ class NameTapParser(CommandParser):
     def __init__(self):
         CommandParser.__init__(self, '^name tap (\S*)( (\S*))?$')
     def get_command(self, input):
-        match = self.is_command(input);
+        match = self.is_input(input);
         if match:
             tap = self.tapManager.get_current_tap()
             if match.group(2) and match.group(3):
@@ -522,7 +522,7 @@ class PrintNamesParser(CommandParser):
     def __init__(self):
         CommandParser.__init__(self, '^print names$')
     def get_command(self, input):
-        match = self.is_command(input);
+        match = self.is_input(input);
         if match:
             return e3_command.PrintNames()
         else:
@@ -534,7 +534,7 @@ class PrintNamesParser(CommandParser):
 #    def __init__(self):
 #        CommandParser.__init__(self, '^clear names$')
 #    def get_command(self, input):
-#        match = self.is_command(input);
+#        match = self.is_input(input);
 #        if match:
 #            return e3_command.ClearNames()
 #        else:
@@ -546,7 +546,7 @@ class UseTapParser(CommandParser):
     def __init__(self):
         CommandParser.__init__(self, '^use tap (\S+)$')
     def get_command(self, input):
-        match = self.is_command(input);
+        match = self.is_input(input);
         if match:
             tap = self.tapManager.get_tap_from_id_or_name(match.group(1))
             if tap:
@@ -557,12 +557,12 @@ class UseTapParser(CommandParser):
             raise Exception('Unrecognized command line')
     def get_help(self):
         return "use tap <tap>\nMakes <tap> the current tap"
-            
+    
 class PrintTapParser(CommandParser):
     def __init__(self):
         CommandParser.__init__(self, '^print tap( (\S*))?$')
     def get_command(self, input):
-        match = self.is_command(input)
+        match = self.is_input(input)
         if match:
             tap = self.tapManager.get_current_tap()
             if match.group(1) and match.group(2):
@@ -580,7 +580,7 @@ class PrintTaxonomiesParser(CommandParser):
     def __init__(self):
         CommandParser.__init__(self, '^print taxonomies( (\S*))?$')
     def get_command(self, input):
-        match = self.is_command(input)
+        match = self.is_input(input)
         if match:
             tap = self.tapManager.get_current_tap()
             if match.group(1) and match.group(2):
@@ -598,7 +598,7 @@ class PrintArticulationsParser(CommandParser):
     def __init__(self):
         CommandParser.__init__(self, '^print articulations( (\S*))?$')
     def get_command(self, input):
-        match = self.is_command(input)    
+        match = self.is_input(input)    
         if match:
             tap = self.tapManager.get_current_tap()
             if match.group(1) and match.group(2):
@@ -616,7 +616,7 @@ class MoreWorldsThanParser(CommandParser):
     def __init__(self):
         CommandParser.__init__(self, '^more than (\d+) worlds( (\S*))?$')
     def get_command(self, input):
-        match = self.is_command(input)
+        match = self.is_input(input)
         if match:
             tap = self.tapManager.get_current_tap()
             if match.group(2) and match.group(3):
@@ -634,7 +634,7 @@ class GraphWorldsParser(CommandParser):
     def __init__(self):
         CommandParser.__init__(self, '^graph worlds( (\S*))?$')
     def get_command(self, input):
-        match = self.is_command(input)
+        match = self.is_input(input)
         if match:
             tap = self.tapManager.get_current_tap()
             if match.group(1) and match.group(2):
@@ -652,7 +652,7 @@ class GraphTapParser(CommandParser):
     def __init__(self):
         CommandParser.__init__(self, '^graph tap( (\S*))?$')
     def get_command(self, input):
-        match = self.is_command(input)
+        match = self.is_input(input)
         if match:
             tap = self.tapManager.get_current_tap()
             if match.group(1) and match.group(2):
@@ -670,7 +670,7 @@ class GraphFourInOneParser(CommandParser):
     def __init__(self):
         CommandParser.__init__(self, '^graph four in one( (\S*))?$')
     def get_command(self, input):
-        match = self.is_command(input)
+        match = self.is_input(input)
         if match:
             tap = self.tapManager.get_current_tap()
             if match.group(1) and match.group(2):
@@ -688,7 +688,7 @@ class GraphSummaryParser(CommandParser):
     def __init__(self):
         CommandParser.__init__(self, '^graph summary( (\S*))?$')
     def get_command(self, input):
-        match = self.is_command(input)
+        match = self.is_input(input)
         if match:
             tap = self.tapManager.get_current_tap()
             if match.group(1) and match.group(2):
@@ -706,7 +706,7 @@ class GraphAmbiguityParser(CommandParser):
     def __init__(self):
         CommandParser.__init__(self, '^graph ambiguity( (\S*))?$')
     def get_command(self, input):
-        match = self.is_command(input)
+        match = self.is_input(input)
         if match:
             tap = self.tapManager.get_current_tap()
             if match.group(1) and match.group(2):
@@ -724,7 +724,7 @@ class IsConsistentParser(CommandParser):
     def __init__(self):
         CommandParser.__init__(self, '^is consistent( (\S*))?$')
     def get_command(self, input):
-        match = self.is_command(input)
+        match = self.is_input(input)
         if match:
             tap = self.tapManager.get_current_tap()
             if match.group(1) and match.group(2):
@@ -742,7 +742,7 @@ class PrintWorldsParser(CommandParser):
     def __init__(self):
         CommandParser.__init__(self, '^print worlds( (\S*))?$')
     def get_command(self, input):
-        match = self.is_command(input)
+        match = self.is_input(input)
         if match:
             tap = self.tapManager.get_current_tap()
             if match.group(1) and match.group(2):
@@ -760,7 +760,7 @@ class GraphInconsistencyParser(CommandParser):
     def __init__(self):
         CommandParser.__init__(self, '^graph\s+(?:(?P<type>full|reduced)\s+)?inconsistency( (?P<tapName>\S+))?$')
     def get_command(self, input):
-        match = self.is_command(input)
+        match = self.is_input(input)
         if match:
             tap = self.tapManager.get_current_tap()
             type = match.group("type")
@@ -780,7 +780,7 @@ class PrintFixParser(CommandParser):
     def __init__(self):
         CommandParser.__init__(self, '^print fix( (\S*))?$')
     def get_command(self, input):
-        match = self.is_command(input)
+        match = self.is_input(input)
         if match:
             tap = self.tapManager.get_current_tap()
             if match.group(1) and match.group(2):
@@ -850,5 +850,5 @@ class CommandProvider(object):
         pass
     def provide(self, input):
         for parser in commandParsers:
-            if parser.is_command(input):
+            if parser.is_input(input):
                return parser.get_command(input)

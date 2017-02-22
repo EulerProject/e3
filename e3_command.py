@@ -5,7 +5,8 @@ from autologging import logged
 from pinject import copy_args_to_public_fields
 from subprocess import Popen, PIPE, call
 import os
-    
+import time
+
 @logged
 class Command(object):
     @copy_args_to_public_fields
@@ -17,6 +18,7 @@ class Command(object):
         self.output = []
         self.outputFiles = []
         self.executeOutput = []
+        self.runtime = 0
         pass
     def run(self):
         self.__log.debug("run %s" % self.__class__.__name__)
@@ -70,22 +72,23 @@ class Euler2Command(Command):
         self.defaultIsCoverage = config['defaultIsCoverage']
         self.defaultRegions = config['defaultRegions']
         self.tapId = self.tap.get_id()
-        self.cleantaxFile = self.tapManager.get_cleantax_file(self.tap)
+        self.cleantaxFile = self.tapManager.get_cleantax_file(self.tapId)
         self.outputDir = self.tapManager.get_tap_dir(self.tapId)
         self.name = self.__class__.__name__
-        self.e2InputDir = self.tapManager.get_0_input_dir(self.tap)
-        self.e2AspInputDir = self.tapManager.get_1_asp_input_dir(self.tap)
-        self.e2AspOutputDir = self.tapManager.get_2_asp_output_dir(self.tap)
-        self.e2MirDir = self.tapManager.get_3_mir_dir(self.tap)
-        self.e2PWsDir = self.tapManager.get_4_pws_dir(self.tap)
-        self.e2AggregatesDir = self.tapManager.get_5_aggregates_dir(self.tap)
-        self.e2LatticesDir = self.tapManager.get_6_lattices_dir(self.tap)
+        self.e2InputDir = self.tapManager.get_0_input_dir(self.tapId)
+        self.e2AspInputDir = self.tapManager.get_1_asp_input_dir(self.tapId)
+        self.e2AspOutputDir = self.tapManager.get_2_asp_output_dir(self.tapId)
+        self.e2MirDir = self.tapManager.get_3_mir_dir(self.tapId)
+        self.e2PWsDir = self.tapManager.get_4_pws_dir(self.tapId)
+        self.e2AggregatesDir = self.tapManager.get_5_aggregates_dir(self.tapId)
+        self.e2LatticesDir = self.tapManager.get_6_lattices_dir(self.tapId)
         self.isConsistent = True
         if not hasattr(self, 'maxN'):
             self.maxN = None
     def run(self):
         Command.run(self)
     def run_euler(self, command):
+        start_time = time.time()
         # add parameters to the command that are relevant to avoid re-runs (i.e. all tap relevant data + maxN + ...?)
         # by at the same time keeping the file name minimal
         coverage = "" if self.isCoverage else "--disablecov"
@@ -100,6 +103,7 @@ class Euler2Command(Command):
         stdoutFile = os.path.join(self.outputDir, '%s.stdout' % command)
         stderrFile = os.path.join(self.outputDir, '%s.stderr' % command)
         returnCodeFile = os.path.join(self.outputDir, '%s.returncode' % command)
+        runtimeFile = os.path.join(self.outputDir, '%s.runtime' % command)
         if os.path.isfile(stdoutFile) and os.path.isfile(stderrFile) and os.path.isfile(returnCodeFile):
             with open(stdoutFile,'r') as f:
                 stdout = f.read()
@@ -107,6 +111,8 @@ class Euler2Command(Command):
                 stderr = f.read()
             with open(returnCodeFile,'r') as f:
                 returnCode = f.read()
+            with open(runtimeFile, 'r') as f:
+                self.runtime = self.runtime + float(f.read())
             if "Input is inconsistent" in stdout:
                 self.isConsistent = False
             if returnCode and stderr:
@@ -119,21 +125,25 @@ class Euler2Command(Command):
         with open(stdoutFile, 'w+') as out:
             with open(stderrFile, 'w+') as err:
                 with open(returnCodeFile, 'w+') as rc:
-                    #print command
-                    p = Popen(command, stdout=PIPE, stderr=PIPE, shell=True)
-                    stdout, stderr = p.communicate()
-                    #print stdout
-                    #print stderr
-                    if p.returncode and stderr:
-                        print stderr.rstrip()
-                    if "Input is inconsistent" in stdout:
-                        self.isConsistent = False
-                    out.write(stdout)
-                    err.write(stderr)
-                    rc.write('%s' % p.returncode)
-                    if os.path.isfile('report.csv'):
-                        os.remove('report.csv')
-                    return stdout, stderr, p.returncode
+                    with open(runtimeFile, 'w+') as rtf:
+                        #print command
+                        p = Popen(command, stdout=PIPE, stderr=PIPE, shell=True)
+                        stdout, stderr = p.communicate()
+                        #print stdout
+                        #print stderr
+                        if p.returncode and stderr:
+                            print stderr.rstrip()
+                        if "Input is inconsistent" in stdout:
+                            self.isConsistent = False
+                        out.write(stdout)
+                        err.write(stderr)
+                        rc.write('%s' % p.returncode)
+                        if os.path.isfile('report.csv'):
+                            os.remove('report.csv')
+                        thisRuntime = time.time() - start_time
+                        self.runtime = self.runtime + thisRuntime
+                        rtf.write(str(thisRuntime))
+                        return stdout, stderr, p.returncode
     def is_consistent(self):
         return self.isConsistent
     def get_possible_worlds(self):
@@ -199,7 +209,7 @@ class Reset(ModelCommand):
         import e3_io
         e3_io.reset()
         self.output.append("Reset successful")
-        self.output.append("Tap: " + self.tapManager.get_current_tap_id_and_name_and_status())
+        self.output.append("Tap: " + self.tapManager.get_current_tap_name_and_status())
         
 @logged 
 class Clear(ModelCommand):
@@ -211,10 +221,10 @@ class Clear(ModelCommand):
         import e3_io
         e3_io.clear()
         self.output.append("Clear successful")
-        self.output.append("Tap: " + self.tapManager.get_current_tap_id_and_name_and_status())
+        self.output.append("Tap: " + self.tapManager.get_current_tap_name_and_status())
          
 @logged
-class SetGitCredentials(MiscCommand):        
+class SetGitCredentials(MiscCommand):
     @copy_args_to_public_fields
     def __init__(self, host, user, password):
         MiscCommand.__init__(self)
@@ -244,7 +254,7 @@ class GitPull(MiscCommand):
             e3_io.clean_e3_dir()
             g.clone(config['gitRepository'], e3_io.get_e3_dir())
         self.output.append("Pulled successfully")
-        self.output.append("Tap: " + self.tapManager.get_current_tap_id_and_name_and_status())
+        self.output.append("Tap: " + self.tapManager.get_current_tap_name_and_status())
 
 @logged
 class GitPush(MiscCommand):
@@ -307,8 +317,8 @@ class NameTap(MiscCommand):
         MiscCommand.__init__(self)
     def run(self):
         MiscCommand.run(self)
-        self.tapManager.set_name(self.name, self.tap);
-        self.output.append("Tap: " + self.tapManager.get_tap_id_and_name_and_status(self.tap))
+        self.tapManager.set_name(self.name, self.tap.get_id());
+        self.output.append("Tap: " + self.tapManager.get_tap_name_and_status(self.tap.get_id()))
                 
 class PrintNames(MiscCommand):
     @copy_args_to_public_fields
@@ -497,8 +507,7 @@ class LoadTap(ModelCommand):
             import e3_io
             tap = e3_io.CleantaxReader().get_tap_from_cleantax_file(self.cleantaxFile)
             self.tapManager.set_current_tap(tap)
-            self.tapManager.store_tap(tap)
-            self.output.append("Tap: " + self.tapManager.get_tap_id_and_name_and_status(tap))
+            self.output.append("Tap: " + self.tapManager.get_tap_name_and_status(tap.get_id()))
         except IOError as e:
             self.output.append("File not found.")
             return
@@ -512,12 +521,12 @@ class ClearTap(ModelCommand):
         ModelCommand.__init__(self)
     def run(self):
         ModelCommand.run(self)
-        config = self.configManager.get_config()
+        currentTap = self.tapManager.get_current_tap()
+        config = ConfigManager().get_config()
         import e3_model
         tap = e3_model.Tap(config['defaultIsCoverage'], config['defaultIsSiblingDisjointness'], config['defaultRegions'], [], [])
         self.tapManager.set_current_tap(tap)
-        self.tapManager.store_tap(tap)
-        self.output.append("Tap: " + self.tapManager.get_tap_id_and_name_and_status(tap))
+        self.output.append("Tap: " + self.tapManager.get_tap_name_and_status(currentTap.get_id()))
 
 class AddChildren(ModelCommand):
     @copy_args_to_public_fields
@@ -534,6 +543,7 @@ class AddChildren(ModelCommand):
         import e3_validation
         try:
             self.tap.add_children(self.taxonomyId, parts[0], parts[1:])
+            self.tapManager.set_current_tap(self.tap)
         except ValueError as e:
             self.output.append(str(e))
             return
@@ -541,9 +551,7 @@ class AddChildren(ModelCommand):
             self.output.append(str(e))
             return
         
-        self.tapManager.set_current_tap(self.tap)
-        self.tapManager.store_tap(self.tap)
-        self.output.append("Tap: " + self.tapManager.get_tap_id_and_name_and_status(self.tap))
+        self.output.append("Tap: " + self.tapManager.get_tap_name_and_status(self.tap.get_id()))
 
 class RemoveChildren(ModelCommand):
     @copy_args_to_public_fields
@@ -560,6 +568,7 @@ class RemoveChildren(ModelCommand):
         import e3_validation
         try:
             self.tap.remove_children(self.taxonomyId, parts[0], parts[1:], self.recursive)
+            self.tapManager.set_current_tap(self.tap)
         except ValueError as e:
             self.output.append(str(e))
             return
@@ -567,9 +576,7 @@ class RemoveChildren(ModelCommand):
             self.output.append(str(e))
             return
         
-        self.tapManager.set_current_tap(self.tap)
-        self.tapManager.store_tap(self.tap)
-        self.output.append("Tap: " + self.tapManager.get_tap_id_and_name_and_status(self.tap))
+        self.output.append("Tap: " + self.tapManager.get_tap_name_and_status(self.tap.get_id()))
 
 class AddTaxonomy(ModelCommand):
     @copy_args_to_public_fields
@@ -579,11 +586,10 @@ class AddTaxonomy(ModelCommand):
         ModelCommand.run(self)
         if self.tap.has_taxonomy(self.id):
             self.output.append("Taxonomy with id: " + self.id + " already exists")
-        import e3_model
-        taxonomy = self.tap.add_taxonomy(e3_model.Taxonomy(self.id, self.name))
+            
+        self.tap.add_taxonomy(e3_model.Taxonomy(self.id, self.name))
         self.tapManager.set_current_tap(self.tap)
-        self.tapManager.store_tap(self.tap)
-        self.output.append("Tap: " + self.tapManager.get_tap_id_and_name_and_status(self.tap))
+        self.output.append("Tap: " + self.tapManager.get_tap_name_and_status(self.tap.get_id()))
 
 class RemoveTaxonomy(ModelCommand):
     @copy_args_to_public_fields
@@ -594,10 +600,9 @@ class RemoveTaxonomy(ModelCommand):
         if not self.tap.has_taxonomy(self.id):
             self.output.append("Taxonomy with id " + self.id + " does not exist")
             return
-        taxonomy = self.tap.remove_taxonomy(self.id)
+        self.tap.remove_taxonomy(self.id)
         self.tapManager.set_current_tap(self.tap)
-        self.tapManager.store_tap(self.tap)
-        self.output.append("Tap: " + self.tapManager.get_tap_id_and_name_and_status(self.tap))
+        self.output.append("Tap: " + self.tapManager.get_tap_name_and_status(self.tap.get_id()))
             
 class ClearTaxonomy(ModelCommand):
     @copy_args_to_public_fields
@@ -608,10 +613,9 @@ class ClearTaxonomy(ModelCommand):
         if not self.tap.has_taxonomy(self.id):
             self.output.append("Taxonomy with id " + self.id + " does not exist")
             return
-        taxonomy = self.tap.clear_taxonomy(self.id)
+        self.tap.clear_taxonomy(self.id)
         self.tapManager.set_current_tap(self.tap)
-        self.tapManager.store_tap(self.tap)
-        self.output.append("Tap: " + self.tapManager.get_tap_id_and_name_and_status(self.tap))
+        self.output.append("Tap: " + self.tapManager.get_tap_name_and_status(self.tap.get_id()))
                     
 class ClearArticulations(ModelCommand):
     @copy_args_to_public_fields
@@ -621,8 +625,7 @@ class ClearArticulations(ModelCommand):
         ModelCommand.run(self)
         self.tap.articulations = []
         self.tapManager.set_current_tap(self.tap)
-        self.tapManager.store_tap(self.tap)
-        self.output.append("Tap: " + self.tapManager.get_tap_id_and_name_and_status(self.tap))
+        self.output.append("Tap: " + self.tapManager.get_tap_name_and_status(self.tap.get_id()))
             
 class SetTaxonomyInfo(ModelCommand):
     @copy_args_to_public_fields
@@ -632,8 +635,7 @@ class SetTaxonomyInfo(ModelCommand):
         ModelCommand.run(self)
         self.tap.set_taxonomy_info(self.id, self.newId, self.newName)
         self.tapManager.set_current_tap(self.tap)
-        self.tapManager.store_tap(self.tap)
-        self.output.append("Tap: " + self.tapManager.get_tap_id_and_name_and_status(self.tap))
+        self.output.append("Tap: " + self.tapManager.get_tap_name_and_status(self.tap.get_id()))
         
 @logged
 class AddArticulation(ModelCommand):
@@ -650,10 +652,9 @@ class AddArticulation(ModelCommand):
         else:
             import e3_validation
             if e3_validation.ModelValidator().is_valid_new_articulation(articulation, self.tap):
-                self.tap.add_articulation(articulation)        
+                self.tap.add_articulation(articulation)
                 self.tapManager.set_current_tap(self.tap)
-                self.tapManager.store_tap(self.tap)
-                self.output.append("Tap: " + self.tapManager.get_tap_id_and_name_and_status(self.tap))
+                self.output.append("Tap: " + self.tapManager.get_tap_name_and_status(self.tap.get_id()))
             else:
                 self.output.append("This articulation already exists: " + newArticulation)
 
@@ -667,10 +668,10 @@ class RemoveArticulation(ModelCommand):
         if self.articulationIndex > len(self.tap.articulations) or self.articulationIndex < 1:
             self.output.append("This is not a valid index")
             return
+        #self.tapManager.remove_articulation(self.input, self.tap, self.articulationIndex)
         self.tap.remove_articulation(self.articulationIndex)
         self.tapManager.set_current_tap(self.tap)
-        self.tapManager.store_tap(self.tap)
-        self.output.append("Tap: " + self.tapManager.get_tap_id_and_name_and_status(self.tap))
+        self.output.append("Tap: " + self.tapManager.get_tap_name_and_status(self.tap.get_id()))
     
 class UseTap(ModelCommand):
     @copy_args_to_public_fields
@@ -680,7 +681,7 @@ class UseTap(ModelCommand):
         ModelCommand.run(self)
         self.tapManager.set_current_tap(self.tap)
         if self.tap:
-            self.output.append("Tap: " + self.tapManager.get_tap_id_and_name_and_status(self.tap))
+            self.output.append("Tap: " + self.tapManager.get_tap_name_and_status(self.tap.get_id()))
             
 @logged
 class SetCoverage(ModelCommand):
@@ -691,8 +692,7 @@ class SetCoverage(ModelCommand):
         ModelCommand.run(self)
         self.tap.isCoverage = self.value
         self.tapManager.set_current_tap(self.tap)
-        self.tapManager.store_tap(self.tap)
-        self.output.append("Tap: " + self.tapManager.get_tap_id_and_name_and_status(self.tap))
+        self.output.append("Tap: " + self.tapManager.get_tap_name_and_status(self.tap.get_id()))
 
 @logged 
 class SetRegions(ModelCommand):
@@ -704,8 +704,7 @@ class SetRegions(ModelCommand):
         if self.value == "mnpw" or self.value == "mncb" or self.value == "mnve" or self.value == "vrpw" or self.value == "vrve":
             self.tap.regions = self.value
             self.tapManager.set_current_tap(self.tap)
-            self.tapManager.store_tap(self.tap)
-            self.output.append("Tap: " + self.tapManager.get_tap_id_and_name_and_status(self.tap))
+            self.output.append("Tap: " + self.tapManager.get_tap_name_and_status(self.tap.get_id()))
         else:
             self.output.append("This is not a valid region")
 
@@ -718,8 +717,7 @@ class SetSiblingDisjointness(ModelCommand):
         ModelCommand.run(self)
         self.tap.isSiblingDisjointness = self.value
         self.tapManager.set_current_tap(self.tap)
-        self.tapManager.store_tap(self.tap)
-        self.output.append("Tap: " + self.tapManager.get_tap_id_and_name_and_status(self.tap))
+        self.output.append("Tap: " + self.tapManager.get_tap_name_and_status(self.tap.get_id()))
     
 @logged 
 class GraphWorlds(Euler2Command):
@@ -758,8 +756,7 @@ class GraphWorlds(Euler2Command):
                 if openCount < self.maxPossibleWorldsToShow:
                     openCount += 1
                     self.executeOutput.append(self.imageViewer.format(file = file))
-                
-@logged 
+@logged
 class IsConsistent(Euler2Command):
     @copy_args_to_public_fields
     def __init__(self, tap):
@@ -786,12 +783,11 @@ class MoreWorldsThan(Euler2Command):
         Euler2Command.run(self)
         if not self.tap.is_euler_ready():
             self.output.append("The tap is not ready: " + self.tap.get_status_message())
-            return
+            return 0
         
         stdout, stderr, returnCode = self.run_euler(self.alignConsistencyCommand)
         if not self.is_consistent():
             self.output.append("Cannot determine if there are more than {more} worlds. The tap is not consistent".format(more = self.more))
-            return
         
         stdout, stderr, returnCode = self.run_euler(self.alignMaxNCommand)
         possibleWorldsCount = len(self.get_possible_worlds())

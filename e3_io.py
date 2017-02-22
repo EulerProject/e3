@@ -10,6 +10,11 @@ import uuid
 from subprocess import Popen, PIPE, call
 from autologging import logged
 from pinject import copy_args_to_public_fields
+import networkx as nx
+from networkx.readwrite import json_graph
+import json
+from bs4 import BeautifulSoup
+from pygments.styles.paraiso_dark import GREEN
 
 e3Dir = os.path.join(expanduser("~"), ".e3")
 
@@ -38,9 +43,7 @@ def reset():
     ConfigManager().get_config()
     tapManager = TapManager()
     tapManager.load_demo_taps()
-    tap = tapManager.get_default_tap()
-    tapManager.store_tap(tap)
-    tapManager.set_current_tap(tap)
+    tapManager.set_current_tap(tapManager.get_default_tap())
     
 def clear():
     configManager = ConfigManager()
@@ -49,9 +52,7 @@ def clear():
     clean_working_dir()
     tapManager = TapManager()
     tapManager.load_demo_taps()
-    tap = tapManager.get_default_tap()
-    tapManager.store_tap(tap)
-    tapManager.set_current_tap(tap)
+    tapManager.set_current_tap(tapManager.get_default_tap())
     configManager.store_config(config)
     
 def set_git_credencials(host, user, password):
@@ -68,7 +69,7 @@ def set_git_credencials(host, user, password):
             f.write("machine " + host + "\n")
             f.write("login " + user + "\n")
             f.write("password " + password + "\n")
-
+            
 @logged
 class CleantaxReader(object):
     def get_articulation_from_cleantax(self, cleantaxLine):
@@ -169,6 +170,69 @@ class CleantaxReader(object):
         return articulations
 
 class TapManager(object):
+    def get_history_file(self):
+        historyFile = os.path.join(get_e3_dir(), ".history")
+        if not os.path.isfile(historyFile):
+            with open(historyFile, 'w') as f:
+                pass
+        return historyFile
+    def get_named_history(self):
+        with open(self.get_history_file(), 'r') as historyFile:
+            import e3_model
+            try:
+                jsonData = json.load(historyFile)
+                g = json_graph.node_link.node_link_graph(jsonData)
+                
+                namedG = nx.DiGraph()
+                for node in g.nodes(data=True):
+                    name = self.get_tap_name(node[0])
+                    if name is None and "/" in node[0]:
+                        parts = node[0].split("/")
+                        name = self.get_tap_name(parts[0]) + "/" + parts[1]
+                    elif name is None:
+                        name = node[0]
+                    namedG.add_node(name, node[1])
+                for edge in g.edges(data=True):
+                    nameSrc = self.get_tap_name(edge[0])
+                    nameDst = self.get_tap_name(edge[1])
+                    if nameSrc is None and "/" in edge[0]:
+                        parts = edge[0].split("/")
+                        nameSrc = self.get_tap_name(parts[0]) + "/" + parts[1]
+                    elif nameSrc is None:
+                        nameSrc = edge[0]
+                    if nameDst is None and "/" in edge[1]:
+                        parts = edge[1].split("/")
+                        nameDst = self.get_tap_name(parts[0]) + "/" + parts[1]
+                    elif nameDst is None:
+                        nameDst = edge[1]
+                    namedG.add_edge(nameSrc, nameDst, edge[2])
+                return e3_model.History(namedG)
+            except Exception as e:
+                #print str(e)
+                return e3_model.History(None)
+    def get_history(self):
+        with open(self.get_history_file(), 'r') as historyFile:
+            import e3_model
+            try:
+                jsonData = json.load(historyFile)#, cls = HistoryJSONDecoder)
+                g = json_graph.node_link.node_link_graph(jsonData)
+                return e3_model.History(g)
+            except Exception as e:
+                return e3_model.History(None)
+    def store_history(self, history):
+        with open(self.get_history_file(), 'w') as historyFile:
+            jsonData = json_graph.node_link.node_link_data(history.g)
+            import e3_model
+            json.dump(jsonData, historyFile)#, cls = HistoryJSONEncoder)
+    def add_history_edge(self, fromTapId, toTapId, attributesDict):
+        history = self.get_history()
+        history.add_edge(fromTapId, toTapId, attributesDict)
+        self.store_history(history)
+    def add_history_node(self, tapId, attributesDict):
+        history = self.get_history()
+        history.add_node(tapId, attributesDict)
+        self.store_history(history)
+        
     def load_demo_taps(self):
         demosDir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "demos")
         for root, dirs, files in os.walk(demosDir):
@@ -181,15 +245,15 @@ class TapManager(object):
                 if tap:
                     nameTap = e3_command.NameTap(tap, "demo_" + dir)
                     nameTap.run()
-    def get_current_tap_id_and_name(self):
+    def get_current_tap_name(self):
         tap = self.get_current_tap()
-        return self.get_tap_id_and_name(tap.get_id())
+        return self.get_tap_name(tap.get_id())
     
-    def get_current_tap_id_and_name_and_status(self):
+    def get_current_tap_name_and_status(self):
         tap = self.get_current_tap()
-        return self.get_tap_id_and_name_and_status(tap)
+        return self.get_tap_name_and_status(tap.get_id())
     
-    def get_tap_id_and_name(self, tapId):
+    def get_tap_name(self, tapId):
         name = self.get_name(tapId)
         return name
         #if name:
@@ -197,18 +261,20 @@ class TapManager(object):
         #else:
         #    return tapId
     
-    def get_tap_id_and_name_and_status(self, tap):
-        tap_id_and_name = self.get_tap_id_and_name(tap.get_id())
+    def get_tap_name_and_status(self, tapId):
+        tap_name = self.get_tap_name(tapId)
+        tap = self.get_tap(tapId)
         status = tap.get_status_message()
         if status:
-            return tap_id_and_name + " (" + status + ")"
-        return tap_id_and_name
+            return tap_name + " (" + status + ")"
+        return tap_name
     
     def get_current_tap(self):
         with open(self.get_current_tap_file(), 'r') as currentTapFile:
             return self.get_tap(currentTapFile.readline())
         
     def set_current_tap(self, tap):
+        self.store_tap(tap)
         with open(self.get_current_tap_file(), 'w') as currentTapfile:
             currentTapfile.write(tap.get_id())
     
@@ -226,9 +292,9 @@ class TapManager(object):
                 while name in names:
                     name = randomName + "_" + id
                     id = id + 1
-            self.set_name(name, tap)
+            self.set_name(name, tap.get_id())
         
-        tapFile = self.get_tap_file(tap)        
+        tapFile = self.get_tap_file(tap.get_id())
         with open(tapFile, 'w') as f:
             f.write(str(tap.isCoverage) + '\n')
             f.write(str(tap.isSiblingDisjointness) + '\n')
@@ -243,7 +309,7 @@ class TapManager(object):
         self.store_tap_to_cleantax(tap)
 
     def store_tap_to_cleantax(self, tap):
-        cleantaxFile = self.get_cleantax_file(tap)
+        cleantaxFile = self.get_cleantax_file(tap.get_id())
         with open(cleantaxFile, 'w') as f:  
             f.write(tap.get_cleantax())
 
@@ -255,14 +321,20 @@ class TapManager(object):
         import e3_model
         return e3_model.Tap(isCoverage, isSiblingDisjointness, regions, [], [])
             
+    def get_tap_from_id_or_name(self, id_or_name):
+        if self.is_tap_id(id_or_name):
+            return self.get_tap(id_or_name)
+        if self.is_tap_name(id_or_name):
+            id = self.get_tap_id(id_or_name)
+            if id:
+                return self.get_tap(id)
+            
     def get_tap(self, tapId):
         if not tapId or tapId is None:
             return None
-        tapFile = self.get_tap_file_from_id(tapId)
+        tapFile = self.get_tap_file(tapId)
         if not os.path.isfile(tapFile):
-            tap = self.get_default_tap()
-            self.store_tap(tap)
-            return tap
+            return None
         
         cleantax = []
         with open(tapFile, 'r') as f:
@@ -283,48 +355,48 @@ class TapManager(object):
         cleantaxReader = CleantaxReader()
         return cleantaxReader.get_tap_from_cleantax(isCoverage, isSiblingDisjointness, regions, cleantax)
     
-    def get_tap_file_from_id(self, tapId):
+    def get_tap_file(self, tapId):
+        tapDir = self.get_tap_dir(tapId)
+        if tapDir is None:
+            return None
         tap_file = os.path.join(self.get_tap_dir(tapId), ".tap")
-        #if not os.path.isfile(tap_file):
-        #    with open(tap_file, 'w') as f:
-        #        pass
         return tap_file
-    
-    def get_tap_file(self, tap):
-        return self.get_tap_file_from_id(tap.get_id())
-    
-    def get_cleantax_file(self, tap):
-        tap_id_and_name = self.get_tap_id_and_name(tap.get_id()).replace(" ", "")
-        cleantax_file = os.path.join(self.get_taps_dir(), tap_id_and_name, ".cleantax")
+
+    def get_cleantax_file(self, tapId):
+        tap_name = self.get_tap_name(tapId).replace(" ", "")
+        cleantax_file = os.path.join(self.get_taps_dir(), tap_name, ".cleantax")
         if not os.path.isfile(cleantax_file):
             with open(cleantax_file, 'w') as f:
                 pass
         return cleantax_file
     
-    def get_0_input_dir(self, tap):
-        return os.path.join(self.get_taps_dir(), self.get_tap_id_and_name(tap.get_id()).replace(" ", ""), "0-Input")
+    def get_0_input_dir(self, tapId):
+        return os.path.join(self.get_taps_dir(), self.get_tap_name(tapId).replace(" ", ""), "0-Input")
     
-    def get_1_asp_input_dir(self, tap):
-        return os.path.join(self.get_taps_dir(), self.get_tap_id_and_name(tap.get_id()).replace(" ", ""), "1-ASP-input-code")
+    def get_1_asp_input_dir(self, tapId):
+        return os.path.join(self.get_taps_dir(), self.get_tap_name(tapId).replace(" ", ""), "1-ASP-input-code")
     
-    def get_2_asp_output_dir(self, tap):
-        return os.path.join(self.get_taps_dir(), self.get_tap_id_and_name(tap.get_id()).replace(" ", ""), "2-ASP-output")
+    def get_2_asp_output_dir(self, tapId):
+        return os.path.join(self.get_taps_dir(), self.get_tap_name(tapId).replace(" ", ""), "2-ASP-output")
     
-    def get_3_mir_dir(self, tap):
-        return os.path.join(self.get_taps_dir(), self.get_tap_id_and_name(tap.get_id()).replace(" ", ""), "3-MIR")
+    def get_3_mir_dir(self, tapId):
+        return os.path.join(self.get_taps_dir(), self.get_tap_name(tapId).replace(" ", ""), "3-MIR")
     
-    def get_4_pws_dir(self, tap):
-        return os.path.join(self.get_taps_dir(), self.get_tap_id_and_name(tap.get_id()).replace(" ", ""), "4-PWs")
+    def get_4_pws_dir(self, tapId):
+        return os.path.join(self.get_taps_dir(), self.get_tap_name(tapId).replace(" ", ""), "4-PWs")
     
-    def get_5_aggregates_dir(self, tap):
-        return os.path.join(self.get_taps_dir(), self.get_tap_id_and_name(tap.get_id()).replace(" ", ""), "5-Aggregates")
+    def get_5_aggregates_dir(self, tapId):
+        return os.path.join(self.get_taps_dir(), self.get_tap_name(tapId).replace(" ", ""), "5-Aggregates")
     
-    def get_6_lattices_dir(self, tap):
-        return os.path.join(self.get_taps_dir(), self.get_tap_id_and_name(tap.get_id()).replace(" ", ""), "6-Lattices")
+    def get_6_lattices_dir(self, tapId):
+        return os.path.join(self.get_taps_dir(), self.get_tap_name(tapId).replace(" ", ""), "6-Lattices")
     
     def get_tap_dir(self, tapId):
-        tap_id_and_name = self.get_tap_id_and_name(tapId).replace(" ", "")
-        tap_dir = os.path.join(get_e3_dir(), "taps", tap_id_and_name)
+        tap_name = self.get_tap_name(tapId)
+        if tap_name is None:
+            return None
+        tap_name = tap_name.replace(" ", "")
+        tap_dir = os.path.join(get_e3_dir(), "taps", tap_name)
         if not os.path.isdir(tap_dir):
             os.makedirs(tap_dir)
         return tap_dir
@@ -342,12 +414,12 @@ class TapManager(object):
                 pass
         return current_tap_file
     
-    def set_name(self, name, tap):
+    def set_name(self, name, tapId):
         import yaml
-        oldName = self.get_name(tap.get_id())
+        oldName = self.get_name(tapId)
         oldTapDir = None
         if oldName is not None:
-            oldTapDir = self.get_tap_dir(tap.get_id())
+            oldTapDir = self.get_tap_dir(tapId)
         names = { }
         with open(self.get_names_file(), "r") as namesFile:
             doc = yaml.load(namesFile)
@@ -356,12 +428,12 @@ class TapManager(object):
                     names[key] = value
         if oldName in names:
             del names[oldName]
-        names[name] = tap.get_id()
+        names[name] = tapId
         with open(self.get_names_file(), "w") as namesFile:
             yaml.dump(names, namesFile, default_flow_style=False)
         if oldTapDir is not None:
             for filename in os.listdir(oldTapDir):
-                shutil.move(os.path.join(oldTapDir, filename), self.get_tap_dir(tap.get_id()))
+                shutil.move(os.path.join(oldTapDir, filename), self.get_tap_dir(tapId))
             shutil.rmtree(oldTapDir)
     
     def get_names(self):
@@ -376,21 +448,25 @@ class TapManager(object):
     
     def clear_names(self):
         with open(self.get_names_file(), 'w'): pass
-        
-    def get_tap_from_name(self, name):
-        id = self.get_tap_id(name)
-        if id:
-            return self.get_tap(id)
-        return None
     
-    def get_tap_from_id_or_name(self, name_or_id):
-        tap = self.get_tap_from_name(name_or_id)
-        if not tap:
-            tap = self.get_tap(name_or_id)
-        if not tap:
-            return None
+    def is_tap_id(self, tapId):
+        tapFile = self.get_tap_file(tapId)
+        if tapFile is None:
+            return False
+        if os.path.isfile(tapFile):
+            return True
+        return False
+    
+    def is_tap_name(self, name):
+        tapId = self.get_tap_id(name)
+        if tapId is None:
+            return False
         else:
-            return tap
+            tapFile = self.get_tap_file(tapId)
+            if not os.path.isfile(tapFile):
+                return False
+            else:
+                return True
         
     def get_tap_id(self, name):
         import yaml
@@ -402,13 +478,13 @@ class TapManager(object):
                     return doc[name]
         return None
     
-    def get_name(self, id):
+    def get_name(self, tapId):
         import yaml
         with open(self.get_names_file(), 'r') as namesFile:
             doc = yaml.load(namesFile)
             if doc:
                 for key, value in doc.items():
-                    if value == id:
+                    if value == tapId:
                         return key
         return None
     
@@ -540,3 +616,176 @@ class ConfigManager(object):
             with open(config_file, 'w+') as f:
                 pass
         return config_file
+    
+class GraphCreator(object):
+    def create_graph(self, targetDir, templateName, targetName, dataDict):
+        with open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "graphs", templateName + ".html"),"r+") as htmlTemplateFile:
+            htmlTemplate = htmlTemplateFile.read()
+            soup = BeautifulSoup(htmlTemplate, 'lxml')
+            for key in dataDict:
+                dataElement = soup.find(id =key)
+                data = dataDict[key]
+                if data[0] == "json":
+                    dataElement.string = json.dumps(data[1])
+                elif data[0] == "plain":
+                    dataSoup = BeautifulSoup(data[1], 'html.parser')
+                    #x = dataSoup.find("svg")
+                    #if x is not None:
+                    #    x['height'] = "100%"
+                    #    x['width'] = "100%"
+                    dataElement.append(dataSoup)
+            htmlDoc = soup.prettify("utf-8")
+            with open(os.path.join(targetDir, targetName + ".html"), "wb") as file:
+                file.write(htmlDoc)
+    def create_history_graph(self, targetDir):
+        history = TapManager().get_named_history()
+        jsonData = json_graph.node_link.node_link_data(history.g)
+        #jsonData['nodes'] = [
+        #    {
+        #        'id': node['id'],
+        #        'name': node['id'],
+        #        'href': os.path.join(node['id'], "tap.html"),
+        #        'status': TapManager().get_tap_from_id_or_name(node['id']).get_status_message(),
+        #        'size': len(TapManager().get_tap_from_id_or_name(node['id']).articulations)
+        #    }
+        #    for node in jsonData['nodes']]
+        
+        newJsonDataNodes = []
+        for node in jsonData['nodes']:
+            tap = TapManager().get_tap_from_id_or_name(node['id'])
+            statusMessage = ""
+            size = 10
+            if tap is not None:
+                size = len(tap.articulations)
+            if tap is not None and tap.get_status_message() is not None:
+                statusMessage = tap.get_status_message()
+            name = node['id']
+            href = os.path.join(node['id'], "tap.html")
+            color = "blue"
+            if "/" in name:
+                color = "red"
+                tapId = node['id'].split("/")[0]
+                command = node['id'].split("/")[1]
+                href = os.path.join(tapId, "_".join(command.split()), "index.html")
+                #if not os.path.isfile(os.path.join(get_working_dir(), href)):
+                #    href = ""
+                name = node['output']
+            newJsonDataNodes.append(
+                {
+                    'id': node['id'],
+                    'name': name,
+                    'href': href,
+                    'status': statusMessage,
+                    'size': size,
+                    'color': color
+                }
+                )
+        jsonData['nodes'] = newJsonDataNodes
+        #jsonData['links'] = [
+        #    {
+        #        'source': jsonData['nodes'][link['source']]['id'],
+        #        'target': jsonData['nodes'][link['target']]['id'],
+        #        'command': link['command']
+        #    }
+        #    for link in jsonData['links']]
+        self.create_graph(targetDir, "history", "index", { "data" : ("json", jsonData)})
+    def create_runtime_graph(self, targetDir):
+        #create_graph("runtimes")
+        pass
+    def create_taxonomy_graph(self, targetDir):
+        import e3_validation
+        modelValidator = e3_validation.ModelValidator()
+        tap = TapManager().get_current_tap()
+        for taxonomy in tap.taxonomies:
+            if modelValidator.is_tree(taxonomy):
+                pass
+            else:
+                jsonData = json_graph.node_link.node_link_data(taxonomy.g)
+                jsonData['links'] = [
+                    {
+                        'source': jsonData['nodes'][link['source']]['id'],
+                        'target': jsonData['nodes'][link['target']]['id']
+                    }
+                    for link in jsonData['links']]
+                self.create_graph(targetDir, "taxonomy", "taxonomy" + taxonomy.id, { "data" : ("json", jsonData) })
+    def create_tap_graph(self, targetDir):
+        tap = TapManager().get_current_tap()
+        import e3_command
+        graphTap = e3_command.GraphTap(tap)
+        graphTap.run()
+        svg = ""
+        if graphTap.outputFiles:
+            file = graphTap.outputFiles[0]
+            with open(file, 'r') as f:
+                svgFound = False
+                for i, line in enumerate(f):
+                    if svgFound or line.strip().startswith("<svg"):
+                        svgFound = True
+                        svg += line
+        
+        
+        nodeColors = { 0: "red",
+                   1: "blue",
+                   2: "green",
+                   3: "gray",
+                   4: "organge"}
+        relationColors = {  "taxonomy": "black",
+                            "equals": "red",
+                            "includes": "red",
+                            "is_included_in": "red",
+                            "disjoint": "red",
+                            "overlaps": "red" 
+                          }
+        
+        g = nx.DiGraph()
+        
+        i = 0;
+        for taxonomy in tap.taxonomies:
+            #mapping = {}
+            for node in taxonomy.g:
+                g.add_node(taxonomy.id + "." + node, color = nodeColors[i], group = taxonomy.id)
+            for edge in taxonomy.g.edges():
+                relation = "taxonomy"
+                g.add_edge(taxonomy.id + "." + edge[0], taxonomy.id + "." + edge[1], 
+                           color = relationColors[relation], relation = relation)
+            i = i + 1 % len(nodeColors)
+            #for node in taxonomy.g:
+            #    mapping[node] = taxonomy.id + "." + node
+            #copy = nx.relabel_nodes(taxonomy.g ,mapping)
+            #g = nx.compose(g, copy)
+            
+        for articulation in tap.articulations:
+            #for now only these: how to deal with other type of relations?
+            if len(articulation.leftNodes) == 1 and len(articulation.rightNodes) == 1:
+                g.add_edge(articulation.leftNodes[0], articulation.rightNodes[0], color = relationColors[articulation.relation], relation = articulation.relation)
+        jsonData = json_graph.node_link.node_link_data(g)
+        #jsonData['nodes'] = [
+        #    {
+        #        'id': node['id'],
+        #        'name': node['id'],
+        #        'hyperlink': os.path.join("e3_data"
+        #    }
+        #    for node in jsonData['nodes']]
+        #jsonData['links'] = [
+        #    {
+        #        'source': jsonData['nodes'][link['source']]['id'],
+        #        'target': jsonData['nodes'][link['target']]['id'],
+        #        'color': link['color'],
+        #        'relation': link['relation']
+        #    }
+        #    for link in jsonData['links']]
+        
+        dataC = []
+        for node in g:
+            outNeighbors = []
+            for successor in g.successors(node):
+                outNeighbors.append(successor)
+            dataC.append({ 
+                "name" : node ,
+                "outNeighbors" : outNeighbors
+                })
+        
+        self.create_graph(targetDir, "tap", "tap", {    "data" : ("json", jsonData), 
+                                                        "sectionA" : ("plain", svg),
+                                                        "dataC" : ("json", dataC)
+                                                    })
