@@ -45,54 +45,56 @@ class Run(object):
         tapDir = os.path.join(e3DataDir, "_".join(tapId.split()))
         runDir = os.path.join(e3DataDir, "_".join(tapId.split()), "_".join(input.split()))
         
-        runDirOutputFiles = []
-        if command.get_output_files():
-            if not os.path.isdir(runDir):
-                os.makedirs(runDir)
-            with open(os.path.join(tapDir, "input.txt"), 'w+') as i:
-                i.write(tapAfterExecution.get_cleantax())
-            with open(os.path.join(tapDir, "config.txt"), 'w+') as cfg:
-                cfg.write("isCoverage: " + str(tapAfterExecution.isCoverage) + "\n")
-                cfg.write("isSiblingDisjointness: " + str(tapAfterExecution.isSiblingDisjointness) + "\n")
-                cfg.write("regions: " + tapAfterExecution.regions + "\n")
-                cfg.write("\n")
-                yaml.dump(config, cfg, default_flow_style=False)
-                
-            for outputFile in command.get_output_files():
-                newName = input
-                if(len(command.get_output_files()) > 1):
-                    newName = os.path.basename(outputFile)
-                    if ".cleantax" in newName:
-                        newName = newName.replace(".cleantax", input)
-                    else:
-                        newName = input + "_" + newName
-                newName = "_".join(newName.split())
-                if not newName.endswith("." + config['imageFormat']):
-                    newName = newName  + "." + config['imageFormat']
-                newFile = os.path.join(runDir, newName)
-                shutil.copy(outputFile, newFile)
-                runDirOutputFiles.append(newFile)
-                indexHtml = [
-                    "<li><a href=" + os.path.basename(runDirOutputFile) + ">" + os.path.basename(runDirOutputFile) + "</a></br>"
-                    for runDirOutputFile in runDirOutputFiles]
-                with open(os.path.join(runDir, 'index.html'), 'w') as indexFile:
-                    indexFile.write('\n'.join(indexHtml))
-                
-                newExecuteOutput = []
-                for execute in command.get_execute_output():
-                    if outputFile in execute:
-                        execute = execute.replace(outputFile, newFile)
-                    newExecuteOutput.append(execute)
-                command.executeOutput = newExecuteOutput
+        import e3_command
+        if isinstance(command, e3_command.Euler2Command):
+            runDirOutputFiles = []
+            if command.get_output_files():
+                if not os.path.isdir(runDir):
+                    os.makedirs(runDir)
+                with open(os.path.join(runDir, "config.txt"), 'w+') as cfg:
+                    cfg.write("isCoverage: " + str(tapAfterExecution.isCoverage) + "\n")
+                    cfg.write("isSiblingDisjointness: " + str(tapAfterExecution.isSiblingDisjointness) + "\n")
+                    cfg.write("regions: " + tapAfterExecution.regions + "\n")
+                    cfg.write("\n")
+                    yaml.dump(config, cfg, default_flow_style=False)
+                    
+                for outputFile in command.get_output_files():
+                    newName = input
+                    if(len(command.get_output_files()) > 1):
+                        newName = os.path.basename(outputFile)
+                        if ".cleantax" in newName:
+                            newName = newName.replace(".cleantax", input)
+                        else:
+                            newName = input + "_" + newName
+                    newName = "_".join(newName.split())
+                    if not newName.endswith("." + config['imageFormat']):
+                        newName = newName  + "." + config['imageFormat']
+                    newFile = os.path.join(runDir, newName)
+                    shutil.copy(outputFile, newFile)
+                    runDirOutputFiles.append(newFile)
+                    indexHtml = [
+                        "<li><a href=" + os.path.basename(runDirOutputFile) + ">" + os.path.basename(runDirOutputFile) + "</a></br>"
+                        for runDirOutputFile in runDirOutputFiles]
+                    indexHtml.insert(0, "<li><a href=\"config.txt\">config.txt</a></br>")
+                    with open(os.path.join(runDir, 'index.html'), 'w') as indexFile:
+                        indexFile.write('\n'.join(indexHtml))
+                    
+                    newExecuteOutput = []
+                    for execute in command.get_execute_output():
+                        if outputFile in execute:
+                            execute = execute.replace(outputFile, newFile)
+                        newExecuteOutput.append(execute)
+                    command.executeOutput = newExecuteOutput
                 
         import e3_command
         if isinstance(command, e3_command.ModelCommand) or isinstance(command, e3_command.Euler2Command):
             if not os.path.isdir(tapDir):
                 os.makedirs(tapDir)
+            with open(os.path.join(tapDir, "input.txt"), 'w+') as i:
+                i.write(tapAfterExecution.get_cleantax())
+                
             self.graphCreator.create_history_graph(e3DataDir)
-            self.graphCreator.create_taxonomy_graph(tapDir)
             self.graphCreator.create_tap_graph(tapDir)
-            self.graphCreator.create_runtime_graph(e3DataDir)
                     
     def process_execute_result(self, command):
         if command.get_output():

@@ -623,7 +623,7 @@ class GraphCreator(object):
             htmlTemplate = htmlTemplateFile.read()
             soup = BeautifulSoup(htmlTemplate, 'lxml')
             for key in dataDict:
-                dataElement = soup.find(id =key)
+                dataElement = soup.find(id = key)
                 data = dataDict[key]
                 if data[0] == "json":
                     dataElement.string = json.dumps(data[1])
@@ -634,6 +634,8 @@ class GraphCreator(object):
                     #    x['height'] = "100%"
                     #    x['width'] = "100%"
                     dataElement.append(dataSoup)
+                elif data[0] == "insert":
+                    dataElement.insert(0, data[1])
             htmlDoc = soup.prettify("utf-8")
             with open(os.path.join(targetDir, targetName + ".html"), "wb") as file:
                 file.write(htmlDoc)
@@ -689,25 +691,6 @@ class GraphCreator(object):
         #    }
         #    for link in jsonData['links']]
         self.create_graph(targetDir, "history", "index", { "data" : ("json", jsonData)})
-    def create_runtime_graph(self, targetDir):
-        #create_graph("runtimes")
-        pass
-    def create_taxonomy_graph(self, targetDir):
-        import e3_validation
-        modelValidator = e3_validation.ModelValidator()
-        tap = TapManager().get_current_tap()
-        for taxonomy in tap.taxonomies:
-            if modelValidator.is_tree(taxonomy):
-                pass
-            else:
-                jsonData = json_graph.node_link.node_link_data(taxonomy.g)
-                jsonData['links'] = [
-                    {
-                        'source': jsonData['nodes'][link['source']]['id'],
-                        'target': jsonData['nodes'][link['target']]['id']
-                    }
-                    for link in jsonData['links']]
-                self.create_graph(targetDir, "taxonomy", "taxonomy" + taxonomy.id, { "data" : ("json", jsonData) })
     def create_tap_graph(self, targetDir):
         tap = TapManager().get_current_tap()
         import e3_command
@@ -722,58 +705,32 @@ class GraphCreator(object):
                     if svgFound or line.strip().startswith("<svg"):
                         svgFound = True
                         svg += line
-        
-        
-        nodeColors = { 0: "red",
-                   1: "blue",
-                   2: "green",
-                   3: "gray",
-                   4: "organge"}
-        relationColors = {  "taxonomy": "black",
-                            "equals": "red",
-                            "includes": "red",
-                            "is_included_in": "red",
-                            "disjoint": "red",
-                            "overlaps": "red" 
-                          }
-        
-        g = nx.DiGraph()
-        
+                        
+        '''g = nx.MultiDiGraph()
         i = 0;
         for taxonomy in tap.taxonomies:
             #mapping = {}
             for node in taxonomy.g:
-                g.add_node(taxonomy.id + "." + node, color = nodeColors[i], group = taxonomy.id)
+                g.add_node(taxonomy.id + "." + node, group = taxonomy.id) 
+                #color = nodeColors[i]
             for edge in taxonomy.g.edges():
-                relation = "taxonomy"
-                g.add_edge(taxonomy.id + "." + edge[0], taxonomy.id + "." + edge[1], 
-                           color = relationColors[relation], relation = relation)
-            i = i + 1 % len(nodeColors)
-            #for node in taxonomy.g:
-            #    mapping[node] = taxonomy.id + "." + node
-            #copy = nx.relabel_nodes(taxonomy.g ,mapping)
-            #g = nx.compose(g, copy)
-            
-        for articulation in tap.articulations:
+                relation = "taxonomy_outgoing." + taxonomy.id
+                g.add_edge(taxonomy.id + "." + edge[0], taxonomy.id + "." + edge[1], relation = relation)
+                #relation = "taxonomy_incoming." + taxonomy.id
+                #g.add_edge(taxonomy.id + "." + edge[1], taxonomy.id + "." + edge[0], relation = relation)
+        for articulation in tap.articulations:*/
             #for now only these: how to deal with other type of relations?
             if len(articulation.leftNodes) == 1 and len(articulation.rightNodes) == 1:
-                g.add_edge(articulation.leftNodes[0], articulation.rightNodes[0], color = relationColors[articulation.relation], relation = articulation.relation)
+                g.add_edge(articulation.leftNodes[0], articulation.rightNodes[0], relation = articulation.relation)
+                
+                #if articulation.relation  == "equals" or articulation.relation  == "disjoint" or articulation.relation  == "overlaps":
+                #    g.add_edge(articulation.rightNodes[0], articulation.leftNodes[0], relation = articulation.relation)
+                #if articulation.relation == "includes": 
+                #    g.add_edge(articulation.rightNodes[0], articulation.leftNodes[0], relation = "is_included_in")
+                #if articulation.relation == "is_included_in": 
+                #    g.add_edge(articulation.rightNodes[0], articulation.leftNodes[0], relation = "includes")
+        
         jsonData = json_graph.node_link.node_link_data(g)
-        #jsonData['nodes'] = [
-        #    {
-        #        'id': node['id'],
-        #        'name': node['id'],
-        #        'hyperlink': os.path.join("e3_data"
-        #    }
-        #    for node in jsonData['nodes']]
-        #jsonData['links'] = [
-        #    {
-        #        'source': jsonData['nodes'][link['source']]['id'],
-        #        'target': jsonData['nodes'][link['target']]['id'],
-        #        'color': link['color'],
-        #        'relation': link['relation']
-        #    }
-        #    for link in jsonData['links']]
         
         dataC = []
         for node in g:
@@ -787,5 +744,11 @@ class GraphCreator(object):
         
         self.create_graph(targetDir, "tap", "tap", {    "data" : ("json", jsonData), 
                                                         "sectionA" : ("plain", svg),
-                                                        "dataC" : ("json", dataC)
+                                                        "dataC" : ("json", dataC),
+                                                        "sectionF-textarea" : ("insert", tap.get_cleantax())
                                                     })
+        #print jsonData'''
+        self.create_graph(targetDir, "tap", "tap", { 
+                                                    "cleantax-textarea" : ("insert", tap.get_cleantax()), 
+                                                    "visualization" : ("plain", svg)
+                                                     })
