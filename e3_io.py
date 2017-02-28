@@ -62,7 +62,7 @@ def set_git_credencials(host, user, password):
     p = Popen("git config --global user.name \"" + user + "\"", stdout=PIPE, stderr=PIPE, shell=True)
     stdout, stderr = p.communicate()
     
-    config = get_config()
+    config = ConfigManager().get_config()
     netrc_file = os.path.join(get_home_dir(), ".netrc")
     if not os.path.isfile(netrc_file):
         with open(netrc_file, 'w') as f:
