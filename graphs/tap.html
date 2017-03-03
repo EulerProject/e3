@@ -27,11 +27,32 @@ svg { position:fixed; top:0; left:0; height:100%; width:100% }
 			</textarea>
 		</div>
         <div id="visualization" class="tab-pane fade">
+        <button id="zoomin">Zoom in</button>
+        <button id="zoomout">Zoom out</button>
+        <button id="reset">Reset</button>
         </div>
     </div>
 </div>
 <script>
-var graph = d3.select("svg g.graph").call(d3.behavior.zoom().scaleExtent([0.1, 10]).on("zoom", zoom))
+var zoom = d3.behavior.zoom().scaleExtent([0.1, 10]).on("zoom", zoom);
+var graph = d3.select("svg g.graph");
+d3.select("button#reset").on("click", reset);
+//d3.select("button#zoomin").on("click", zoomIn);
+//d3.select("button#zoomout").on("click", zoomOut);
+graph.call(zoom)
+
+//function zoomIn() {
+//	graph.attr("transform", "translate(" + d3.event.translate + ")scale(" + d3.event.scale + ")");
+//}
+
+//function zoomed() {
+// svg.select(".x.axis").call(xAxis);
+//  svg.select(".y.axis").call(yAxis);
+//}
+
+function reset() {
+	graph.attr("transform", "");
+}
 
 function zoom() {
 	graph.attr("transform", "translate(" + d3.event.translate + ")scale(" + d3.event.scale + ")");
