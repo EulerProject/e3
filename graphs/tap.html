@@ -13,6 +13,24 @@
 <style type="text/css">
 html, body { margin:0; padding:0; overflow:hidden }
 svg { position:fixed; top:0; left:0; height:100%; width:100% }
+button#reset {
+  position: absolute;
+  right: 30px;
+  top: 160px;
+  z-index: 99;
+}
+button#zoomin {
+  position: absolute;
+  right: 30px;
+  top: 100px;
+  z-index: 99;
+}
+button#zoomout {
+  position: absolute;
+  right: 30px;
+  top: 130px;
+  z-index: 99;
+}
 </style>
 </head>
 <body>
@@ -37,25 +55,44 @@ svg { position:fixed; top:0; left:0; height:100%; width:100% }
 var zoom = d3.behavior.zoom().scaleExtent([0.1, 10]).on("zoom", zoom);
 var graph = d3.select("svg g.graph");
 d3.select("button#reset").on("click", reset);
-//d3.select("button#zoomin").on("click", zoomIn);
-//d3.select("button#zoomout").on("click", zoomOut);
+d3.select("button#zoomin").on("click", zoomIn);
+d3.select("button#zoomout").on("click", zoomOut);
 graph.call(zoom)
 
-//function zoomIn() {
-//	graph.attr("transform", "translate(" + d3.event.translate + ")scale(" + d3.event.scale + ")");
-//}
+var t = d3.transform(graph.attr("transform")),
+    	initialX = t.translate[0],
+    	initialY = t.translate[1],
+		initialS = t.scale[0];
+		
+function zoomIn() {
+	var t = d3.transform(graph.attr("transform")),
+    	x = t.translate[0],
+    	y = t.translate[1],
+		s = t.scale[0];
+	var newScale = (s + 0.2);
+	zoom.scale(newScale)
+	graph.attr("transform", "translate(" + x + " ," + y + ") scale(" + newScale + ")");
+}
 
-//function zoomed() {
-// svg.select(".x.axis").call(xAxis);
-//  svg.select(".y.axis").call(yAxis);
-//}
+function zoomOut() {
+	var t = d3.transform(graph.attr("transform")),
+    	x = t.translate[0],
+    	y = t.translate[1],
+		s = t.scale[0];
+	var newScale = (s - 0.2);
+	zoom.scale(newScale)
+	graph.attr("transform", "translate(" + x + " ," + y + ") scale(" + newScale + ")");
+}
 
 function reset() {
-	graph.attr("transform", "");
+	initialTranslate = [initialX, initialY];
+	zoom.translate(initialTranslate);
+	zoom.scale(initialS)
+	graph.attr("transform", "translate(" + initialX + " ," + initialY + ") scale(" + initialS + ")");
 }
 
 function zoom() {
-	graph.attr("transform", "translate(" + d3.event.translate + ")scale(" + d3.event.scale + ")");
+	graph.attr("transform", "translate(" + d3.event.translate + ") scale(" + d3.event.scale + ")");
 }
 </script>
 </body>
