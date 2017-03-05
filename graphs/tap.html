@@ -1,99 +1,158 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-<meta charset="utf-8">
-<meta http-equiv="X-UA-Compatible" content="IE=edge">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title id="title"></title>
-<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
-<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap-theme.min.css" integrity="sha384-rHyoN1iRsVXV4nD0JutlnGaslCJuC7uwjduW9SVrLvRYooPp2bWYgmgJQIXwl/Sp" crossorigin="anonymous">
-<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
-<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
-<script src="http://d3js.org/d3.v3.min.js" charset="utf-8"></script>
-<style type="text/css">
-html, body { margin:0; padding:0; overflow:hidden }
-svg { position:fixed; top:0; left:0; height:100%; width:100% }
-button#reset {
-  position: absolute;
-  right: 30px;
-  top: 160px;
-  z-index: 99;
+ <head>
+  <meta charset="utf-8"/>
+  <meta content="IE=edge" http-equiv="X-UA-Compatible"/>
+  <meta content="width=device-width, initial-scale=1" name="viewport"/>
+  <title id="title">
+  </title>
+  <link crossorigin="anonymous" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" rel="stylesheet"/>
+  <link crossorigin="anonymous" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap-theme.min.css" integrity="sha384-rHyoN1iRsVXV4nD0JutlnGaslCJuC7uwjduW9SVrLvRYooPp2bWYgmgJQIXwl/Sp" rel="stylesheet"/>
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js">
+  </script>
+  <script crossorigin="anonymous" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js">
+  </script>
+  <script charset="utf-8" src="http://d3js.org/d3.v3.min.js">
+  </script>
+  <style type="text/css">
+.container {
+	width: initial;
+	padding-right: 0px;
+	padding-left: 0px;
+	margin-left: 0px;
+	margin-right: 0px;
 }
 button#zoomin {
   position: absolute;
   right: 30px;
-  top: 100px;
+  top: 50px;
   z-index: 99;
 }
 button#zoomout {
   position: absolute;
   right: 30px;
-  top: 130px;
+  top: 80px;
+  z-index: 99;
+}	
+button#reset {
+  position: absolute;
+  right: 30px;
+  top: 110px;
   z-index: 99;
 }
-</style>
-</head>
-<body>
-<div class="container">
-    <ul class="nav nav-tabs">
-        <li class="active"><a data-toggle="tab" href="#cleantax">Cleantax</a></li>
-        <li><a data-toggle="tab" href="#visualization">Visualization</a></li>
-    </ul>
-    <div class="tab-content">
-    	<div id="cleantax" class="tab-pane fade in active">
-			<textarea disabled id="cleantax-textarea" class=".form-control" rows="30" cols="100">
-			</textarea>
-		</div>
-        <div id="visualization" class="tab-pane fade">
-        <button id="zoomin">Zoom in</button>
-        <button id="zoomout">Zoom out</button>
-        <button id="reset">Reset</button>
-        </div>
+  </style>
+ </head>
+ <body>
+  <div class="container">
+   <ul class="nav nav-tabs">
+    <li class="active">
+     <a data-toggle="tab" href="#cleantax">
+      Cleantax
+     </a>
+    </li>
+    <li>
+     <a data-toggle="tab" href="#visualization">
+      Visualization
+     </a>
+    </li>
+   </ul>
+   <div class="tab-content">
+    <div class="tab-pane fade in active" id="cleantax">
+     <textarea cols="150" disabled="" id="cleantax-textarea" rows="30"></textarea>
     </div>
-</div>
-<script>
-var zoom = d3.behavior.zoom().scaleExtent([0.1, 10]).on("zoom", zoom);
-var graph = d3.select("svg g.graph");
+    <div class="tab-pane fade" id="visualization">
+     <button id="zoomin">
+      Zoom in
+     </button>
+     <button id="zoomout">
+      Zoom out
+     </button>
+     <button id="reset">
+      Reset
+     </button>
+    </div>
+   </div>
+  </div>
+  <script id="visualization">
+var size = {
+  width: document.body.clientWidth || window.innerWidth,
+  height: document.body.clientHeight || window.innerHeight
+}
+
+var graphG = d3.select("svg g.graph");
+d3.select("svg").remove();
+
+var margin = {top: 0, right: 0, bottom: 0, left: 0},
+    width = size['width'] - margin.left - margin.right,
+    height = size['height'] - 1 - margin.top - margin.bottom;
+
+var x = d3.scale.linear()
+    .domain([-width / 2, width / 2])
+    .range([0, width]);
+
+var y = d3.scale.linear()
+    .domain([-height / 2, height / 2])
+    .range([height, 0]);
+
+var zoom = d3.behavior.zoom()
+    .x(x)
+    .y(y)
+    .scaleExtent([0.1, 32])
+    .on("zoom", zoom);
+
+var svg = d3.select("#visualization").append("svg")
+    .attr("width", width + margin.left + margin.right)
+    .attr("height", height + margin.top + margin.bottom)
+	.append("g")
+    .attr("transform", "translate(" + margin.left + "," + margin.top + ")")
+    .call(zoom)
+	.append(function() {
+		return graphG.node();
+	});
+
+function zoom() {
+	x = d3.event.translate[0]
+	y = d3.event.translate[1]
+    graphG.attr("transform", "translate(" + d3.event.translate + ") scale(" + d3.event.scale + ")");
+}
+
 d3.select("button#reset").on("click", reset);
 d3.select("button#zoomin").on("click", zoomIn);
 d3.select("button#zoomout").on("click", zoomOut);
-graph.call(zoom)
 
-var t = d3.transform(graph.attr("transform")),
+var t = d3.transform(graphG.attr("transform")),
     	initialX = t.translate[0],
     	initialY = t.translate[1],
 		initialS = t.scale[0];
 		
 function zoomIn() {
-	var t = d3.transform(graph.attr("transform")),
+	var t = d3.transform(graphG.attr("transform")),
     	x = t.translate[0],
     	y = t.translate[1],
 		s = t.scale[0];
-	var newScale = (s + 0.2);
+	var newScale = (s + 0.1);
 	zoom.scale(newScale)
-	graph.attr("transform", "translate(" + x + " ," + y + ") scale(" + newScale + ")");
+	graphG.attr("transform", "translate(" + x + " ," + y + ") scale(" + newScale + ")");
 }
 
 function zoomOut() {
-	var t = d3.transform(graph.attr("transform")),
+	var t = d3.transform(graphG.attr("transform")),
     	x = t.translate[0],
     	y = t.translate[1],
 		s = t.scale[0];
-	var newScale = (s - 0.2);
+	var newScale = (s - 0.1);
 	zoom.scale(newScale)
-	graph.attr("transform", "translate(" + x + " ," + y + ") scale(" + newScale + ")");
+	graphG.attr("transform", "translate(" + x + " ," + y + ") scale(" + newScale + ")");
 }
 
 function reset() {
 	initialTranslate = [initialX, initialY];
 	zoom.translate(initialTranslate);
 	zoom.scale(initialS)
-	graph.attr("transform", "translate(" + initialX + " ," + initialY + ") scale(" + initialS + ")");
+	graphG.attr("transform", "translate(" + initialX + " ," + initialY + ") scale(" + initialS + ")");
 }
 
-function zoom() {
-	graph.attr("transform", "translate(" + d3.event.translate + ") scale(" + d3.event.scale + ")");
-}
-</script>
-</body>
+reset(); //removes the random jump after first click issue
+  </script>
+ </body>
 </html>
