@@ -47,9 +47,10 @@ class Run(object):
         tapDir = os.path.join(e3DataDir, "_".join(tapId.split()))
         runDir = os.path.join(e3DataDir, "_".join(tapId.split()), "_".join(input.split()))
         
+        runDirOutputFiles = []
         import e3_command
         if isinstance(command, e3_command.Euler2Command):
-            runDirOutputFiles = []
+            
             if command.get_output_files():
                 if not os.path.isdir(runDir):
                     os.makedirs(runDir)
@@ -97,8 +98,9 @@ class Run(object):
                 
             self.graphCreator.create_history_graph(e3DataDir)
             self.graphCreator.create_tap_graph(tapDir)
+        return runDirOutputFiles
                     
-    def process_execute_result(self, command):
+    def process_execute_result(self, command, runDirOutputFiles):
         if command.get_output():
             for output in command.get_output():
                 print output
@@ -132,7 +134,7 @@ class Run(object):
                 tapAfterExecution = self.tapManager.get_current_tap()
                 self.add_to_history(input, command, tapBeforeExecution, tapAfterExecution)
                 self.projectManager.append_project_history(input, command)
-                self.create_cwd_command_output(input, command, tapAfterExecution)
+                runDirOutputFiles = self.create_cwd_command_output(input, command, tapAfterExecution)
                 self.process_execute_result(command)
             except Exception as e:
                 tb = traceback.format_exc()
