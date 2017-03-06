@@ -149,6 +149,11 @@ class OneShot(Run):
     def run(self):
         input = ' '.join(sys.argv[1:])
         input = input.replace('\\', '')
+        
+        current_tap = self.tapManager.get_current_tap()
+        if current_tap is None:
+            import e3_io
+            e3_io.reset()
         #try:
         command = self.commandProvider.provide(input)
         self.executeCommand(input, command)
