@@ -283,8 +283,6 @@ class TapManager(object):
     def get_current_tap(self):
         with open(self.get_current_tap_file(), 'r') as currentTapFile:
             tap = self.get_tap(currentTapFile.readline())
-            if tap is None:
-                return self.get_default_tap()
             return tap
         
     def set_current_tap(self, tap):
