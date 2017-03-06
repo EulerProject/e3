@@ -14,7 +14,6 @@ import networkx as nx
 from networkx.readwrite import json_graph
 import json
 from bs4 import BeautifulSoup
-from pygments.styles.paraiso_dark import GREEN
 import datetime
 
 e3Dir = os.path.join(expanduser("~"), ".e3")
@@ -608,8 +607,8 @@ class ConfigManager(object):
                     'defaultIsSiblingDisjointness': True,
                     'defaultRegions': 'mnpw',
                     'reasoner': 'dlv',
-                    '.e3gitRepo': '',
-                    'e3DataGitRepo': '',
+                    'cacheGitRepo': '',
+                    'workspaceGitRepo': '',
                     'showOutputFileLocation': False
                     #'gitUser': "",
                     #'gitPassword': ""

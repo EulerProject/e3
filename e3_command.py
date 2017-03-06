@@ -239,7 +239,7 @@ class SetGitCredentials(MiscCommand):
         self.output.append("git credentials set successfully")
 
 @logged
-class GitPullCore(MiscCommand):
+class GitCachePull(MiscCommand):
     @copy_args_to_public_fields
     def __init__(self):
         MiscCommand.__init__(self)
@@ -255,7 +255,7 @@ class GitPullCore(MiscCommand):
             g.pull()
         except git.exc.GitCommandError as e:
             e3_io.clean_e3_dir()
-            g.clone(config['.e3GitRepo'], e3_io.get_e3_dir())
+            g.clone(config['cacheGitRepo'], e3_io.get_e3_dir())
         self.output.append("Pulled successfully")
         self.output.append("Tap: " + self.tapManager.get_current_tap_name_and_status())
         
@@ -276,7 +276,7 @@ class GitPull(MiscCommand):
             g.pull()
         except git.exc.GitCommandError as e:
             e3_io.clean_e3_data_git_dir()
-            g.clone(config['e3DataGitRepo'], e3_io.get_e3_data_git_dir())
+            g.clone(config['workspaceGitRepo'], e3_io.get_e3_data_git_dir())
             
         targetDir = os.path.join(e3_io.get_e3_data_git_dir(), self.name)
         if not os.path.isdir(targetDir):
@@ -305,7 +305,7 @@ class GitPush(MiscCommand):
                 g.status()
             except git.exc.GitCommandError as e:
                 g.init() # can already have a .git folder
-                g.remote("add", "origin", config['e3DataGitRepo']) # can already have an "origin"
+                g.remote("add", "origin", config['workspaceGitRepo']) # can already have an "origin"
             g.pull("origin", "master") # may not be able to if remote is invalid url
             
             targetDir = os.path.join(e3_io.get_e3_data_git_dir(), self.name)
@@ -324,7 +324,7 @@ class GitPush(MiscCommand):
             self.output.append(str(e))
 
 @logged
-class GitPushCore(MiscCommand):
+class GitCachePush(MiscCommand):
     @copy_args_to_public_fields
     def __init__(self, message):
         MiscCommand.__init__(self)
@@ -340,7 +340,7 @@ class GitPushCore(MiscCommand):
                 g.status()
             except git.exc.GitCommandError as e:
                 g.init() # can already have a .git folder
-                g.remote("add", "origin", config['.e3GitRepo']) # can already have an "origin"
+                g.remote("add", "origin", config['cacheGitRepo']) # can already have an "origin"
             g.fetch() # may not be able to if remote is invalid url
             g.add(".")
             try: 

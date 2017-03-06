@@ -192,17 +192,17 @@ class GitPullParser(CommandParser):
         return "git pull\nClones or pulls e3_data from the configured git repository"
 
 @logged               
-class GitPullCoreParser(CommandParser):
+class GitCachePullParser(CommandParser):
     def __init__(self):
-        CommandParser.__init__(self, '^git pull core$')
+        CommandParser.__init__(self, '^git cache pull')
     def get_command(self, input):
         match = self.is_input(input)
         if match:
-            return e3_command.GitPullCore()
+            return e3_command.GitCachePull()
         else:
             raise Exception('Unrecognized command line')
     def get_help(self):
-        return "git pull core\nClones or pulls the .e3 core from the configured git repository"
+        return "git cache pull\nClones or pulls the .e3 cache from the configured git repository"
     
 @logged
 class ShowHistoryParser(CommandParser):
@@ -247,20 +247,20 @@ class GitPushParser(CommandParser):
         return "git push <name> <message>\nCommits and pushes the e3_data to the configured git repository"
 
 @logged               
-class GitPushCoreParser(CommandParser):
+class GitCachePushParser(CommandParser):
     def __init__(self):
-        CommandParser.__init__(self, '^git push core(?: (?P<message>.*))?$')
+        CommandParser.__init__(self, '^git cache push(?: (?P<message>.*))?$')
     def get_command(self, input):
         match = self.is_input(input)
         if match:
             if match.group("message"):
-                return e3_command.GitPushCore(match.group("message"))
+                return e3_command.GitCachePush(match.group("message"))
             else:
-                return e3_command.GitPushCore("e3 git push core") 
+                return e3_command.GitCachePush("e3 git cache push") 
         else:
             raise Exception('Unrecognized command line')
     def get_help(self):
-        return "git push core <message>\nCommits and pushes the .e3 core to the configured git repository"
+        return "git cache push <message>\nCommits and pushes the .e3 cache to the configured git repository"
 
 class LoadTapParser(CommandParser):
     def __init__(self):
@@ -883,8 +883,8 @@ commandParsers = [  ByeParser(),
                     #RemoveProjectHistoryParser(),
                     GitPullParser(),
                     GitPushParser(),
-                    GitPullCoreParser(),
-                    GitPushCoreParser(),
+                    GitCachePullParser(),
+                    GitCachePushParser(),
                     SetGitCredentialsParser(),
                     ShowHistoryParser()
                 ]              
