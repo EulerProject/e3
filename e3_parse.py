@@ -47,7 +47,7 @@ class ClearParser(CommandParser):
         else:
             raise Exception('Unrecognized command line')
     def get_help(self):
-        return "empty\nClears e3 taps"
+        return "empty\nClears the .e3 cache and e3_data workspace"
     
 @logged
 class CreateProjectParser(CommandParser):
@@ -189,7 +189,7 @@ class GitPullParser(CommandParser):
         else:
             raise Exception('Unrecognized command line')
     def get_help(self):
-        return "git pull\nClones or pulls e3_data from the configured git repository"
+        return "git pull\nClones or pulls e3_data workspace from the configured git repository"
 
 @logged               
 class GitCachePullParser(CommandParser):
@@ -244,7 +244,7 @@ class GitPushParser(CommandParser):
         else:
             raise Exception('Unrecognized command line')
     def get_help(self):
-        return "git push <name> <message>\nCommits and pushes the e3_data to the configured git repository"
+        return "git push <name> <message>\nCommits and pushes the e3_data workspace to the configured git repository"
 
 @logged               
 class GitCachePushParser(CommandParser):
