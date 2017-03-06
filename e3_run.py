@@ -12,6 +12,7 @@ import os
 from subprocess import Popen, PIPE, call
 import shutil
 import yaml
+import time
 
 @logged
 class Run(object):
@@ -31,11 +32,11 @@ class Run(object):
             srcNode = tapBeforeExecution.get_id()#e3_model.TapHistoryNode(tapBeforeExecution.get_id(), { })
             dstNode = tapBeforeExecution.get_id() + "/" +input#e3_model.Euler2CommandHistoryNode(tapBeforeExecution.get_id(), input, { "output" : '; '.join(command.get_output()) })
             self.tapManager.add_history_node(dstNode, { "output" : '; '.join(command.get_output()) })
-            self.tapManager.add_history_edge(srcNode, dstNode, { "command" : input, "runtime" : command.runtime })
+            self.tapManager.add_history_edge(srcNode, dstNode, { "command" : input, "startTime": command.startTime, "endTime" : command.endTime })
         if isinstance(command, e3_command.ModelCommand):
             srcNode = tapBeforeExecution.get_id() #e3_model.TapHistoryNode(tapBeforeExecution.get_id(), { })
             dstNode = tapAfterExecution.get_id() #e3_model.TapHistoryNode(tapAfterExecution.get_id(), { })
-            self.tapManager.add_history_edge(srcNode, dstNode, { "command" : input })
+            self.tapManager.add_history_edge(srcNode, dstNode, { "command" : input, "startTime": command.startTime, "endTime" : command.endTime })
             
     def create_cwd_command_output(self, input, command, tapAfterExecution):
         config = self.configManager.get_config()
@@ -72,12 +73,12 @@ class Run(object):
                     newFile = os.path.join(runDir, newName)
                     shutil.copy(outputFile, newFile)
                     runDirOutputFiles.append(newFile)
-                    indexHtml = [
-                        "<li><a href=" + os.path.basename(runDirOutputFile) + ">" + os.path.basename(runDirOutputFile) + "</a></br>"
-                        for runDirOutputFile in runDirOutputFiles]
-                    indexHtml.insert(0, "<li><a href=\"config.txt\">config.txt</a></br>")
-                    with open(os.path.join(runDir, 'index.html'), 'w') as indexFile:
-                        indexFile.write('\n'.join(indexHtml))
+                    #indexHtml = [
+                    #    "<li><a href=" + os.path.basename(runDirOutputFile) + ">" + os.path.basename(runDirOutputFile) + "</a></br>"
+                    #    for runDirOutputFile in runDirOutputFiles]
+                    #indexHtml.insert(0, "<li><a href=\"config.txt\">config.txt</a></br>")
+                    #with open(os.path.join(runDir, 'index.html'), 'w') as indexFile:
+                    #    indexFile.write('\n'.join(indexHtml))
                     
                     newExecuteOutput = []
                     for execute in command.get_execute_output():
@@ -117,16 +118,18 @@ class Run(object):
     
     def executeCommand(self, input, command):
         if command != None:
-            #try:
+            try:
                 tapBeforeExecution = self.tapManager.get_current_tap()
+                command.startTime = time.time()
                 command.run()
+                command.endTime = time.time()
                 tapAfterExecution = self.tapManager.get_current_tap()
                 self.add_to_history(input, command, tapBeforeExecution, tapAfterExecution)
                 self.projectManager.append_project_history(input, command)
                 self.create_cwd_command_output(input, command, tapAfterExecution)
                 self.process_execute_result(command)
-            #except Exception as e:
-            #    print "Something went wrong: " + str(e)
+            except Exception as e:
+               print "Something went wrong: " + str(e)
         else:
             print "Unrecognized command"
     
@@ -134,6 +137,7 @@ class Run(object):
 class OneShot(Run):
     @copy_args_to_public_fields
     def __init__(self, commandProvider):
+        
         Run.__init__(self)
     def run(self):
         input = ' '.join(sys.argv[1:])

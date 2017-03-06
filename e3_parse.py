@@ -181,20 +181,46 @@ class HelpParser(CommandParser):
 @logged               
 class GitPullParser(CommandParser):
     def __init__(self):
-        CommandParser.__init__(self, '^git pull$')
+        CommandParser.__init__(self, '^git pull (?P<name>.+)$')
     def get_command(self, input):
         match = self.is_input(input)
         if match:
-            return e3_command.GitPull()
+            return e3_command.GitPull(match.group("name"))
         else:
             raise Exception('Unrecognized command line')
     def get_help(self):
-        return "git pull\nClones or pulls the e3 state from the configured git repository"
+        return "git pull\nClones or pulls e3_data from the configured git repository"
+
+@logged               
+class GitPullCoreParser(CommandParser):
+    def __init__(self):
+        CommandParser.__init__(self, '^git pull core$')
+    def get_command(self, input):
+        match = self.is_input(input)
+        if match:
+            return e3_command.GitPullCore()
+        else:
+            raise Exception('Unrecognized command line')
+    def get_help(self):
+        return "git pull core\nClones or pulls the .e3 core from the configured git repository"
     
+@logged
+class ShowHistoryParser(CommandParser):
+    def __init__(self):
+        CommandParser.__init__(self, '^show history$')
+    def get_command(self, input):
+        match = self.is_input(input)
+        if match:
+            return e3_command.ShowHistory()
+        else:
+            raise Exception('Unrecognized command line')
+    def get_help(self):
+        return "show history\nShows the html rendered history"
+
 @logged               
 class SetGitCredentialsParser(CommandParser):
     def __init__(self):
-        CommandParser.__init__(self, '^git credentials (.*) (.*) "(.*)"$')
+        CommandParser.__init__(self, '^git credentials (.+) (.+) "(.*)"$')
     def get_command(self, input):
         match = self.is_input(input)
         if match:
@@ -207,18 +233,34 @@ class SetGitCredentialsParser(CommandParser):
 @logged               
 class GitPushParser(CommandParser):
     def __init__(self):
-        CommandParser.__init__(self, '^git push( (.*))?$')
+        CommandParser.__init__(self, '^git push (?P<name>.+)(?: (?P<message>.*))?$')
     def get_command(self, input):
         match = self.is_input(input)
         if match:
-            if match.group(1)and match.group(2):
-                return e3_command.GitPush(match.group(2))
+            if match.group("name") and match.group("message"):
+                return e3_command.GitPush(match.group("name"), match.group("message"))
             else:
-                return e3_command.GitPush("e3 git push") 
+                return e3_command.GitPush(match.group("name"), "e3 git push") 
         else:
             raise Exception('Unrecognized command line')
     def get_help(self):
-        return "git push <message>\nCommits and pushes the e3 state to the configured git repository"
+        return "git push <name> <message>\nCommits and pushes the e3_data to the configured git repository"
+
+@logged               
+class GitPushCoreParser(CommandParser):
+    def __init__(self):
+        CommandParser.__init__(self, '^git push core(?: (?P<message>.*))?$')
+    def get_command(self, input):
+        match = self.is_input(input)
+        if match:
+            if match.group("message"):
+                return e3_command.GitPushCore(match.group("message"))
+            else:
+                return e3_command.GitPushCore("e3 git push core") 
+        else:
+            raise Exception('Unrecognized command line')
+    def get_help(self):
+        return "git push core <message>\nCommits and pushes the .e3 core to the configured git repository"
 
 class LoadTapParser(CommandParser):
     def __init__(self):
@@ -831,17 +873,20 @@ commandParsers = [  ByeParser(),
                     GraphInconsistencyParser(),
                     GraphAmbiguityParser(),
                     PrintFixParser(),
-                    CreateProjectParser(),
-                    PrintProjectsParser(),
-                    OpenProjectParser(),
-                    CloseProjectParser(),
-                    RemoveProjectParser(),
-                    ClearProjectsParser(),
-                    PrintProjectHistoryParser(),
-                    RemoveProjectHistoryParser(),
+                    #CreateProjectParser(),
+                    #PrintProjectsParser(),
+                    #OpenProjectParser(),
+                    #CloseProjectParser(),
+                    #RemoveProjectParser(),
+                    #ClearProjectsParser(),
+                    #PrintProjectHistoryParser(),
+                    #RemoveProjectHistoryParser(),
                     GitPullParser(),
                     GitPushParser(),
-                    SetGitCredentialsParser()
+                    GitPullCoreParser(),
+                    GitPushCoreParser(),
+                    SetGitCredentialsParser(),
+                    ShowHistoryParser()
                 ]              
                                                 
 class CommandProvider(object):

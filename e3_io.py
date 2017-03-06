@@ -15,6 +15,7 @@ from networkx.readwrite import json_graph
 import json
 from bs4 import BeautifulSoup
 from pygments.styles.paraiso_dark import GREEN
+import datetime
 
 e3Dir = os.path.join(expanduser("~"), ".e3")
 
@@ -22,6 +23,14 @@ def get_e3_dir():
     if not os.path.isdir(e3Dir):
         os.makedirs(e3Dir)
     return e3Dir
+
+def get_e3_data_git_dir():
+    e3Dir = get_e3_dir()
+    e3DataGitDir = os.path.join(e3Dir, "e3_data_git")
+    if not os.path.isdir(e3DataGitDir):
+        os.makedirs(e3DataGitDir)
+    return e3DataGitDir
+    
 
 def get_working_dir():
     return os.path.join(os.getcwd(), "e3_data")
@@ -31,6 +40,9 @@ def get_home_dir():
 
 def clean_e3_dir():
     shutil.rmtree(get_e3_dir())
+
+def clean_e3_data_git_dir():
+    shutil.rmtree(get_e3_data_git_dir())
     
 def clean_working_dir():
     workingDir = get_working_dir()
@@ -588,6 +600,7 @@ class ConfigManager(object):
         defaultConfig = {
                     'euler2Executable': 'euler2', #os.path.join(get_home_dir(), 'git', 'EulerX'),
                     'imageViewer': 'xdg-open {file}',
+                    'htmlViewer': 'xdg-open {file}',
                     'maxPossibleWorldsToShow': 5,
                     'imageFormat': 'svg',
                     'repairMethod': 'topdown',
@@ -595,7 +608,8 @@ class ConfigManager(object):
                     'defaultIsSiblingDisjointness': True,
                     'defaultRegions': 'mnpw',
                     'reasoner': 'dlv',
-                    'gitRepository': "https://github.com/rodenhausen/my_e3_env.git",
+                    '.e3gitRepo': '',
+                    'e3DataGitRepo': '',
                     'showOutputFileLocation': False
                     #'gitUser': "",
                     #'gitPassword': ""
@@ -642,6 +656,141 @@ class GraphCreator(object):
     def create_history_graph(self, targetDir):
         history = TapManager().get_named_history()
         jsonData = json_graph.node_link.node_link_data(history.g)
+        
+        data = {}
+        data['name'] = "history"
+        data['children'] = []
+        
+        #for node in jsonData['nodes']:
+        #    newJsonDataNodes.append(node)
+        
+        import e3_parse
+        commandProvider = e3_parse.CommandProvider()
+        jsonData['link'] = jsonData['links'].sort(key=lambda l: l['startTime'], reverse=False)
+        lastTapNode = None
+        e3DataDir = get_working_dir()
+        for link in jsonData['links']:
+            link['source'] = jsonData['nodes'][link['source']]
+            link['target'] = jsonData['nodes'][link['target']]
+            command = commandProvider.provide(link['command'])
+            startTime = datetime.datetime.utcfromtimestamp(link['startTime']).strftime('%m/%d/%Y %H:%M:%S')
+            endTime = datetime.datetime.utcfromtimestamp(link['endTime']).strftime('%m/%d/%Y %H:%M:%S')
+            runTime =  str(round(link['endTime'] - link['startTime'], 2)) + " sec."
+            
+            #if isinstance(command, Euler2Command):
+            #    child = {}
+            #    child['name'] = link['command']
+            #    child['children'] = []
+            #    data['children'].append(child)
+            if lastTapNode is None:
+                sourceNode = {}
+                sourceNode['name'] = link['source']['id']
+                sourceNode['type'] = "tap"
+                sourceNode['href'] = os.path.join("_".join(sourceNode['name'].split()), "index.html")
+                sourceNode['children'] = []
+                data['children'].append(sourceNode)
+                lastTapNode = sourceNode
+                
+            import e3_command
+            if isinstance(command, e3_command.ModelCommand):
+                commandNode = {}
+                commandNode['name'] = link['command']
+                commandNode['type'] = "modelCommand"
+                commandNode['startTime'] = startTime
+                commandNode['endTime'] = endTime
+                commandNode['runTime'] = runTime
+                commandNode['children'] = []
+                lastTapNode['children'].append(commandNode)
+                
+                targetNode = {}
+                targetNode['name'] = link['target']['id']
+                targetNode['type'] = "tap"
+                targetNode['href'] = os.path.join("_".join(targetNode['name'].split()), "index.html")
+                targetNode['children'] = []
+                data['children'].append(targetNode)
+                lastTapNode = targetNode
+                
+            if isinstance(command, e3_command.Euler2Command):
+                commandNode = {}
+                commandNode['name'] = link['command']
+                commandNode['type'] = "euler2Command"
+                commandNode['startTime'] = startTime
+                commandNode['endTime'] = endTime
+                commandNode['runTime'] = runTime
+                commandNode['children'] = []
+                lastTapNode['children'].append(commandNode)
+                
+                targetNode = {}
+                targetNode['name'] = link['target']['output']
+                targetNode['type'] = "commandOutput"
+                targetNode['children'] = []
+                runDir = os.path.join(e3DataDir, "_".join(lastTapNode['name'].split()), "_".join(link['command'].split()))
+                relativeRunDir = os.path.join("_".join(lastTapNode['name'].split()), "_".join(link['command'].split()))
+                
+                if os.path.isdir(runDir):
+                    files = os.listdir(runDir)
+                    files = sorted(files)#.sort(key=lambda f: os.path.basename(f), reverse=True)
+                    for filename in files:
+                        file = os.path.join(relativeRunDir, filename)
+                        outputNode = {}
+                        outputNode['name'] = filename
+                        outputNode['type'] = "commandOutputFile"
+                        outputNode['href'] = file
+                        outputNode['children'] = []
+                        targetNode['children'].append(outputNode)
+                commandNode['children'].append(targetNode)
+                
+            if isinstance(command, e3_command.MiscCommand):
+                commandNode = {}
+                commandNode['name'] = link['command']
+                commandNode['type'] = link['miscCommand']
+                commandNode['startTime'] = startTime
+                commandNode['endTime'] = endTime
+                commandNode['runTime'] = runTime
+                commandNode['children'] = []
+                lastTapNode['children'].append(commandNode)
+                
+                targetNode = {}
+                targetNode['name'] = link['target']['output']
+                commandNode['type'] = link['commandOutput']
+                targetNode['children'] = []
+                commandNode['children'].append(targetNode)
+                
+        return self.create_graph(targetDir, "history", "index", {   "title" : ("plain", "e3 history"), 
+                                                                    "data" : ("json", data)})
+    
+        '''for node in jsonData['nodes']:
+            tap = TapManager().get_tap_from_id_or_name(node['id'])
+            statusMessage = ""
+            size = 10
+            if tap is not None:
+                size = len(tap.articulations)
+            if tap is not None and tap.get_status_message() is not None:
+                statusMessage = tap.get_status_message()
+            name = node['id']
+            href = os.path.join(node['id'], "tap.html")
+            color = "blue"
+            if "/" in name:
+                color = "red"
+                tapId = node['id'].split("/")[0]
+                command = node['id'].split("/")[1]
+                href = os.path.join(tapId, "_".join(command.split()), "index.html")
+                #if not os.path.isfile(os.path.join(get_working_dir(), href)):
+                #    href = ""
+                name = node['output']
+            newJsonDataNodes.append(
+                {
+                    'id': node['id'],
+                    'name': name,
+                    'href': href,
+                    'status': statusMessage,
+                    'size': size,
+                    'color': color
+                }
+                )'''
+        #jsonData['nodes'] = newJsonDataNodes
+        
+        
         #jsonData['nodes'] = [
         #    {
         #        'id': node['id'],
@@ -652,7 +801,7 @@ class GraphCreator(object):
         #    }
         #    for node in jsonData['nodes']]
         
-        newJsonDataNodes = []
+        '''newJsonDataNodes = []
         for node in jsonData['nodes']:
             tap = TapManager().get_tap_from_id_or_name(node['id'])
             statusMessage = ""
@@ -690,23 +839,15 @@ class GraphCreator(object):
         #        'command': link['command']
         #    }
         #    for link in jsonData['links']]
-        self.create_graph(targetDir, "history", "index", { "data" : ("json", jsonData)})
+        self.create_graph(targetDir, "history", "index", { "data" : ("json", jsonData)})'''
     def create_tap_graph(self, targetDir):
         tap = TapManager().get_current_tap()
-        import e3_command
-        graphTap = e3_command.GraphTap(tap)
-        graphTap.run()
-        svg = ""
-        if graphTap.outputFiles:
-            file = graphTap.outputFiles[0]
-            with open(file, 'r') as f:
-                svgFound = False
-                for i, line in enumerate(f):
-                    if svgFound or line.strip().startswith("<svg"):
-                        svgFound = True
-                        svg += line
+        tapName = TapManager().get_tap_name(tap.get_id())
+        
                         
-        '''g = nx.MultiDiGraph()
+        '''               
+        #create dataAdjacency
+        g = nx.MultiDiGraph()
         i = 0;
         for taxonomy in tap.taxonomies:
             #mapping = {}
@@ -748,7 +889,49 @@ class GraphCreator(object):
                                                         "sectionF-textarea" : ("insert", tap.get_cleantax())
                                                     })
         #print jsonData'''
-        self.create_graph(targetDir, "tap", "tap", { 
+        self.create_graph(targetDir, "tap", "index", { 
+                                                    "title" : ("plain", "Tap: " + tapName),
                                                     "cleantax-textarea" : ("insert", tap.get_cleantax()), 
-                                                    "visualization" : ("plain", svg)
+                                                    "visualization" : ("plain", self.create_visualization_data(tap)),
+                                                    "dataAdjacency" : ("json", self.create_adjacency_data(tap)),
                                                      })
+        
+    def create_visualization_data(self, tap):
+        import e3_command
+        graphTap = e3_command.GraphTap(tap)
+        graphTap.run()
+        svg = ""
+        if graphTap.outputFiles:
+            file = graphTap.outputFiles[0]
+            with open(file, 'r') as f:
+                svgFound = False
+                for i, line in enumerate(f):
+                    if svgFound or line.strip().startswith("<svg"):
+                        svgFound = True
+                        svg += line
+        return svg
+        
+    def create_adjacency_data(self, tap):
+        g = nx.MultiDiGraph()
+        i = 0;
+        for taxonomy in tap.taxonomies:
+            for node in taxonomy.g:
+                g.add_node(taxonomy.id + "." + node, group = taxonomy.id) 
+            for edge in taxonomy.g.edges():
+                relation = "taxonomy_outgoing." + taxonomy.id
+                g.add_edge(taxonomy.id + "." + edge[0], taxonomy.id + "." + edge[1], relation = relation)
+                relation = "taxonomy_incoming." + taxonomy.id
+                g.add_edge(taxonomy.id + "." + edge[1], taxonomy.id + "." + edge[0], relation = relation)
+        for articulation in tap.articulations:
+            #for now only these: how to deal with other type of relations?
+            if len(articulation.leftNodes) == 1 and len(articulation.rightNodes) == 1:
+                g.add_edge(articulation.leftNodes[0], articulation.rightNodes[0], relation = articulation.relation)
+                
+                if articulation.relation  == "equals" or articulation.relation  == "disjoint" or articulation.relation  == "overlaps":
+                    g.add_edge(articulation.rightNodes[0], articulation.leftNodes[0], relation = articulation.relation)
+                if articulation.relation == "includes": 
+                    g.add_edge(articulation.rightNodes[0], articulation.leftNodes[0], relation = "is_included_in")
+                if articulation.relation == "is_included_in": 
+                    g.add_edge(articulation.rightNodes[0], articulation.leftNodes[0], relation = "includes")
+        
+        return json_graph.node_link.node_link_data(g)

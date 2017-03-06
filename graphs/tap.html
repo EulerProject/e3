@@ -14,6 +14,7 @@
   </script>
   <script charset="utf-8" src="http://d3js.org/d3.v3.min.js">
   </script>
+  <script type="text/json" id="dataAdjacency"></script>
   <style type="text/css">
 .container {
 	width: initial;
@@ -22,19 +23,46 @@
 	margin-left: 0px;
 	margin-right: 0px;
 }
-button#zoomin {
+div#visualization button#zoomin {
   position: absolute;
   right: 30px;
   top: 50px;
   z-index: 99;
 }
-button#zoomout {
+div#visualization button#zoomout {
   position: absolute;
   right: 30px;
   top: 80px;
   z-index: 99;
 }	
-button#reset {
+div#visualization button#reset {
+  position: absolute;
+  right: 30px;
+  top: 110px;
+  z-index: 99;
+}
+
+div#adjacency text.activeLegend {
+  fill: red;
+  font-weight: bold;
+}
+div#adjacency text.activeTick {
+   fill: red;
+   font-weight: bold;
+}
+div#adjacency button#zoomin {
+  position: absolute;
+  right: 30px;
+  top: 50px;
+  z-index: 99;
+}
+div#adjacency button#zoomout {
+  position: absolute;
+  right: 30px;
+  top: 80px;
+  z-index: 99;
+}	
+div#adjacency button#reset {
   position: absolute;
   right: 30px;
   top: 110px;
@@ -55,6 +83,11 @@ button#reset {
       Visualization
      </a>
     </li>
+    <li>
+     <a data-toggle="tab" href="#adjacency">
+      Adjacency
+     </a>
+    </li>
    </ul>
    <div class="tab-content">
     <div class="tab-pane fade in active" id="cleantax">
@@ -71,16 +104,28 @@ button#reset {
       Reset
      </button>
     </div>
+    <div class="tab-pane fade" id="adjacency">
+     <button id="zoomin">
+      Zoom in
+     </button>
+     <button id="zoomout">
+      Zoom out
+     </button>
+     <button id="reset">
+      Reset
+     </button>
+    </div>
    </div>
   </div>
   <script id="visualization">
-var size = {
+   var size = {
   width: document.body.clientWidth || window.innerWidth,
   height: document.body.clientHeight || window.innerHeight
 }
 
-var graphG = d3.select("svg g.graph");
-d3.select("svg").remove();
+var oldSvg = d3.select("div#visualization svg")
+var graphG = d3.select("div#visualization svg g.graph");
+oldSvg.remove();
 
 var margin = {top: 0, right: 0, bottom: 0, left: 0},
     width = size['width'] - margin.left - margin.right,
@@ -116,14 +161,18 @@ function zoom() {
     graphG.attr("transform", "translate(" + d3.event.translate + ") scale(" + d3.event.scale + ")");
 }
 
-d3.select("button#reset").on("click", reset);
-d3.select("button#zoomin").on("click", zoomIn);
-d3.select("button#zoomout").on("click", zoomOut);
 
+d3.select("div#visualization button#reset").on("click", reset);
+d3.select("div#visualization button#zoomin").on("click", zoomIn);
+d3.select("div#visualization button#zoomout").on("click", zoomOut);
+
+var originalWidth = Number(oldSvg.attr("width").slice(0, -2));
+var originalHeight = Number(oldSvg.attr("width").slice(0, -2));
+initialScale = Math.min(width/originalWidth, height/originalHeight) * 0.7
 var t = d3.transform(graphG.attr("transform")),
-    	initialX = t.translate[0],
-    	initialY = t.translate[1],
-		initialS = t.scale[0];
+    	initialX = (size['width'] - (initialScale * originalWidth))/2, //t.translate[0],
+    	initialY = size['height'] * 0.8, //t.translate[1],
+		initialS = initialScale; //t.scale[0];
 		
 function zoomIn() {
 	var t = d3.transform(graphG.attr("transform")),
@@ -150,6 +199,265 @@ function reset() {
 	zoom.translate(initialTranslate);
 	zoom.scale(initialS)
 	graphG.attr("transform", "translate(" + initialX + " ," + initialY + ") scale(" + initialS + ")");
+}
+
+reset(); //removes the random jump after first click issue
+  </script>
+  <script id="adjacency">
+   var size = {
+  width: document.body.clientWidth || window.innerWidth,
+  height: document.body.clientHeight || window.innerHeight
+}
+
+var margin = {top: 0, right: 0, bottom: 0, left: 0},
+    width = size['width'] - margin.left - margin.right,
+    height = size['height'] - 1 - margin.top - margin.bottom;
+
+var x = d3.scale.linear()
+    .domain([-width / 2, width / 2])
+    .range([0, width]);
+
+var y = d3.scale.linear()
+    .domain([-height / 2, height / 2])
+    .range([height, 0]);
+
+var zoom = d3.behavior.zoom()
+    .x(x)
+    .y(y)
+    .scaleExtent([0.1, 32])
+    .on("zoom", zoom);
+
+var canvas = d3.select("#adjacency").append("svg")
+    .attr("width", width + margin.left + margin.right)
+    .attr("height", height + margin.top + margin.bottom)
+	.append("g")
+    .attr("transform", "translate(" + margin.left + "," + margin.top + ")")
+    .call(zoom);
+
+var content = canvas.append("g");
+	
+var cellWidth = 25;
+
+var data = JSON.parse(document.getElementById('dataAdjacency').innerHTML);
+
+//sort nodes
+for (i in data['links']) {
+	l = data['links'][i];
+	l.source = data['nodes'][l.source].id
+	l.target = data['nodes'][l.target].id
+}
+data['nodes'] = data['nodes'].sort(function(a, b) { 
+									return d3.ascending(a.id, b.id); 
+								});
+//sort links for legend
+data['links'] = data['links'].sort(function(a, b) { 
+								return d3.ascending(a.relation, b.relation); 
+							});
+for (i in data['links']) {
+	l = data['links'][i];
+	l.source = data['nodes'].map(function (n) {
+									return n.id;
+								}).indexOf(l.source)
+	l.target = data['nodes'].map(function (n) {
+									return n.id;
+								}).indexOf(l.target)
+}
+
+var linksMap = { };
+for (i in data['links']) {
+	var l = data['links'][i];
+	linksMap[l.source + ";" + l.target] = l;
+}
+var cells = [];
+for (i in data['nodes']) {
+	for (j in data['nodes']) {
+		var id = i + ";" + j;
+		cells.push({ 
+					id: id,
+					source: i, 
+					target: j, 
+					relation: id in linksMap ? linksMap[id].relation : ""
+				});
+	}
+}
+c20 = d3.scale.category20();
+colorIndex = 0;
+var colors = { 
+		"" : "white",
+		"equals" : c20(colorIndex++),
+		"disjoint" : c20(colorIndex++),
+		"includes" : c20(colorIndex++),
+		"is_included_in" : c20(colorIndex++),
+		"overlaps" : c20(colorIndex++)
+}
+for (i in data['links']) {
+	var l = data['links'][i];
+	if (!(l.relation in colors)) {
+		colors[l.relation] = c20(colorIndex);
+		colorIndex = (colorIndex + 1) % 20;
+	}
+	cells.push({ 
+				id: l.source + ";" + l.target, 
+				source: l.source, 
+				target: l.target, 
+				relation: l.relation 
+			});
+}
+
+var x = d3.scale.linear()
+	.domain([-width / 2, width / 2])
+	.range([0, width]);
+
+var y = d3.scale.linear()
+	.domain([-height / 2, height / 2])
+	.range([height, 0]);
+
+adjacencyView = content.append("g")
+	      .attr("transform", "translate(90,90)");
+	    adjacencyView.selectAll("rect")
+	      .data(cells)
+	      .enter()
+	      .append("rect")
+	      .attr("width", cellWidth)
+	      .attr("height", cellWidth)
+	      .attr("x", function (d) {return d.target * cellWidth})
+	      .attr("y", function (d) {return d.source * cellWidth})
+	      .style("fill", function(d) { return colors[d.relation]; })
+	      .style("stroke", "gray")
+	      .on("mouseover", mouseover)
+		  .on("mouseout", mouseout);
+		
+var matrixScale = d3.scale.ordinal()
+					.domain(data['nodes'].map(function (n) {
+										return n.id
+									}))
+					.rangePoints([0, data['nodes'].length * cellWidth], 1);
+					
+/*tickValues = []
+for (i = 0; i < data['nodes'].length - 2; i++) { 
+	tickValues.push(i * cellWidth + 0.5 * cellWidth)
+}*/
+/*for (i in data['nodes']) {
+	console.log(i);
+	console.log(i * cellWidth);
+	console.log(i * cellWidth - 0.5 * cellWidth);
+	tickValues.push(i * cellWidth - 0.5 * cellWidth)
+	
+}
+console.log(tickValues);*/
+xAxis = d3.svg.axis()
+			.scale(matrixScale)
+			//.tickValues(tickValues)
+			.orient("top")
+			.tickSize(0); 
+yAxis = d3.svg.axis()
+			.scale(matrixScale)
+			//.tickValues(tickValues)
+			.orient("left")
+			.tickSize(0);    
+adjacencyView.append("g")
+			.call(xAxis)
+			.selectAll("text")
+			.style("text-anchor", "end")
+			.attr("transform", "translate(-8,-10) rotate(90)");
+adjacencyView.append("g")
+			.call(yAxis)
+			//.attr("transform", "translate(-10, -10)");
+  
+function mouseover(d, i) {
+	d3.selectAll("div#adjacency rect")
+		/*.style("stroke", function(o) {
+			return (o.source == d.source || o.target == d.target) ? "black" : "gray";
+		})*/
+		.style("stroke-width", function(o) {
+			return (o.source == d.source || o.target == d.target) ? "3px" : "1px";
+		});
+	d3.selectAll("div#adjacency legend g text").classed("activeLegend", function(c, i) { 
+												return c == d.relation
+											});
+	d3.selectAll("div#adjacency g.tick text").classed("activeTick", function(c, i) {
+												return data['nodes'][d.source].id == c || data['nodes'][d.target].id == c;
+											});
+}
+
+function mouseout() {
+	d3.selectAll("div#adjacency rect").style("stroke-width", "1px");
+	d3.selectAll("div#adjacency legend g text").classed("activeLegend", false);
+	d3.selectAll("div#adjacency g.tick text").classed("activeTick", false);
+}
+
+content.append("g").append("text").text("From").style("font-weight", "bold").attr("transform", "translate(5, 75)");
+content.append("g").append("text").text("To").style("font-weight", "bold").attr("transform", "translate(60, 30)");
+
+legend = []
+for (c in colors) {
+	if (c != "") { 
+		legend.push(c);
+	}
+}
+adjacencyViewLegend = content.append("g")
+	.attr("transform", "translate(" + ((data['nodes'].length * cellWidth) + 150) + ", 80)")
+	.attr("id", "legend");
+legendGs = adjacencyViewLegend.selectAll("g")
+  .data(legend);
+legendG = legendGs.enter()
+  .append("g")
+legendG.append("rect")
+  .attr("width", cellWidth)
+  .attr("height", cellWidth)
+  .attr("x", function (d, i) {return 0; })
+  .attr("y", function (d, i) {return i * cellWidth})
+  .style("fill", function(d) { return colors[d]; })
+  .style("stroke", "gray");
+legendG.append("text")
+  .text(function(d) { return d; })
+  .attr("x", function (d, i) { return 40; })
+  .attr("y", function (d, i) { return (i * (cellWidth)) + 18; });	
+
+function zoom() {
+	x = d3.event.translate[0]
+	y = d3.event.translate[1]
+    content.attr("transform", "translate(" + d3.event.translate + ") scale(" + d3.event.scale + ")");
+}
+
+d3.select("div#adjacency button#reset").on("click", reset);
+d3.select("div#adjacency button#zoomin").on("click", zoomIn);
+d3.select("div#adjacency button#zoomout").on("click", zoomOut);
+
+
+var originalWidth = data['nodes'].length * cellWidth + 100;
+var originalHeight = data['nodes'].length * cellWidth + 100;
+initialScale = Math.min(width/originalWidth, height/originalHeight) * 0.7
+var t = d3.transform(graphG.attr("transform")),
+    	initialX = (size['width'] - (initialScale * originalWidth))/2, //t.translate[0],
+    	initialY = 20, //t.translate[1],
+		initialS = initialScale; //t.scale[0];
+
+function zoomIn() {
+	var t = d3.transform(content.attr("transform")),
+    	x = t.translate[0],
+    	y = t.translate[1],
+		s = t.scale[0];
+	var newScale = (s + 0.1);
+	zoom.scale(newScale)
+	content.attr("transform", "translate(" + x + " ," + y + ") scale(" + newScale + ")");
+}
+
+function zoomOut() {
+	var t = d3.transform(content.attr("transform")),
+    	x = t.translate[0],
+    	y = t.translate[1],
+		s = t.scale[0];
+	var newScale = (s - 0.1);
+	zoom.scale(newScale)
+	content.attr("transform", "translate(" + x + " ," + y + ") scale(" + newScale + ")");
+}
+
+function reset() {
+	initialTranslate = [initialX, initialY];
+	zoom.translate(initialTranslate);
+	zoom.scale(initialS)
+	content.attr("transform", "translate(" + initialX + " ," + initialY + ") scale(" + initialS + ")");
 }
 
 reset(); //removes the random jump after first click issue

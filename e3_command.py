@@ -5,7 +5,7 @@ from autologging import logged
 from pinject import copy_args_to_public_fields
 from subprocess import Popen, PIPE, call
 import os
-import time
+import shutil
 
 @logged
 class Command(object):
@@ -18,7 +18,8 @@ class Command(object):
         self.output = []
         self.outputFiles = []
         self.executeOutput = []
-        self.runtime = 0
+        self.startTime = None
+        self.endTime = None
         pass
     def run(self):
         self.__log.debug("run %s" % self.__class__.__name__)
@@ -88,7 +89,6 @@ class Euler2Command(Command):
     def run(self):
         Command.run(self)
     def run_euler(self, command):
-        start_time = time.time()
         # add parameters to the command that are relevant to avoid re-runs (i.e. all tap relevant data + maxN + ...?)
         # by at the same time keeping the file name minimal
         coverage = "" if self.isCoverage else "--disablecov"
@@ -103,7 +103,6 @@ class Euler2Command(Command):
         stdoutFile = os.path.join(self.outputDir, '%s.stdout' % command)
         stderrFile = os.path.join(self.outputDir, '%s.stderr' % command)
         returnCodeFile = os.path.join(self.outputDir, '%s.returncode' % command)
-        runtimeFile = os.path.join(self.outputDir, '%s.runtime' % command)
         if os.path.isfile(stdoutFile) and os.path.isfile(stderrFile) and os.path.isfile(returnCodeFile):
             with open(stdoutFile,'r') as f:
                 stdout = f.read()
@@ -111,8 +110,6 @@ class Euler2Command(Command):
                 stderr = f.read()
             with open(returnCodeFile,'r') as f:
                 returnCode = f.read()
-            with open(runtimeFile, 'r') as f:
-                self.runtime = self.runtime + float(f.read())
             if "Input is inconsistent" in stdout:
                 self.isConsistent = False
             if returnCode and stderr:
@@ -125,25 +122,21 @@ class Euler2Command(Command):
         with open(stdoutFile, 'w+') as out:
             with open(stderrFile, 'w+') as err:
                 with open(returnCodeFile, 'w+') as rc:
-                    with open(runtimeFile, 'w+') as rtf:
-                        #print command
-                        p = Popen(command, stdout=PIPE, stderr=PIPE, shell=True)
-                        stdout, stderr = p.communicate()
-                        #print stdout
-                        #print stderr
-                        if p.returncode and stderr:
-                            print stderr.rstrip()
-                        if "Input is inconsistent" in stdout:
-                            self.isConsistent = False
-                        out.write(stdout)
-                        err.write(stderr)
-                        rc.write('%s' % p.returncode)
-                        if os.path.isfile('report.csv'):
-                            os.remove('report.csv')
-                        thisRuntime = time.time() - start_time
-                        self.runtime = self.runtime + thisRuntime
-                        rtf.write(str(thisRuntime))
-                        return stdout, stderr, p.returncode
+                    #print command
+                    p = Popen(command, stdout=PIPE, stderr=PIPE, shell=True)
+                    stdout, stderr = p.communicate()
+                    #print stdout
+                    #print stderr
+                    if p.returncode and stderr:
+                        print stderr.rstrip()
+                    if "Input is inconsistent" in stdout:
+                        self.isConsistent = False
+                    out.write(stdout)
+                    err.write(stderr)
+                    rc.write('%s' % p.returncode)
+                    if os.path.isfile('report.csv'):
+                        os.remove('report.csv')
+                    return stdout, stderr, p.returncode
     def is_consistent(self):
         return self.isConsistent
     def get_possible_worlds(self):
@@ -224,6 +217,16 @@ class Clear(ModelCommand):
         self.output.append("Tap: " + self.tapManager.get_current_tap_name_and_status())
          
 @logged
+class ShowHistory(MiscCommand):
+    @copy_args_to_public_fields
+    def __init__(self):
+        MiscCommand.__init__(self)
+    def run(self):
+        MiscCommand.run(self)
+        config = self.configManager.get_config()
+        import e3_io
+        self.executeOutput.append(config['htmlViewer'].format(file = os.path.join(e3_io.get_working_dir(), "index.html")))
+@logged
 class SetGitCredentials(MiscCommand):
     @copy_args_to_public_fields
     def __init__(self, host, user, password):
@@ -234,9 +237,9 @@ class SetGitCredentials(MiscCommand):
         import e3_io
         e3_io.set_git_credencials(self.host, self.user, self.password)
         self.output.append("git credentials set successfully")
-        
+
 @logged
-class GitPull(MiscCommand):
+class GitPullCore(MiscCommand):
     @copy_args_to_public_fields
     def __init__(self):
         MiscCommand.__init__(self)
@@ -252,12 +255,76 @@ class GitPull(MiscCommand):
             g.pull()
         except git.exc.GitCommandError as e:
             e3_io.clean_e3_dir()
-            g.clone(config['gitRepository'], e3_io.get_e3_dir())
+            g.clone(config['.e3GitRepo'], e3_io.get_e3_dir())
         self.output.append("Pulled successfully")
         self.output.append("Tap: " + self.tapManager.get_current_tap_name_and_status())
+        
+@logged
+class GitPull(MiscCommand):
+    @copy_args_to_public_fields
+    def __init__(self, name):
+        MiscCommand.__init__(self)
+        pass
+    def run(self):
+        MiscCommand.run(self)
+        config = self.configManager.get_config()
+        import git
+        import e3_io
+        g = git.Git(e3_io.get_e3_data_git_dir())
+        try:
+            g.status()
+            g.pull()
+        except git.exc.GitCommandError as e:
+            e3_io.clean_e3_data_git_dir()
+            g.clone(config['e3DataGitRepo'], e3_io.get_e3_data_git_dir())
+            
+        targetDir = os.path.join(e3_io.get_e3_data_git_dir(), self.name)
+        if not os.path.isdir(targetDir):
+            self.output.append("Pulled successfully but " + self.name + " not found in the repository.")
+            return
+        if os.path.isdir(e3_io.get_working_dir()):
+            shutil.rmtree(e3_io.get_working_dir())
+        shutil.copytree(targetDir, e3_io.get_working_dir())
+        self.output.append("Pulled successfully")
 
 @logged
 class GitPush(MiscCommand):
+    @copy_args_to_public_fields
+    def __init__(self, name, message):
+        MiscCommand.__init__(self)
+        pass
+    def run(self):
+        MiscCommand.run(self)
+        config = self.configManager.get_config()
+            
+        import git
+        import e3_io
+        try:
+            g = git.Git(e3_io.get_e3_data_git_dir())
+            try:
+                g.status()
+            except git.exc.GitCommandError as e:
+                g.init() # can already have a .git folder
+                g.remote("add", "origin", config['e3DataGitRepo']) # can already have an "origin"
+            g.pull("origin", "master") # may not be able to if remote is invalid url
+            
+            targetDir = os.path.join(e3_io.get_e3_data_git_dir(), self.name)
+            if os.path.isdir(targetDir):
+                shutil.rmtree(targetDir)
+            shutil.copytree(e3_io.get_working_dir(), targetDir)
+            g.add(".")
+            try: 
+                g.commit("-m", self.message) #could fail if nothing to commit anymore locally, but push missing
+            except git.exc.GitCommandError as e:
+                self.output.append(str(e))
+            #could in theory have empty message 
+            g.push("--all")
+            self.output.append("Pushed successfully")
+        except git.exc.GitCommandError as e:
+            self.output.append(str(e))
+
+@logged
+class GitPushCore(MiscCommand):
     @copy_args_to_public_fields
     def __init__(self, message):
         MiscCommand.__init__(self)
@@ -273,8 +340,8 @@ class GitPush(MiscCommand):
                 g.status()
             except git.exc.GitCommandError as e:
                 g.init() # can already have a .git folder
-                g.remote("add", "origin", config['gitRepository']) # can already have an "origin"
-            g.fetch() # may not be able to if remote is bogus url
+                g.remote("add", "origin", config['.e3GitRepo']) # can already have an "origin"
+            g.fetch() # may not be able to if remote is invalid url
             g.add(".")
             try: 
                 g.commit("-m", self.message) #could fail if nothing to commit anymore locally, but push missing
@@ -370,7 +437,7 @@ class PrintArticulations(MiscCommand):
         articulationLines = [x + y for x, y in zip(indices, [a.__str__() for a in self.tap.articulations])]
         self.output.append('\n'.join(articulationLines))
     
-@logged
+'''@logged
 class CreateProject(MiscCommand):
     @copy_args_to_public_fields
     def __init__(self, name):
@@ -494,7 +561,8 @@ class PrintProjects(MiscCommand):
             self.output.append('\n'.join(projects))
         else:
             self.output.append('No projects stored.')
-            
+'''
+
 @logged 
 class LoadTap(ModelCommand):
     @copy_args_to_public_fields
