@@ -637,7 +637,7 @@ class GraphCreator(object):
     def create_graph(self, targetDir, templateName, targetName, dataDict):
         with open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "graphs", templateName + ".html"),"r+") as htmlTemplateFile:
             htmlTemplate = htmlTemplateFile.read()
-            soup = BeautifulSoup(htmlTemplate, 'lxml')
+            soup = BeautifulSoup(htmlTemplate, 'html5lib')
             for key in dataDict:
                 dataElement = soup.find(id = key)
                 data = dataDict[key]
