@@ -13,6 +13,7 @@ from subprocess import Popen, PIPE, call
 import shutil
 import yaml
 import time
+import traceback
 
 @logged
 class Run(object):
@@ -118,7 +119,7 @@ class Run(object):
     
     def executeCommand(self, input, command):
         if command != None:
-            #try:
+            try:
                 tapBeforeExecution = self.tapManager.get_current_tap()
                 command.startTime = time.time()
                 command.run()
@@ -128,8 +129,9 @@ class Run(object):
                 self.projectManager.append_project_history(input, command)
                 self.create_cwd_command_output(input, command, tapAfterExecution)
                 self.process_execute_result(command)
-            #except Exception as e:
-            #   print "Something went wrong: " + str(e)
+            except Exception as e:
+                tb = traceback.format_exc()
+                print "Something went wrong: " + tb
         else:
             print "Unrecognized command"
     
@@ -142,11 +144,12 @@ class OneShot(Run):
     def run(self):
         input = ' '.join(sys.argv[1:])
         input = input.replace('\\', '')
-        try:
-            command = self.commandProvider.provide(input)
-            self.executeCommand(input, command)
-        except Exception as e:
-            print str(e)
+        #try:
+        command = self.commandProvider.provide(input)
+        self.executeCommand(input, command)
+        #except Exception as e:
+        #    tb = traceback.format_exc()
+        #    print "Something went wrong: " + tb
         
 @logged 
 class Interactive(Run):
@@ -170,4 +173,5 @@ class Interactive(Run):
             command = self.commandProvider.provide(input)
             self.executeCommand(input, command)
             #except Exception as e:
-            #    print str(e)
+            #    tb = traceback.format_exc()
+            #    print "Something went wrong: " + tb
