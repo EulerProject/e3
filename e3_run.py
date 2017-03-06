@@ -120,6 +120,11 @@ class Run(object):
     def executeCommand(self, input, command):
         if command != None:
             try:
+                current_tap = self.tapManager.get_current_tap()
+                if current_tap is None:
+                    import e3_io
+                    e3_io.reset()
+                
                 tapBeforeExecution = self.tapManager.get_current_tap()
                 command.startTime = time.time()
                 command.run()
