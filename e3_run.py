@@ -118,7 +118,7 @@ class Run(object):
     
     def executeCommand(self, input, command):
         if command != None:
-            try:
+            #try:
                 tapBeforeExecution = self.tapManager.get_current_tap()
                 command.startTime = time.time()
                 command.run()
@@ -128,8 +128,8 @@ class Run(object):
                 self.projectManager.append_project_history(input, command)
                 self.create_cwd_command_output(input, command, tapAfterExecution)
                 self.process_execute_result(command)
-            except Exception as e:
-               print "Something went wrong: " + str(e)
+            #except Exception as e:
+            #   print "Something went wrong: " + str(e)
         else:
             print "Unrecognized command"
     

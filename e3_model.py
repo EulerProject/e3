@@ -6,7 +6,6 @@ from pinject import copy_args_to_public_fields
 import hashlib
 import networkx as nx
 import matplotlib.pyplot as plt
-from compiler.ast import Node
 import copy
 from networkx.readwrite import json_graph
 import json
