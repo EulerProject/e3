@@ -135,7 +135,7 @@ class Run(object):
                 self.add_to_history(input, command, tapBeforeExecution, tapAfterExecution)
                 self.projectManager.append_project_history(input, command)
                 runDirOutputFiles = self.create_cwd_command_output(input, command, tapAfterExecution)
-                self.process_execute_result(command)
+                self.process_execute_result(command, runDirOutputFiles)
             except Exception as e:
                 tb = traceback.format_exc()
                 print "Something went wrong: " + tb
