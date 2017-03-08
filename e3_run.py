@@ -59,7 +59,8 @@ class Run(object):
                     cfg.write("isSiblingDisjointness: " + str(tapAfterExecution.isSiblingDisjointness) + "\n")
                     cfg.write("regions: " + tapAfterExecution.regions + "\n")
                     cfg.write("\n")
-                    yaml.dump(config, cfg, default_flow_style=False)
+                    import e3_io
+                    e3_io.ordered_yaml_dump(config, stream=cfg, Dumper=yaml.SafeDumper, default_flow_style=False)
                     
                 for outputFile in command.get_output_files():
                     newName = input
@@ -70,8 +71,8 @@ class Run(object):
                         else:
                             newName = input + "_" + newName
                     newName = "_".join(newName.split())
-                    if not newName.endswith("." + config['imageFormat']):
-                        newName = newName  + "." + config['imageFormat']
+                    if not newName.endswith("." + config['cli behavior']['imageFormat']):
+                        newName = newName  + "." + config['cli behavior']['imageFormat']
                     newFile = os.path.join(runDir, newName)
                     shutil.copy(outputFile, newFile)
                     runDirOutputFiles.append(newFile)
@@ -106,7 +107,7 @@ class Run(object):
                 print output
         
         config = self.configManager.get_config()
-        if config['showOutputFileLocation'] and command.get_output_files():
+        if config['cli behavior']['showOutputFileLocation'] and command.get_output_files():
             print "Files:"
             for outputFile in runDirOutputFiles:
                 print outputFile

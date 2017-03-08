@@ -13,8 +13,10 @@ from pinject import copy_args_to_public_fields
 import networkx as nx
 from networkx.readwrite import json_graph
 import json
+import yaml
 from bs4 import BeautifulSoup
 import datetime
+from collections import OrderedDict
 
 e3Dir = os.path.join(expanduser("~"), ".e3")
 
@@ -81,6 +83,27 @@ def set_git_credencials(host, user, password):
             f.write("login " + user + "\n")
             f.write("password " + password + "\n")
             
+def ordered_yaml_load(stream, Loader=yaml.Loader, object_pairs_hook=OrderedDict):
+    class OrderedLoader(Loader):
+        pass
+    def construct_mapping(loader, node):
+        loader.flatten_mapping(node)
+        return object_pairs_hook(loader.construct_pairs(node))
+    OrderedLoader.add_constructor(
+        yaml.resolver.BaseResolver.DEFAULT_MAPPING_TAG,
+        construct_mapping)
+    return yaml.load(stream, OrderedLoader)
+
+def ordered_yaml_dump(data, stream=None, Dumper=yaml.Dumper, **kwds):
+    class OrderedDumper(Dumper):
+        pass
+    def _dict_representer(dumper, data):
+        return dumper.represent_mapping(
+            yaml.resolver.BaseResolver.DEFAULT_MAPPING_TAG,
+            data.items())
+    OrderedDumper.add_representer(OrderedDict, _dict_representer)
+    return yaml.dump(data, stream, OrderedDumper, **kwds)
+            
 @logged
 class CleantaxReader(object):
     def get_articulation_from_cleantax(self, cleantaxLine):
@@ -101,7 +124,7 @@ class CleantaxReader(object):
         config = ConfigManager().get_config()
         with open(cleantaxFile, 'r') as f:
             lines = f.readlines()
-            return self.get_tap_from_cleantax(config['defaultIsCoverage'], config['defaultIsSiblingDisjointness'], config['defaultRegions'], lines)
+            return self.get_tap_from_cleantax(config['reasoning']['defaultIsCoverage'], config['reasoning']['defaultIsSiblingDisjointness'], config['reasoning']['defaultRegions'], lines)
     
     def get_tap_from_cleantax(self, isCoverage, isSiblingDisjointness, regions, cleantax):
         cleantax = self.get_normalized_cleantax(cleantax)
@@ -327,9 +350,9 @@ class TapManager(object):
 
     def get_default_tap(self):
         config = ConfigManager().get_config()
-        isCoverage = config['defaultIsCoverage']
-        isSiblingDisjointness = config['defaultIsSiblingDisjointness']
-        regions = config['defaultRegions']
+        isCoverage = config['reasoning']['defaultIsCoverage']
+        isSiblingDisjointness = config['reasoning']['defaultIsSiblingDisjointness']
+        regions = config['reasoning']['defaultRegions']
         import e3_model
         return e3_model.Tap(isCoverage, isSiblingDisjointness, regions, [], [])
             
@@ -351,9 +374,9 @@ class TapManager(object):
         cleantax = []
         with open(tapFile, 'r') as f:
             config = ConfigManager().get_config()
-            isCoverage = config['defaultIsCoverage']
-            isSiblingDisjointness = config['defaultIsSiblingDisjointness']
-            regions = config['defaultRegions']
+            isCoverage = config['reasoning']['defaultIsCoverage']
+            isSiblingDisjointness = config['reasoning']['defaultIsSiblingDisjointness']
+            regions = config['reasoning']['defaultRegions']
         
             for i, line in enumerate(f):
                 if i == 0:
@@ -427,7 +450,6 @@ class TapManager(object):
         return current_tap_file
     
     def set_name(self, name, tapId):
-        import yaml
         oldName = self.get_name(tapId)
         oldTapDir = None
         if oldName is not None:
@@ -449,7 +471,6 @@ class TapManager(object):
             shutil.rmtree(oldTapDir)
     
     def get_names(self):
-        import yaml
         names = []
         with open(self.get_names_file(), 'r') as namesFile:
             doc = yaml.load(namesFile)
@@ -481,7 +502,6 @@ class TapManager(object):
                 return True
         
     def get_tap_id(self, name):
-        import yaml
         name = name.strip()
         with open(self.get_names_file(), 'r') as namesFile:
             doc = yaml.load(namesFile)
@@ -491,7 +511,6 @@ class TapManager(object):
         return None
     
     def get_name(self, tapId):
-        import yaml
         with open(self.get_names_file(), 'r') as namesFile:
             doc = yaml.load(namesFile)
             if doc:
@@ -591,38 +610,36 @@ class ProjectManager(object):
     
 class ConfigManager(object):
     def get_config(self):
-        import yaml
         config = None
         with open(self.get_config_file(), 'r') as f:
-            config = yaml.safe_load(f)
+            config = ordered_yaml_load(f, yaml.SafeLoader)
             if(config):
                 return config
-        defaultConfig = {
-                    'euler2Executable': 'euler2', #os.path.join(get_home_dir(), 'git', 'EulerX'),
-                    'imageViewer': 'xdg-open {file}',
-                    'htmlViewer': 'xdg-open {file}',
-                    'maxPossibleWorldsToShow': 5,
-                    'imageFormat': 'svg',
-                    'repairMethod': 'topdown',
-                    'defaultIsCoverage': True,
-                    'defaultIsSiblingDisjointness': True,
-                    'defaultRegions': 'mnpw',
-                    'reasoner': 'dlv',
-                    'cacheGitRepo': '',
-                    'workspaceGitRepo': '',
-                    'showOutputFileLocation': False
-                    #'gitUser': "",
-                    #'gitPassword': ""
-                    }
+        defaultConfig = OrderedDict()
+        defaultConfig['cli behavior'] = OrderedDict()
+        defaultConfig['cli behavior']['imageFormat'] = 'svg'
+        defaultConfig['cli behavior']['maxPossibleWorldsToShow'] = 5
+        defaultConfig['cli behavior']['showOutputFileLocation'] = False
+        defaultConfig['environment'] = OrderedDict()
+        defaultConfig['environment']['euler2Executable'] = 'euler2'
+        defaultConfig['environment']['htmlViewer'] = 'xdg-open {file}'
+        defaultConfig['environment']['imageViewer'] = 'xdg-open {file}'
+        defaultConfig['reasoning'] = OrderedDict()
+        defaultConfig['reasoning']['defaultIsCoverage'] = True
+        defaultConfig['reasoning']['defaultIsSiblingDisjointness'] = True
+        defaultConfig['reasoning']['defaultRegions'] = 'mnpw'
+        defaultConfig['reasoning']['reasoner'] = 'dlv'
+        defaultConfig['reasoning']['repairMethod'] = 'topdown'
+        defaultConfig['sharing'] = OrderedDict()
+        defaultConfig['sharing']['cacheGitRepo'] = ''
+        defaultConfig['sharing']['workspaceGitRepo'] = ''
         config = defaultConfig
-        with open(self.get_config_file(), 'w') as f:
-            yaml.dump(config, f, default_flow_style=False)
+        self.store_config(config)
         return config
     
     def store_config(self, config):
-        import yaml
         with open(self.get_config_file(), 'w') as f:
-            yaml.dump(config, f, default_flow_style=False)
+            ordered_yaml_dump(config, stream=f, Dumper=yaml.SafeDumper, default_flow_style=False)
             
     def get_config_file(self):
         config_file = os.path.join(get_e3_dir(), ".config")

@@ -6,6 +6,7 @@ from pinject import copy_args_to_public_fields
 from subprocess import Popen, PIPE, call
 import os
 import shutil
+import yaml
 
 @logged
 class Command(object):
@@ -54,24 +55,24 @@ class Euler2Command(Command):
         self.showIVCommand = '{euler2Executable} show iv {cleantaxFile} -o {outputDir} {imageFormat}';
         self.showPWCommand = '{euler2Executable} show -o {outputDir} pw {imageFormat}'
         self.showInconLatCommand = '{euler2Executable} show -o {outputDir} inconLat {imageFormat}'
-        self.showInconLatFullCommand = '{euler2Executable} show -o {outputDir} inconLat --full {imageFormat} --full'
+        self.showInconLatFullCommand = '{euler2Executable} show -o {outputDir} inconLat {imageFormat} --full'
         self.showInconLatReducedCommand = '{euler2Executable} show -o {outputDir} inconLat {imageFormat} --reduced'
         self.showFourInOneCommand = '{euler2Executable} show -o {outputDir} fourinone {imageFormat}'
         self.showSummaryCommand = '{euler2Executable} show -o {outputDir} sv {imageFormat}'
         self.showAmbLatCommand = '{euler2Executable} show -o {outputDir} ambLat {imageFormat}'
         config = self.configManager.get_config()
-        self.euler2Executable = config['euler2Executable']
-        self.reasoner = config['reasoner']
-        self.imageViewer = config['imageViewer']
-        self.maxPossibleWorldsToShow = config['maxPossibleWorldsToShow']
-        self.imageFormat = config['imageFormat']
-        self.repairMethod = config['repairMethod']
+        self.euler2Executable = config['environment']['euler2Executable']
+        self.reasoner = config['reasoning']['reasoner']
+        self.imageViewer = config['environment']['imageViewer']
+        self.maxPossibleWorldsToShow = config['cli behavior']['maxPossibleWorldsToShow']
+        self.imageFormat = config['cli behavior']['imageFormat']
+        self.repairMethod = config['reasoning']['repairMethod']
         self.isCoverage = self.tap.isCoverage
         self.isSiblingDisjointness = self.tap.isSiblingDisjointness
         self.regions = self.tap.regions
-        self.defaultIsSiblingDisjointness = config['defaultIsSiblingDisjointness']
-        self.defaultIsCoverage = config['defaultIsCoverage']
-        self.defaultRegions = config['defaultRegions']
+        self.defaultIsSiblingDisjointness = config['reasoning']['defaultIsSiblingDisjointness']
+        self.defaultIsCoverage = config['reasoning']['defaultIsCoverage']
+        self.defaultRegions = config['reasoning']['defaultRegions']
         self.tapId = self.tap.get_id()
         self.cleantaxFile = self.tapManager.get_cleantax_file(self.tapId)
         self.outputDir = self.tapManager.get_tap_dir(self.tapId)
@@ -169,16 +170,24 @@ class SetConfig(MiscCommand):
     def run(self):
         MiscCommand.run(self)
         config = self.configManager.get_config()
-        if not self.key in config:
+        oldValue = None
+        for firstLevelKey in config:
+            if self.key in config[firstLevelKey]:
+                oldValue = config[firstLevelKey][self.key]
+                break
+        
+        if oldValue is None:
             self.output.append("Configuration parameter " + self.key + " does not exist.")
             return 
-        if type(config[self.key]) is bool:
+        
+        if type(oldValue) is bool:
             self.value = True if not (self.value == 'false' or self.value == 'False') else False
-        if type(config[self.key]) is int:
+        if type(oldValue) is int:
             self.value = int(self.value)
-        if type(config[self.key]) is str:
+        if type(oldValue) is str:
             self.value = str(self.value)
-        config[self.key] = self.value
+            
+        config[firstLevelKey][self.key] = self.value
         self.configManager.store_config(config)
         self.output.append("Configuration updated: " + self.key + " = " + str(self.value))
 
@@ -189,8 +198,8 @@ class PrintConfig(MiscCommand):
     def run(self):
         MiscCommand.run(self)
         config = self.configManager.get_config()
-        for key in config:
-            self.output.append("{key} = {value}".format(key = key, value = config[key])) 
+        import e3_io
+        print e3_io.ordered_yaml_dump(config, Dumper=yaml.SafeDumper, default_flow_style=False)
           
 @logged 
 class Reset(ModelCommand):
@@ -225,7 +234,7 @@ class ShowHistory(MiscCommand):
         MiscCommand.run(self)
         config = self.configManager.get_config()
         import e3_io
-        self.executeOutput.append(config['htmlViewer'].format(file = os.path.join(e3_io.get_working_dir(), "index.html")))
+        self.executeOutput.append(config['environment']['htmlViewer'].format(file = os.path.join(e3_io.get_working_dir(), "index.html")))
 @logged
 class SetGitCredentials(MiscCommand):
     @copy_args_to_public_fields
@@ -255,7 +264,7 @@ class GitCachePull(MiscCommand):
             g.pull()
         except git.exc.GitCommandError as e:
             e3_io.clean_e3_dir()
-            g.clone(config['cacheGitRepo'], e3_io.get_e3_dir())
+            g.clone(config['sharing']['cacheGitRepo'], e3_io.get_e3_dir())
         self.output.append("Pulled successfully")
         self.output.append("Tap: " + self.tapManager.get_current_tap_name_and_status())
         
@@ -276,7 +285,7 @@ class GitPull(MiscCommand):
             g.pull()
         except git.exc.GitCommandError as e:
             e3_io.clean_e3_data_git_dir()
-            g.clone(config['workspaceGitRepo'], e3_io.get_e3_data_git_dir())
+            g.clone(config['sharing']['workspaceGitRepo'], e3_io.get_e3_data_git_dir())
             
         targetDir = os.path.join(e3_io.get_e3_data_git_dir(), self.name)
         if not os.path.isdir(targetDir):
@@ -305,7 +314,7 @@ class GitPush(MiscCommand):
                 g.status()
             except git.exc.GitCommandError as e:
                 g.init() # can already have a .git folder
-                g.remote("add", "origin", config['workspaceGitRepo']) # can already have an "origin"
+                g.remote("add", "origin", config['sharing']['workspaceGitRepo']) # can already have an "origin"
             g.pull("origin", "master") # may not be able to if remote is invalid url
             
             targetDir = os.path.join(e3_io.get_e3_data_git_dir(), self.name)
@@ -340,7 +349,7 @@ class GitCachePush(MiscCommand):
                 g.status()
             except git.exc.GitCommandError as e:
                 g.init() # can already have a .git folder
-                g.remote("add", "origin", config['cacheGitRepo']) # can already have an "origin"
+                g.remote("add", "origin", config['sharing']['cacheGitRepo']) # can already have an "origin"
             g.fetch() # may not be able to if remote is invalid url
             g.add(".")
             try: 
