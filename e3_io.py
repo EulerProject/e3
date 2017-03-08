@@ -62,7 +62,7 @@ def clear():
     configManager = ConfigManager()
     config = configManager.get_config()
     clean_e3_dir()
-    clean_working_dir()
+    #clean_working_dir()
     tapManager = TapManager()
     tapManager.load_demo_taps()
     tapManager.set_current_tap(tapManager.get_default_tap())
@@ -258,6 +258,9 @@ class TapManager(object):
             jsonData = json_graph.node_link.node_link_data(history.g)
             import e3_model
             json.dump(jsonData, historyFile)#, cls = HistoryJSONEncoder)
+    def clear_history(self):
+        history = e3.model.History()
+        self.store_history(history)
     def add_history_edge(self, fromTapId, toTapId, attributesDict):
         history = self.get_history()
         history.add_edge(fromTapId, toTapId, attributesDict)
@@ -394,12 +397,12 @@ class TapManager(object):
         tapDir = self.get_tap_dir(tapId)
         if tapDir is None:
             return None
-        tap_file = os.path.join(self.get_tap_dir(tapId), ".tap")
+        tap_file = os.path.join(self.get_tap_dir(tapId), "tap")
         return tap_file
 
     def get_cleantax_file(self, tapId):
         tap_name = self.get_tap_name(tapId).replace(" ", "")
-        cleantax_file = os.path.join(self.get_taps_dir(), tap_name, ".cleantax")
+        cleantax_file = os.path.join(self.get_taps_dir(), tap_name, "cleantax")
         if not os.path.isfile(cleantax_file):
             with open(cleantax_file, 'w') as f:
                 pass
@@ -524,90 +527,8 @@ class TapManager(object):
         if not os.path.isfile(namesFile):
             with open(namesFile, 'w') as f:
                 pass
-        return namesFile    
-    
-class ProjectManager(object):
-    def remove_project(self, project):
-        if self.exists_project(project):
-            shutil.rmtree(get_project_dir(project))
-    
-    def set_current_project(self, project):
-        with open(self.get_current_project_file(), 'w') as currentProjectFile:
-            if not project:
-                pass
-            else:
-                currentProjectFile.write(project)
-                
-    def get_current_project(self):
-        with open(self.get_current_project_file(), 'r') as currentProjectFile:
-            return currentProjectFile.readline()
-        
-    def set_history(self, project, history):
-        with open(self.get_history_file(project), 'w') as historyFile:
-            historyFile.write(history)
-        
-    def get_projects(self):
-        return os.listdir(self.get_projects_dir())
-        
-    def clear_projects(self):
-        for project in self.get_projects():
-            self.remove_project(project)
-            
-    def create_project(self, project):
-        os.makedirs(os.path.join(self.get_projects_dir(), project));
-            
-    def exists_project(self, project):
-        return os.path.isdir(self.get_project_dir(project))
-    
-    def append_project_history(self, input, command):
-        #if not isinstance(command, e3_command.MiscCommand):
-        id = str(uuid.uuid4())
-        currentProject = None
-        with open(self.get_current_project_file(), 'r') as currentProjectFile:
-            currentProject = currentProjectFile.readline()
-        if currentProject:
-            with open(self.get_history_file(currentProject), 'a') as historyFile:
-                historyFile.write(id + " " + input + '\n')
-            tap = TapManager().get_current_tap()
-            stepDir = os.path.join(self.get_project_dir(currentProject), id)
-            import e3_command
-            if isinstance(command, e3_command.MiscCommand):
-                os.makedirs(stepDir)
-            if isinstance(command, e3_command.ModelCommand):
-                shutil.copytree(TapManager().get_tap_dir(tap.get_id()), stepDir)
-                pass
-            if isinstance(command, e3_command.Euler2Command):
-                shutil.copytree(TapManager().get_tap_dir(tap.get_id()), stepDir)
-                pass
-            with open(os.path.join(stepDir, '.outputs'), 'w') as f:
-                f.write('\n'.join(command.get_output()))
-            with open(os.path.join(stepDir, '.command'), 'w') as f:
-                f.write(input)
-                
-    def get_current_project_file(self):
-        current_project_file = os.path.join(get_e3_dir(), ".current_project")
-        if not os.path.isfile(current_project_file):
-            with open(current_project_file, 'w') as f:
-                pass
-        return current_project_file
-    
-    def get_history_file(self, project):
-        if self.exists_project(project):
-            history_file = os.path.join(self.get_project_dir(project), ".history")
-            if not os.path.isfile(history_file):
-                with open(history_file, 'w') as f:
-                    pass
-            return history_file
-    
-    def get_projects_dir(self):
-        projectsDir = os.path.join(get_e3_dir(), "projects")
-        if not os.path.isdir(projectsDir):
-            os.makedirs(projectsDir)
-        return projectsDir
-    
-    def get_project_dir(self, project):
-        return os.path.join(self.get_projects_dir(), project)
-    
+        return namesFile
+
 class ConfigManager(object):
     def get_config(self):
         config = None
@@ -615,6 +536,10 @@ class ConfigManager(object):
             config = ordered_yaml_load(f, yaml.SafeLoader)
             if(config):
                 return config
+        self.store_config(self.get_default_config())
+        return config
+    
+    def get_default_config(self):
         defaultConfig = OrderedDict()
         defaultConfig['cli behavior'] = OrderedDict()
         defaultConfig['cli behavior']['imageFormat'] = 'svg'
@@ -633,9 +558,7 @@ class ConfigManager(object):
         defaultConfig['sharing'] = OrderedDict()
         defaultConfig['sharing']['cacheGitRepo'] = ''
         defaultConfig['sharing']['workspaceGitRepo'] = ''
-        config = defaultConfig
-        self.store_config(config)
-        return config
+        return defaultConfig
     
     def store_config(self, config):
         with open(self.get_config_file(), 'w') as f:

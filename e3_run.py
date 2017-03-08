@@ -21,7 +21,6 @@ class Run(object):
         import e3_io
         self.configManager = e3_io.ConfigManager()
         self.tapManager = e3_io.TapManager()
-        self.projectManager = e3_io.ProjectManager()
         self.graphCreator = e3_io.GraphCreator()
         pass
     def run(self):
@@ -66,8 +65,8 @@ class Run(object):
                     newName = input
                     if(len(command.get_output_files()) > 1):
                         newName = os.path.basename(outputFile)
-                        if ".cleantax" in newName:
-                            newName = newName.replace(".cleantax", input)
+                        if "cleantax" in newName:
+                            newName = newName.replace("cleantax", input)
                         else:
                             newName = input + "_" + newName
                     newName = "_".join(newName.split())
@@ -134,7 +133,6 @@ class Run(object):
                 command.endTime = time.time()
                 tapAfterExecution = self.tapManager.get_current_tap()
                 self.add_to_history(input, command, tapBeforeExecution, tapAfterExecution)
-                self.projectManager.append_project_history(input, command)
                 runDirOutputFiles = self.create_cwd_command_output(input, command, tapAfterExecution)
                 self.process_execute_result(command, runDirOutputFiles)
             except Exception as e:

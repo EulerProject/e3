@@ -47,111 +47,33 @@ class ClearParser(CommandParser):
         else:
             raise Exception('Unrecognized command line')
     def get_help(self):
-        return "empty\nClears the .e3 cache and e3_data workspace"
+        return "clear\nClears the history and cache. Keeps the config."
+
+@logged
+class ResetConfigParser(CommandParser):
+    def __init__(self):
+        CommandParser.__init__(self, '^reset config$')
+    def get_command(self, input):
+        match = self.is_input(input)
+        if match:
+            return e3_command.ResetConfig()
+        else:
+            raise Exception('Unrecognized command line')
+    def get_help(self):
+        return "reset config\nResets the config to the default"
     
 @logged
-class CreateProjectParser(CommandParser):
+class ClearHistoryParser(CommandParser):
     def __init__(self):
-        CommandParser.__init__(self, '^create project (\S*)$')
+        CommandParser.__init__(self, '^clear history$')
     def get_command(self, input):
         match = self.is_input(input)
         if match:
-            return e3_command.CreateProject(match.group(1))
+            return e3_command.ClearHistory()
         else:
             raise Exception('Unrecognized command line')
     def get_help(self):
-        return "create project <name>\nCreates a project with <name> including managable command history"
-    
-@logged
-class OpenProjectParser(CommandParser):
-    def __init__(self):
-        CommandParser.__init__(self, '^open project (\S*)$')
-    def get_command(self, input):
-        match = self.is_input(input)
-        if match:
-            return e3_command.OpenProject(match.group(1))
-        else:
-            raise Exception('Unrecognized command line')
-    def get_help(self):
-        return "open project <name>\nOpens an existing project with <name>"
-        
-@logged
-class PrintProjectHistoryParser(CommandParser):
-    def __init__(self):
-        CommandParser.__init__(self, '^print project history$')
-    def get_command(self, input):
-        match = self.is_input(input)
-        if match:
-            return e3_command.PrintProjectHistory(CommandProvider())
-        else:
-            raise Exception('Unrecognized command line')
-    def get_help(self):
-        return "print project history\nPrint the project's command history"
-        
-@logged
-class RemoveProjectHistoryParser(CommandParser):
-    def __init__(self):
-        CommandParser.__init__(self, '^remove project history (\d+)$')
-    def get_command(self, input):
-        match = self.is_input(input)
-        if match:
-            return e3_command.RemoveProjectHistory(CommandProvider(), int(match.group(1)))
-        else:
-            raise Exception('Unrecognized command line')
-    def get_help(self):
-        return "remove project history <index>\nRemove command with <index> and all dependent commands from the project's command history"
-        
-@logged
-class CloseProjectParser(CommandParser):
-    def __init__(self):
-        CommandParser.__init__(self, '^close project$')
-    def get_command(self, input):
-        match = self.is_input(input)
-        if match:
-            return e3_command.CloseProject()
-        else:
-            raise Exception('Unrecognized command line')
-    def get_help(self):
-        return "close project\nClose the current project"
-@logged
-class RemoveProjectParser(CommandParser):    
-    def __init__(self):
-        CommandParser.__init__(self, '^remove project (\S*)$')
-    def get_command(self, input):
-        match = self.is_input(input)
-        if match:
-            return e3_command.RemoveProject(match.group(1))
-        else:
-            raise Exception('Unrecognized command line')
-    def get_help(self):
-        return "remove project <name>\nRemove the project with <name>"
-    
-@logged
-class PrintProjectsParser(CommandParser):    
-    def __init__(self):
-        CommandParser.__init__(self, '^print projects$')
-    def get_command(self, input):
-        match = self.is_input(input)
-        if match:
-            return e3_command.PrintProjects()
-        else:
-            raise Exception('Unrecognized command line')
-    def get_help(self):
-        return "print projects\nPrint an overview of the existing projects"
-    
-@logged
-class ClearProjectsParser(CommandParser):    
-    def __init__(self):
-        CommandParser.__init__(self, '^clear projects')
-    def get_command(self, input):
-        match = self.is_input(input)
-        if match:
-            return e3_command.ClearProjects()
-        else:
-            raise Exception('Unrecognized command line')
-    def get_help(self):
-        return "clear projects\nClears all the projects"
-    
+        return "clear history\nClears the history"
 @logged               
 class ByeParser(CommandParser):
     def __init__(self):
@@ -571,19 +493,7 @@ class PrintNamesParser(CommandParser):
             raise Exception('Unrecognized command line')
     def get_help(self):
         return "print names\nShows all stored names and their corresponding taps"
-
-#class ClearNamesParser(CommandParser):
-#    def __init__(self):
-#        CommandParser.__init__(self, '^clear names$')
-#    def get_command(self, input):
-#        match = self.is_input(input);
-#        if match:
-#            return e3_command.ClearNames()
-#        else:
-#            raise Exception('Unrecognized command line')
-#    def get_help(self):
-#        return "clear names\nRemoves all stored named"
-
+    
 class UseTapParser(CommandParser):
     def __init__(self):
         CommandParser.__init__(self, '^use tap (\S+)$')
@@ -840,6 +750,8 @@ commandParsers = [  ByeParser(),
                     HelpParser(), 
                     ResetParser(),
                     ClearParser(),
+                    ResetConfigParser(),
+                    ClearHistoryParser(),
                     SetConfigParser(),
                     PrintConfigParser(),
                     LoadTapParser(),
@@ -860,7 +772,6 @@ commandParsers = [  ByeParser(),
                     SetCoverageParser(),
                     SetRegionsParser(),
                     NameTapParser(),
-                    #ClearNamesParser(),
                     PrintNamesParser(),
                     UseTapParser(), 
                     GraphTapParser(), 
@@ -873,14 +784,6 @@ commandParsers = [  ByeParser(),
                     GraphInconsistencyParser(),
                     GraphAmbiguityParser(),
                     PrintFixParser(),
-                    #CreateProjectParser(),
-                    #PrintProjectsParser(),
-                    #OpenProjectParser(),
-                    #CloseProjectParser(),
-                    #RemoveProjectParser(),
-                    #ClearProjectsParser(),
-                    #PrintProjectHistoryParser(),
-                    #RemoveProjectHistoryParser(),
                     GitPullParser(),
                     GitPushParser(),
                     GitCachePullParser(),

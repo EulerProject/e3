@@ -15,7 +15,6 @@ class Command(object):
         import e3_io
         self.tapManager = e3_io.TapManager()
         self.configManager = e3_io.ConfigManager()
-        self.projectManager = e3_io.ProjectManager()
         self.output = []
         self.outputFiles = []
         self.executeOutput = []
@@ -142,7 +141,7 @@ class Euler2Command(Command):
         return self.isConsistent
     def get_possible_worlds(self):
         possibleWorlds = []
-        with open(os.path.join(self.e2AspOutputDir, '.cleantax.pw'), 'r') as f:
+        with open(os.path.join(self.e2AspOutputDir, 'cleantax.pw'), 'r') as f:
             currentWorld = ""
             for line in f:
                 if len(line.strip()) == 0:
@@ -212,7 +211,28 @@ class Reset(ModelCommand):
         e3_io.reset()
         self.output.append("Reset successful")
         self.output.append("Tap: " + self.tapManager.get_current_tap_name_and_status())
-        
+
+@logged 
+class ResetConfig(MiscCommand):
+    @copy_args_to_public_fields
+    def __init__(self):
+        MiscCommand.__init__(self)
+    def run(self):
+        MiscCommand.run(self)
+        import e3_io
+        self.configManager.store_config(self.configManager.get_default_config())
+        self.output.append("Reset config successfully")
+
+@logged 
+class ClearHistory(MiscCommand):
+    @copy_args_to_public_fields
+    def __init__(self):
+        MiscCommand.__init__(self)
+    def run(self):
+        MiscCommand.run(self)
+        self.tapManager.clear_history()
+        self.output.append("Cleared history successfully")
+
 @logged 
 class Clear(ModelCommand):
     @copy_args_to_public_fields
@@ -408,15 +428,6 @@ class PrintNames(MiscCommand):
         else:
             self.output.append('No names stored.')
     
-#class ClearNames(MiscCommand):
-#    @copy_args_to_public_fields
-#    def __init__(self):
-#        MiscCommand.__init__(self)
-#    def run(self):
-#        MiscCommand.run(self)
-#        self.tapManager.clear_names()
-#        self.output.append("Names are cleared")
-    
 class PrintTap(MiscCommand):
     @copy_args_to_public_fields
     def __init__(self, tap):
@@ -445,132 +456,6 @@ class PrintArticulations(MiscCommand):
             indices.append(str(x) + ". ")
         articulationLines = [x + y for x, y in zip(indices, [a.__str__() for a in self.tap.articulations])]
         self.output.append('\n'.join(articulationLines))
-    
-'''@logged
-class CreateProject(MiscCommand):
-    @copy_args_to_public_fields
-    def __init__(self, name):
-        MiscCommand.__init__(self)
-    def run(self):
-        MiscCommand.run(self)
-        if self.projectManager.exists_project(self.name):
-            self.output.append('A project with name ' + self.name + ' already exists')
-            return
-        self.projectManager.create_project(self.name)
-        self.projectManager.set_history(self.name, "")
-        self.projectManager.set_current_project(self.name)
-
-@logged
-class OpenProject(MiscCommand):
-    @copy_args_to_public_fields
-    def __init__(self, name):
-        MiscCommand.__init__(self)
-    def run(self):
-        MiscCommand.run(self)
-        if not self.projectManager.exists_project(self.name):
-            self.output.append('A project with name ' + self.name + ' does not exist')
-            return
-        self.projectManager.set_current_project(self.name)
-
-@logged
-class PrintProjectHistory(MiscCommand):
-    @copy_args_to_public_fields
-    def __init__(self, commandProvider):
-        MiscCommand.__init__(self)
-    def run(self):
-        MiscCommand.run(self)
-        name = self.projectManager.get_current_project()
-        if not name:
-            self.output.append('No project open')
-            return
-        if not self.projectManager.exists_project(name):
-            self.output.append('Project has been removed')
-            return
-        with open(self.projectManager.get_history_file(name), 'r') as historyFile:
-            for i, line in enumerate(historyFile):
-                line = line.rstrip()
-                uuidPart = line.split(' ', 1)[0]
-                commandPart = line.split(' ', 1)[1]
-                command = self.commandProvider.provide(commandPart)
-                if isinstance(command, ModelCommand):
-                    self.output.append(str(i) + ". [Tap] " + commandPart + " (" + uuidPart + ")")
-                elif isinstance(command, Euler2Command):
-                    self.output.append(str(i) + ". [Reasoning] " + commandPart + " (" + uuidPart + ")")
-                elif isinstance(command, MiscCommand):
-                    self.output.append(str(i) + ". [Misc] " + commandPart + " (" + uuidPart + ")")
-                    
-@logged
-class RemoveProjectHistory(MiscCommand):
-    @copy_args_to_public_fields
-    def __init__(self, commandProvider, index):
-        MiscCommand.__init__(self)
-    def run(self):
-        MiscCommand.run(self)
-        name = self.projectManager.get_current_project()
-        if not name:
-            self.output.append('No project open')
-            return
-        if not self.projectManager.exists_project(name):
-            self.output.append('Project has been removed')
-            return
-        lines = []
-        with open(self.projectManager.get_project_history(name), 'r') as historyFile:
-            lines = historyFile.readlines()
-            if self.index >= len(lines) or self.index < 0:
-                self.output.append("This is not a valid index")
-            line = lines[self.index]
-            newLines = list(lines)
-            command = self.commandProvider.provide(line)
-            if isinstance(command, ModelCommand):
-                for i in range(self.index, len(lines)):
-                    del newLines[self.index]
-            else:
-                del newLines[self.index]
-        self.projectManager.set_history(name, ''.join(newLines))
-    
-@logged
-class CloseProject(MiscCommand):
-    @copy_args_to_public_fields
-    def __init__(self):
-        MiscCommand.__init__(self)
-    def run(self):
-        MiscCommand.run(self)
-        self.projectManager.set_current_project(None) 
-    
-@logged
-class ClearProjects(MiscCommand):
-    @copy_args_to_public_fields
-    def __init__(self):
-        MiscCommand.__init__(self)
-    def run(self):
-        MiscCommand.run(self)
-        self.projectManager.clear_projects()
-        self.projectManager.set_current_project(None) 
-    
-@logged
-class RemoveProject(MiscCommand):
-    @copy_args_to_public_fields
-    def __init__(self, name):
-        MiscCommand.__init__(self)
-    def run(self):
-        MiscCommand.run(self)
-        if self.projectManager.get_current_project() == self.name:
-            self.projectManager.set_current_project(None)
-        self.projectManager.remove_project(self.name)
-        
-@logged
-class PrintProjects(MiscCommand):
-    @copy_args_to_public_fields
-    def __init__(self):
-        MiscCommand.__init__(self)
-    def run(self):
-        MiscCommand.run(self)
-        projects = self.projectManager.get_projects()
-        if projects:
-            self.output.append('\n'.join(projects))
-        else:
-            self.output.append('No projects stored.')
-'''
 
 @logged 
 class LoadTap(ModelCommand):
