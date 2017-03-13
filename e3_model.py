@@ -100,6 +100,30 @@ class Tap(object):
             a.rightNodes = newRightNodes
     def has_taxonomy(self, id):
         return self.get_taxonomy(id) is not None
+    def rename_concept(self, taxonomyId, oldName, newName):
+        if self.has_taxonomy(taxonomyId):
+            taxonomy = self.get_taxonomy(taxonomyId)
+            if taxonomy.contains_node(oldName):
+                if not taxonomy.contains_node(newName):
+                    taxonomy.rename_node(oldName, newName)
+                    for articulation in self.articulations:
+                        for i, l in enumerate(articulation.leftNodes):
+                            id = l.split(".")[0]
+                            node = l.split(".")[1]
+                            if id == taxonomyId and node == oldName:
+                                articulation.leftNodes[i] = id + "." + newName
+                        for i, r in enumerate(articulation.rightNodes):
+                            id = r.split(".")[0]
+                            node = r.split(".")[1]
+                            if id == taxonomyId and node == oldName:
+                                articulation.rightNodes[i] = id + "." + newName
+                else:
+                    raise ValueError("Node with name " + newName + " already exists.")
+            else:
+                raise ValueError("Node with name " + oldName + " does not exist.")
+        else:
+            raise ValueError("Taxonomy with id " + taxonomyId + " does not exist.")
+    
     def add_node(self, taxonomyId, node):
         taxonomy = self.get_taxonomy(taxonomyId)
         taxonomy.add_node(node);
@@ -153,23 +177,34 @@ class Tap(object):
     def add_articulation(self, articulation):
         for l in articulation.leftNodes:
             id = l.split(".")[0]
+            node = l.split(".")[1]
             t = self.get_taxonomy(id)
             if t is None:
                 raise Exception("No taxonomy with id " + id + " found.")
+            if not t.contains_node(node):
+                raise Exception("No node with name " + node + " found in taxonomy " + id)
         for r in articulation.rightNodes:
             id = r.split(".")[0]
+            node = r.split(".")[1]
             t = self.get_taxonomy(id)
             if t is None:
-                raise Exception("No taxonomy with id " + id + " found.")        
-        self.articulations.append(articulation)
-    def remove_articulation(self, articulationIndex):
-        del self.articulations[int(articulationIndex) - 1]
+                raise Exception("No taxonomy with id " + id + " found.")
+            if not t.contains_node(node):
+                raise Exception("No node with name " + node + " found in taxonomy " + id)
+        if not self.contains_articulation(articulation):
+            self.articulations.append(articulation)
+    def contains_articulation(self, articulation):
+        return articulation in self.articulations
+    def remove_articulation_by_index(self, articulationIndex):
+        self.remove_articulation(sorted(self.articulations)[int(articulationIndex) - 1])
+    def remove_articulation(self, articulation):
+        self.articulations.remove(articulation)
     def __str__(self, *args, **kwargs):
         indices = []
-        for x in range(1, len(self.articulations) + 1):
+        for x in range(1, len(sorted(self.articulations)) + 1):
             indices.append(str(x) + ". ")
-        articulationLines = [x + y for x, y in zip(indices, [a.__str__() for a in self.articulations])]
-        articulationLines.insert(0, 'articulation')     
+        articulationLines = [x + y for x, y in zip(indices, [a.__str__() for a in sorted(self.articulations)])]
+        articulationLines.insert(0, 'articulation')
         result = []
         for taxonomy in self.taxonomies:
             result.append(taxonomy.__str__())
@@ -186,7 +221,7 @@ class Tap(object):
         for taxonomy in self.taxonomies:      
             result.append(taxonomy.__str__() + '\n\n')
         result.append('articulation\n')
-        for articulation in self.articulations:
+        for articulation in sorted(self.articulations):
             result.append(articulation.__str__() + '\n')
         return "".join(result)
         
@@ -201,6 +236,10 @@ class Taxonomy(object):
     def __init__(self, id, name):
         self.g = nx.DiGraph()
         pass
+    def rename_node(self, oldNode, newNode):
+        map = { }
+        map[oldNode] = newNode
+        nx.relabel_nodes(self.g, map, False)
     def clear(self):
         self.g.clear()
     def add_node(self, node):
@@ -265,22 +304,30 @@ class Taxonomy(object):
         return result
     def add_cleantax_stringyfied_edges(self, collector, src):
         line = "(" + src
-        if self.g.successors(src):
-            for successor in sorted(self.g.successors(src)):
-                line = line + " " + successor
-                self.add_cleantax_stringyfied_edges(collector, successor)
-            line = line + ")"
-            collector.insert(0, line)
+        for successor in sorted(self.g.successors(src)):
+            line = line + " " + successor
+            self.add_cleantax_stringyfied_edges(collector, successor)
+        line = line + ")"
+        collector.insert(0, line)
             
 combinedRCC5s = "{ equals|includes|is_included_in|overlaps|disjoint }"
 relations = [ "lsum", "l3sum", "l4sum", "rsum", "r3sum", "r4sum", "ldiff", "rdiff", "e4sum", "i4sum", "equals", "includes", 
                       "is_included_in", "overlaps", "disjoint", combinedRCC5s 
-                      ]            
-            
+                      ]
+
 #see Taxonomy comment
 class Articulation(object):
     @copy_args_to_public_fields
     def __init__(self, leftNodes, rightNodes, relation):
         pass
     def __str__(self):
-        return "[" + " ".join(self.leftNodes) + " " + self.relation + " " + " ".join(self.rightNodes) + "]"    
+        return "[" + " ".join(self.leftNodes) + " " + self.relation + " " + " ".join(self.rightNodes) + "]"
+    def __lt__ (self, other):
+        return (self.relation + " " + " ".join(self.leftNodes) + " " + " ".join(self.rightNodes)).__lt__(
+            other.relation + " " + " ".join(other.leftNodes) + " " + " ".join(other.rightNodes))
+    def __gt__ (self, other):
+        return other.__lt__(self)
+    def __eq__(self, other):
+        return self.__str__() == other.__str__()
+    def __ne__ (self, other):
+        return not self.__eq__(other)

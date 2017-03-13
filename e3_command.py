@@ -7,6 +7,7 @@ from subprocess import Popen, PIPE, call
 import os
 import shutil
 import yaml
+import re
 
 @logged
 class Command(object):
@@ -37,123 +38,295 @@ class MiscCommand(Command):
         Command.__init__(self)
     def run(self):
         Command.run(self)
-                    
-class Euler2Command(Command):
+
+class Euler2(object):
+    alignUncertaintyReductionInputCommand = '{euler2Executable} align {cleantaxFile} -o {outputDir} -r {reasoner} -e {regions} {disjointness} {coverage} --ur'
+    alignExtractInputCommand = '{euler2Executable} align {cleantaxFile} -o {outputDir} -r {reasoner}  -e {regions} {disjointness} {coverage} --xia'
+    alignArtRemCommand = '{euler2Executable} align {cleantaxFile} -o {outputDir} -r {reasoner}  -e {regions} {disjointness} {coverage} --artRem'
+    alignFourInOneCommand = '{euler2Executable} align {cleantaxFile} -o {outputDir} -r {reasoner} -e {regions} {disjointness} {coverage} --fourinone'
+    alignCommand = '{euler2Executable} align {cleantaxFile} -o {outputDir} -r {reasoner} -e {regions} {disjointness} {coverage}'
+    alignConsistencyCommand = '{euler2Executable} align {cleantaxFile} -o {outputDir} -r {reasoner} -e {regions} {disjointness} {coverage} --consistency'
+    alignMaxNCommand = '{euler2Executable} align {cleantaxFile} -o {outputDir} -r {reasoner} -e {regions} {disjointness} {coverage} -n {maxN}'
+    alignRepairCommand = '{euler2Executable} align {cleantaxFile} -o {outputDir} -r {reasoner} -e {regions} {disjointness} {coverage} --repair={repairMethod}'
+    showIVCommand = '{euler2Executable} show iv {cleantaxFile} -o {outputDir} {imageFormat}';
+    showPWCommand = '{euler2Executable} show -o {outputDir} pw {imageFormat}'
+    showInconLatCommand = '{euler2Executable} show -o {outputDir} inconLat {imageFormat}'
+    showInconLatFullCommand = '{euler2Executable} show -o {outputDir} inconLat {imageFormat} --full'
+    showInconLatReducedCommand = '{euler2Executable} show -o {outputDir} inconLat {imageFormat} --reduced'
+    showFourInOneCommand = '{euler2Executable} show -o {outputDir} fourinone {imageFormat}'
+    showSummaryCommand = '{euler2Executable} show -o {outputDir} sv {imageFormat}'
+    showAmbLatCommand = '{euler2Executable} show -o {outputDir} ambLat {imageFormat}'
+    
     @copy_args_to_public_fields
-    def __init__(self, tap):
-        Command.__init__(self)
-        
-        self.alignUncertaintyReductionInputCommand = '{euler2Executable} align {cleantaxFile} -o {outputDir} -r {reasoner} -e {regions} {disjointness} {coverage} --ur'
-        self.alignExtractInputCommand = '{euler2Executable} align {cleantaxFile} -o {outputDir} -r {reasoner}  -e {regions} {disjointness} {coverage} --xia'
-        self.alignArtRemCommand = '{euler2Executable} align {cleantaxFile} -o {outputDir} -r {reasoner}  -e {regions} {disjointness} {coverage} --artRem'
-        self.alignFoundInOneCommand = '{euler2Executable} align {cleantaxFile} -o {outputDir} -r {reasoner} -e {regions} {disjointness} {coverage} --fourinone'
-        self.alignCommand = '{euler2Executable} align {cleantaxFile} -o {outputDir} -r {reasoner} -e {regions} {disjointness} {coverage}'
-        self.alignConsistencyCommand = '{euler2Executable} align {cleantaxFile} -o {outputDir} -r {reasoner} -e {regions} {disjointness} {coverage} --consistency'
-        self.alignMaxNCommand = '{euler2Executable} align {cleantaxFile} -o {outputDir} -r {reasoner} -e {regions} {disjointness} {coverage} -n {maxN}'
-        self.alignRepairCommand = '{euler2Executable} align {cleantaxFile} -o {outputDir} -r {reasoner} -e {regions} {disjointness} {coverage} --repair={repairMethod}'
-        self.showIVCommand = '{euler2Executable} show iv {cleantaxFile} -o {outputDir} {imageFormat}';
-        self.showPWCommand = '{euler2Executable} show -o {outputDir} pw {imageFormat}'
-        self.showInconLatCommand = '{euler2Executable} show -o {outputDir} inconLat {imageFormat}'
-        self.showInconLatFullCommand = '{euler2Executable} show -o {outputDir} inconLat {imageFormat} --full'
-        self.showInconLatReducedCommand = '{euler2Executable} show -o {outputDir} inconLat {imageFormat} --reduced'
-        self.showFourInOneCommand = '{euler2Executable} show -o {outputDir} fourinone {imageFormat}'
-        self.showSummaryCommand = '{euler2Executable} show -o {outputDir} sv {imageFormat}'
-        self.showAmbLatCommand = '{euler2Executable} show -o {outputDir} ambLat {imageFormat}'
-        config = self.configManager.get_config()
+    def __init__(self, tap):    
+        import e3_io
+        configManager = e3_io.ConfigManager()
+        tapManager = e3_io.TapManager()    
+        config = configManager.get_config()
         self.euler2Executable = config['environment']['euler2Executable']
         self.reasoner = config['reasoning']['reasoner']
-        self.imageViewer = config['environment']['imageViewer']
-        self.maxPossibleWorldsToShow = config['cli behavior']['maxPossibleWorldsToShow']
         self.imageFormat = config['cli behavior']['imageFormat']
         self.repairMethod = config['reasoning']['repairMethod']
         self.isCoverage = self.tap.isCoverage
         self.isSiblingDisjointness = self.tap.isSiblingDisjointness
         self.regions = self.tap.regions
-        self.defaultIsSiblingDisjointness = config['reasoning']['defaultIsSiblingDisjointness']
-        self.defaultIsCoverage = config['reasoning']['defaultIsCoverage']
-        self.defaultRegions = config['reasoning']['defaultRegions']
         self.tapId = self.tap.get_id()
-        self.cleantaxFile = self.tapManager.get_cleantax_file(self.tapId)
-        self.outputDir = self.tapManager.get_tap_dir(self.tapId)
-        self.name = self.__class__.__name__
-        self.e2InputDir = self.tapManager.get_0_input_dir(self.tapId)
-        self.e2AspInputDir = self.tapManager.get_1_asp_input_dir(self.tapId)
-        self.e2AspOutputDir = self.tapManager.get_2_asp_output_dir(self.tapId)
-        self.e2MirDir = self.tapManager.get_3_mir_dir(self.tapId)
-        self.e2PWsDir = self.tapManager.get_4_pws_dir(self.tapId)
-        self.e2AggregatesDir = self.tapManager.get_5_aggregates_dir(self.tapId)
-        self.e2LatticesDir = self.tapManager.get_6_lattices_dir(self.tapId)
+        self.cleantaxFile = tapManager.get_cleantax_file(self.tapId)
+        self.tapDir = tapManager.get_tap_dir(self.tapId)
+        self.e2InputDir = os.path.join(self.tapDir, "{uniqueParameteredRun}", "0-Input")
+        self.e2AspInputDir = os.path.join(self.tapDir, "{uniqueParameteredRun}", "1-ASP-input-code")
+        self.e2AspOutputDir = os.path.join(self.tapDir, "{uniqueParameteredRun}", "2-ASP-output")
+        self.e2MirDir = os.path.join(self.tapDir, "{uniqueParameteredRun}", "3-MIR")
+        self.e2PWsDir = os.path.join(self.tapDir, "{uniqueParameteredRun}", "4-PWs")
+        self.e2AggregatesDir = os.path.join(self.tapDir, "{uniqueParameteredRun}", "5-Aggregates")
+        self.e2LatticesDir = os.path.join(self.tapDir, "{uniqueParameteredRun}", "6-Lattices")
         self.isConsistent = True
         if not hasattr(self, 'maxN'):
             self.maxN = None
-    def run(self):
-        Command.run(self)
-    def run_euler(self, command):
+    def run(self, command):
         # add parameters to the command that are relevant to avoid re-runs (i.e. all tap relevant data + maxN + ...?)
         # by at the same time keeping the file name minimal
         coverage = "" if self.isCoverage else "--disablecov"
         disjointness = "" if self.isSiblingDisjointness else "--disablesib"
         imageFormat = "--svg" if self.imageFormat == "svg" else ""
+        
+        uniqueParameteredRun = "{reasoner} {regions} {coverage} {disjointness} {maxN} {repairMethod} {imageFormat}"
+        uniqueParameteredRun = uniqueParameteredRun.format(reasoner = self.reasoner, regions = self.regions, coverage = coverage, 
+                          disjointness = disjointness, maxN = self.maxN, repairMethod = self.repairMethod, 
+                          imageFormat = imageFormat)
+        uniqueParameteredRun = '_'.join(uniqueParameteredRun.split())
+        outputDir = os.path.join(self.tapDir, uniqueParameteredRun)
+        if not os.path.isdir(outputDir):
+            os.makedirs(outputDir)
+        self.e2InputDir = self.e2InputDir.format(uniqueParameteredRun = uniqueParameteredRun)
+        self.e2AspInputDir = self.e2AspInputDir.format(uniqueParameteredRun = uniqueParameteredRun)
+        self.e2AspOutputDir = self.e2AspOutputDir.format(uniqueParameteredRun = uniqueParameteredRun)
+        self.e2MirDir = self.e2MirDir.format(uniqueParameteredRun = uniqueParameteredRun)
+        self.e2PWsDir = self.e2PWsDir.format(uniqueParameteredRun = uniqueParameteredRun)
+        self.e2AggregatesDir = self.e2AggregatesDir.format(uniqueParameteredRun = uniqueParameteredRun)
+        self.e2LatticesDir = self.e2LatticesDir.format(uniqueParameteredRun = uniqueParameteredRun)
+        
         command = command.format(euler2Executable = '{euler2Executable}', 
                 cleantaxFile = '{cleantaxFile}', outputDir = '{outputDir}', 
                 #imageFormat = '{imageFormat}', 
                 #reasoner = '{reasoner}', 
-                repairMethod = self.repairMethod,  maxN = self.maxN, regions = self.regions, coverage = coverage, 
+                repairMethod = self.repairMethod, maxN = self.maxN, regions = self.regions, coverage = coverage, 
                 disjointness = disjointness, imageFormat = imageFormat, reasoner = self.reasoner)
-        stdoutFile = os.path.join(self.outputDir, '%s.stdout' % command)
-        stderrFile = os.path.join(self.outputDir, '%s.stderr' % command)
-        returnCodeFile = os.path.join(self.outputDir, '%s.returncode' % command)
+        command = ' '.join(command.split())
+        stdoutFile = os.path.join(outputDir, '%s.stdout' % command)
+        stderrFile = os.path.join(outputDir, '%s.stderr' % command)
+        returnCodeFile = os.path.join(outputDir, '%s.returncode' % command)
         if os.path.isfile(stdoutFile) and os.path.isfile(stderrFile) and os.path.isfile(returnCodeFile):
             with open(stdoutFile,'r') as f:
-                stdout = f.read()
+                self.stdout = f.read()
             with open(stderrFile,'r') as f:
-                stderr = f.read()
+                self.stderr = f.read()
             with open(returnCodeFile,'r') as f:
-                returnCode = f.read()
-            if "Input is inconsistent" in stdout:
+                self.returnCode = f.read()
+            if "Input is inconsistent" in self.stdout:
                 self.isConsistent = False
-            if returnCode and stderr:
-                print stderr.rstrip()
-            return stdout, stderr, returnCode
+            if self.returnCode and self.stderr:
+                print self.stderr.rstrip()
+            return self.stdout, self.stderr, self.returnCode
         # add remaining parameters
         command = command.format(euler2Executable = self.euler2Executable, 
-                cleantaxFile = self.cleantaxFile, outputDir = self.outputDir, imageFormat = self.imageFormat, 
+                cleantaxFile = self.cleantaxFile, outputDir = outputDir, imageFormat = self.imageFormat, 
                 maxN = self.maxN, reasoner = self.reasoner);
         with open(stdoutFile, 'w+') as out:
             with open(stderrFile, 'w+') as err:
                 with open(returnCodeFile, 'w+') as rc:
                     #print command
                     p = Popen(command, stdout=PIPE, stderr=PIPE, shell=True)
-                    stdout, stderr = p.communicate()
+                    self.stdout, self.stderr = p.communicate()
                     #print stdout
                     #print stderr
-                    if p.returncode and stderr:
+                    if p.returncode and self.stderr:
                         print stderr.rstrip()
-                    if "Input is inconsistent" in stdout:
+                    if "Input is inconsistent" in self.stdout:
                         self.isConsistent = False
-                    out.write(stdout)
-                    err.write(stderr)
+                    out.write(self.stdout)
+                    err.write(self.stderr)
                     rc.write('%s' % p.returncode)
                     if os.path.isfile('report.csv'):
                         os.remove('report.csv')
-                    return stdout, stderr, p.returncode
+                    self.returncode = p.returncode
+                    return self.stdout, self.stderr, self.returncode
     def is_consistent(self):
         return self.isConsistent
-    def get_possible_worlds(self):
-        possibleWorlds = []
-        with open(os.path.join(self.e2AspOutputDir, 'cleantax.pw'), 'r') as f:
-            currentWorld = ""
-            for line in f:
-                if len(line.strip()) == 0:
-                    if len(currentWorld) > 0:
-                        possibleWorlds.append(currentWorld.rstrip())
-                        currentWorld = ""
-                else:
-                    if not len(line.strip()) == 0:
-                        currentWorld += line
-            if len(currentWorld) > 0:
-                possibleWorlds.append(currentWorld.rstrip())
-        return possibleWorlds
+    def get_world_yaml(self):
+        for filename in os.listdir(self.e2PWsDir):
+            if filename.startswith("cleantax_0_") and filename.endswith(".yaml"):
+                with open(os.path.join(self.e2PWsDir, filename), "r") as f:
+                    return yaml.load(f)
+    def get_worlds(self):
+        worlds = []
+        worldStart = False
+        world = []
+        for line in self.stdout.splitlines():
+            if len(line.strip()) == 0:
+                continue
+            if line.startswith('Possible world'):
+                if worldStart:
+                    worlds.append(world)
+                worldStart = True
+                world = []
+            elif worldStart:
+                line = line.strip()[1:-1]
+                line = line.split(", ")
+                for a in line:
+                    a = a.replace("\"!\"", " disjoint ")
+                    a = a.replace("\"=\"", " equals ")
+                    a = a.replace("\"<\"", " is_included_in ")
+                    a = a.replace("\">\"", " includes ")
+                    a = a.replace("\"><\"", " overlaps ")
+                    world.append(a)
+        if world:
+            worlds.append(world)
+        return worlds
+    
+    def get_world_count(self):
+        return len(self.get_worlds())
+    def get_maximal_articulation_sets(self):
+        sets = []
+        for filename in os.listdir(self.e2InputDir):
+            if filename.startswith("cleantax-alt"):
+                set = []
+                file = os.path.join(self.e2InputDir, filename)
+                import e3_io
+                tap = e3_io.CleantaxReader().get_tap_from_cleantax_file(file)
+                for a in tap.articulations:
+                    set.append(a.__str__()[1:-1]);
+                sets.append(set)
+        return sets
+    
+    def get_unique_articulation_sets(self):
+        uniqueArtSets = []
+        for line in self.stdout.splitlines():
+            if line.startswith('Min articulation subset that makes unique PW'):
+                uniqueArtSet = []
+                articulationsLine = line.split('[')[1]
+                articulations = re.compile(":|,|]").split(articulationsLine)
+                for i, articulation in enumerate(articulations):
+                    if i%2 == 1:
+                        uniqueArtSet.append(articulation.strip())
+                uniqueArtSets.append(uniqueArtSet)
+        return uniqueArtSets
+    
+    #['1.B is_included_in 2.B', '1.A equals 2.A', '1.G equals 2.G', '1.C 1.D lsum 2.C', '1.F equals 2.F', '1.E equals 2.E'] ['1.B is_included_in 2.B', '1.H equals 2.H', '1.A equals 2.A', '1.G equals 2.G', '1.C 1.D lsum 2.C', '1.E equals 2.E'] 
+    def get_maximal_ambiguity_sets(self):
+        for line in self.stdout.splitlines():
+            if line.startswith('MAA'):
+                uniqueArtSets = []
+                articulationSets = re.compile("\] \[|\[|\]").split(line)[1:-1]
+                for articulationSet in articulationSets:
+                    uniqueArtSet = []
+                    for i, articulation in enumerate(articulationSet.split(", ")):
+                        uniqueArtSet.append(articulation.strip()[1:-1])
+                    uniqueArtSets.append(uniqueArtSet)
+                return uniqueArtSets
+
+
+    def get_maximal_consistency_sets(self):
+        for line in self.stdout.splitlines():
+            if line.startswith('MCS'):
+                uniqueArtSets = []
+                articulationSets = re.compile("\] \[|\[|\]").split(line)[1:-1]
+                for articulationSet in articulationSets:
+                    uniqueArtSet = []
+                    for i, articulation in enumerate(articulationSet.split(", ")):
+                        uniqueArtSet.append(articulation.strip()[1:-1])
+                    uniqueArtSets.append(uniqueArtSet)
+                return uniqueArtSets
+    
+    def get_minimal_inconsistency_sets(self):
+        for line in self.stdout.splitlines():
+            if line.startswith('MIS'):
+                uniqueArtSets = []
+                articulationSets = re.compile("\] \[|\[|\]").split(line)[1:-1]
+                for articulationSet in articulationSets:
+                    uniqueArtSet = []
+                    for i, articulation in enumerate(articulationSet.split(", ")):
+                        uniqueArtSet.append(articulation.strip()[1:-1])
+                    uniqueArtSets.append(uniqueArtSet)
+                return uniqueArtSets
+    
+    def get_minimal_uniqueness_sets(self):
+        for line in self.stdout.splitlines():
+            if line.startswith('MUS'):
+                uniqueArtSets = []
+                articulationSets = re.compile("\] \[|\[|\]").split(line)[1:-1]
+                for articulationSet in articulationSets:
+                    uniqueArtSet = []
+                    for i, articulation in enumerate(articulationSet.split(", ")):
+                        uniqueArtSet.append(articulation.strip()[1:-1])
+                    uniqueArtSets.append(uniqueArtSet)
+                return uniqueArtSets
+    
+    def get_input_graphs(self):
+        files = []
+        for filename in os.listdir(self.e2InputDir):
+            if filename.endswith(".%s" % self.imageFormat):
+                file = os.path.join(self.e2InputDir, filename)
+                files.append(file)
+        return files
+    def get_world_graphs(self):
+        files = []
+        for filename in os.listdir(self.e2PWsDir):
+            if filename.endswith(".%s" % self.imageFormat):
+                file = os.path.join(self.e2PWsDir, filename)
+                files.append(file)
+        return files
+    def get_fix_option_sets(self):
+        sets = []
+        for line in self.stdout.splitlines():
+            if line.startswith('Repair option'):
+                set = []
+                articulations = line.split("[")[1].strip()[:-1]
+                for a in articulations.split(" , "):
+                    set.append(a)
+                sets.append(set)
+            if line.startswith('Possible world'):
+                return []
+        return sets
+    def get_inconsistency_lattice_graphs(self):
+        graphs = []
+        for filename in os.listdir(self.e2LatticesDir):
+            if filename.endswith(".%s" % self.imageFormat):
+                file = os.path.join(self.e2LatticesDir, filename)
+                graphs.append(file)
+        return graphs
+    def get_four_in_one_lattice_graphs(self):
+        graphs = []
+        for filename in os.listdir(self.e2LatticesDir):
+            if filename.endswith(".%s" % self.imageFormat):
+                file = os.path.join(self.e2LatticesDir, filename)
+                graphs.append(file)
+        return graphs
+    def get_summary_graphs(self):
+        graphs = []
+        for filename in os.listdir(self.e2AggregatesDir):
+            if filename.endswith(".%s" % self.imageFormat):
+                file = os.path.join(self.e2AggregatesDir, filename)
+                graphs.append(file)
+        return graphs
+    def get_ambiguity_lattice_graphs(self):
+        graphs = []
+        for filename in os.listdir(self.e2LatticesDir):
+            if filename.endswith(".%s" % self.imageFormat):
+                file = os.path.join(self.e2LatticesDir, filename)
+                graphs.append(file)
+        return graphs
+    
+    
+class Euler2Command(Command):
+    @copy_args_to_public_fields
+    def __init__(self, tap):
+        Command.__init__(self)
+        config = self.configManager.get_config()
+        self.imageViewer = config['environment']['imageViewer']
+        self.maxWorldsToShow = config['cli behavior']['maxWorldsToShow']
+    def run(self):
+        Command.run(self)
     
 class ModelCommand(Command):
     @copy_args_to_public_fields                 
@@ -268,7 +441,7 @@ class SetGitCredentials(MiscCommand):
         self.output.append("git credentials set successfully")
 
 @logged
-class GitCachePull(MiscCommand):
+class GitStatePull(MiscCommand):
     @copy_args_to_public_fields
     def __init__(self):
         MiscCommand.__init__(self)
@@ -284,7 +457,7 @@ class GitCachePull(MiscCommand):
             g.pull()
         except git.exc.GitCommandError as e:
             e3_io.clean_e3_dir()
-            g.clone(config['sharing']['cacheGitRepo'], e3_io.get_e3_dir())
+            g.clone(config['sharing']['stateGitRepo'], e3_io.get_e3_dir())
         self.output.append("Pulled successfully")
         self.output.append("Tap: " + self.tapManager.get_current_tap_name_and_status())
         
@@ -353,7 +526,7 @@ class GitPush(MiscCommand):
             self.output.append(str(e))
 
 @logged
-class GitCachePush(MiscCommand):
+class GitStatePush(MiscCommand):
     @copy_args_to_public_fields
     def __init__(self, message):
         MiscCommand.__init__(self)
@@ -369,7 +542,7 @@ class GitCachePush(MiscCommand):
                 g.status()
             except git.exc.GitCommandError as e:
                 g.init() # can already have a .git folder
-                g.remote("add", "origin", config['sharing']['cacheGitRepo']) # can already have an "origin"
+                g.remote("add", "origin", config['sharing']['stateGitRepo']) # can already have an "origin"
             g.fetch() # may not be able to if remote is invalid url
             g.add(".")
             try: 
@@ -499,7 +672,7 @@ class AddChildren(ModelCommand):
         
         parts = self.children[1:-1].split()
         if len(parts) <= 1:
-            self.output.append("Taxonomy line with one <= 1 node is not valid.")
+            self.output.append("Taxonomy line with <= 1 nodes is invalid.")
             return
         
         import e3_validation
@@ -524,7 +697,7 @@ class RemoveChildren(ModelCommand):
         
         parts = self.children[1:-1].split()
         if len(parts) <= 1:
-            self.output.append("Taxonomy line with one <= 1 node is not valid.")
+            self.output.append("Taxonomy line with <= 1 nodes is invalid.")
             return
         
         import e3_validation
@@ -608,9 +781,10 @@ class AddArticulation(ModelCommand):
         ModelCommand.run(self)
         
         import e3_io
+        self.articulationLine = "[" + self.articulationLine + "]"
         articulation = e3_io.CleantaxReader().get_articulation_from_cleantax(self.articulationLine)
         if articulation is  None:
-            self.output.append("Not a valid articulation. No valid relation found.")
+            self.output.append("This is not a valid articulation.")
         else:
             import e3_validation
             if e3_validation.ModelValidator().is_valid_new_articulation(articulation, self.tap):
@@ -618,22 +792,36 @@ class AddArticulation(ModelCommand):
                 self.tapManager.set_current_tap(self.tap)
                 self.output.append("Tap: " + self.tapManager.get_tap_name_and_status(self.tap.get_id()))
             else:
-                self.output.append("This articulation already exists: " + newArticulation)
+                self.output.append("This articulation already exists: " + self.articulationLine)
 
 @logged
-class RemoveArticulation(ModelCommand):
+class RemoveArticulationByIndex(ModelCommand):
     @copy_args_to_public_fields
     def __init__(self, tap, articulationIndex):
         ModelCommand.__init__(self)
     def run(self):
         ModelCommand.run(self)
         if self.articulationIndex > len(self.tap.articulations) or self.articulationIndex < 1:
-            self.output.append("This is not a valid index")
+            self.output.append("This is not a valid index.")
             return
-        #self.tapManager.remove_articulation(self.input, self.tap, self.articulationIndex)
-        self.tap.remove_articulation(self.articulationIndex)
+        self.tap.remove_articulation_by_index(self.articulationIndex)
         self.tapManager.set_current_tap(self.tap)
         self.output.append("Tap: " + self.tapManager.get_tap_name_and_status(self.tap.get_id()))
+    
+@logged
+class RemoveArticulation(ModelCommand):
+    @copy_args_to_public_fields
+    def __init__(self, tap, articulation):
+        ModelCommand.__init__(self)
+    def run(self):
+        ModelCommand.run(self)
+        if not self.tap.contains_articulation(articulation):
+            self.output.append("The tap does not contain the articulation: " + self.articulation)
+            return
+        self.tap.remove_articulation(self.articulation)
+        self.tapManager.set_current_tap(self.tap)
+        self.output.append("Tap: " + self.tapManager.get_tap_name_and_status(self.tap.get_id()))
+    
     
 class UseTap(ModelCommand):
     @copy_args_to_public_fields
@@ -668,7 +856,7 @@ class SetRegions(ModelCommand):
             self.tapManager.set_current_tap(self.tap)
             self.output.append("Tap: " + self.tapManager.get_tap_name_and_status(self.tap.get_id()))
         else:
-            self.output.append("This is not a valid region")
+            self.output.append("This is not a valid region.")
 
 @logged 
 class SetSiblingDisjointness(ModelCommand):
@@ -680,44 +868,129 @@ class SetSiblingDisjointness(ModelCommand):
         self.tap.isSiblingDisjointness = self.value
         self.tapManager.set_current_tap(self.tap)
         self.output.append("Tap: " + self.tapManager.get_tap_name_and_status(self.tap.get_id()))
+
+def get_taxonomy_from_world_yaml(tap, worldYaml):
+    srcTaxonomiesIds = []
+    srcTaxonomiesNames = []
+    for taxonomy in tap.taxonomies:
+        srcTaxonomiesIds.append(taxonomy.id)
+        srcTaxonomiesNames.append(taxonomy.name)
+    import e3_model
+    taxonomy = e3_model.Taxonomy('-'.join(srcTaxonomiesIds), '-'.join(srcTaxonomiesNames))
+    for key in worldYaml:
+        #if "concept" in worldYaml[key]:
+            #node    
+            #groups.add(wordYaml[key]['group'])
+        if "label" in worldYaml[key]:
+            #edge
+            src = worldYaml[key]['s']
+            src = src.replace('\\n', '-')
+            target = worldYaml[key]['t']
+            target = target.replace('\\n', '-')
+            children = []
+            children.append(src)
+            taxonomy.add_children(target, children)
+    return taxonomy
+
+@logged
+class RenameConcept(ModelCommand):
+    @copy_args_to_public_fields
+    def __init__(self, tap, taxonomyId, oldName, newName):
+        ModelCommand.__init__(self)
+    def run(self):
+        ModelCommand.run(self)
+        if not self.tap.has_taxonomy(self.taxonomyId):
+            self.output.append("Taxonomy with id " + self.taxonomyId + " not found.")
+        taxonomy = self.tap.get_taxonomy(self.taxonomyId)
+        if not taxonomy.contains_node(self.oldName):
+            self.output.append("Taxonomy with id " + self.taxonomyId + " does not contain a concept with name " + self.oldName)
+        if taxonomy.contains_node(self.newName):
+            self.output.append("Taxonomy with id " + self.taxonomyId + " already contains a concept with name " + self.newName)
+        self.tap.rename_concept(self.taxonomyId, self.oldName, self.newName)
+        self.tapManager.set_current_tap(self.tap)
+        self.output.append("Tap: " + self.tapManager.get_tap_name_and_status(self.tap.get_id()))
+
+@logged
+class CreateTapFromWorlds(ModelCommand):
+    @copy_args_to_public_fields
+    def __init__(self, srcTaps):
+        ModelCommand.__init__(self)
+    def run(self):
+        ModelCommand.run(self)
+        createdTap = self.tapManager.get_default_tap()
+        for srcTap in self.srcTaps:
+            srcTapName = self.tapManager.get_tap_name(srcTap.get_id())
+            if is_unique(srcTap):
+                align = Euler2(srcTap)
+                stdout, stderr, returnCode = align.run(Euler2.alignCommand)
+                showPW = Euler2(srcTap)
+                stdout, stderr, returnCode = showPW.run(Euler2.showPWCommand)
+                worldYaml = align.get_world_yaml()
+                if worldYaml is None:
+                    self.output.append("Cannot find unique world of tap " + srcTapName)
+                    return
+                taxonomy = get_taxonomy_from_world_yaml(srcTap, worldYaml)
+                createdTap.add_taxonomy(taxonomy)
+            else:
+                self.output.append("Tap " + srcTapName + " is not unique.")
+                return
+        self.tapManager.set_current_tap(createdTap)
+        self.output.append("Tap: " + self.tapManager.get_tap_name_and_status(createdTap.get_id()))
+            
+def is_consistent(tap):
+    alignConsistency = Euler2(tap)
+    stdout, stderr, returnCode = alignConsistency.run(Euler2.alignConsistencyCommand)
+    return alignConsistency.is_consistent()
     
+def is_unique(tap):
+    alignMaxN = Euler2(tap)
+    alignMaxN.maxN = 2
+    stdout, stderr, returnCode = alignMaxN.run(Euler2.alignMaxNCommand)
+    worldCount = alignMaxN.get_world_count()
+    return worldCount == 1
+
 @logged 
 class GraphWorlds(Euler2Command):
     @copy_args_to_public_fields
-    def __init__(self, tap):
+    def __init__(self, tap, maxWorlds):
         Euler2Command.__init__(self, tap)
     def run(self):
         Euler2Command.run(self)
+        if self.maxWorlds is not None and self.maxWorlds <= 0:
+            self.output.append("Can only produce a positive number of worlds.")
+            return
         if not self.tap.is_euler_ready():
             self.output.append("The tap is not ready: " + self.tap.get_status_message())
             return
-        
-        stdout, stderr, returnCode = self.run_euler(self.alignConsistencyCommand)
-        if not self.is_consistent():
-            self.output.append("The tap is inconsistent. I have nothing to show")
+        if not is_consistent(self.tap):
+            self.output.append("The tap is inconsistent. Nothing has been produced.")
             return
-            
-        stdout, stderr, returnCode = self.run_euler(self.alignCommand)
-        stdout, stderr, returnCode = self.run_euler(self.showPWCommand)
-        possibleWorldsCount = len(self.get_possible_worlds())
-        if possibleWorldsCount == 0:
-            self.output.append("There are no possible worlds.")
-        elif possibleWorldsCount <= self.maxPossibleWorldsToShow:
-            self.output.append("There are {count} possible worlds. I show them all to you.".format(
-                count = possibleWorldsCount))
-        else:
-            self.output.append("There are {count} possible worlds. I will only show {maxCount} of them to you.".format(
-                count = possibleWorldsCount, maxCount = self.maxPossibleWorldsToShow))
         
+        if self.maxWorlds is not None:
+            alignMaxN = Euler2(self.tap)
+            alignMaxN.maxN = self.maxWorlds
+            stdout, stderr, returnCode = self.run_euler(Euler2.alignMaxNCommand)
+        else:
+            align = Euler2(self.tap)
+            stdout, stderr, returnCode = align.run(Euler2.alignCommand)
+        
+        showPW = Euler2(self.tap)
+        showPW.maxN = self.maxWorlds
+        stdout, stderr, returnCode = showPW.run(Euler2.showPWCommand)
+        worldCount = showPW.get_world_count()
+        if worldCount == 0:
+            self.output.append("There are no worlds.")
+        else:
+            self.output.append("{count} worlds have been produced.".format(
+                count = worldCount))
         self.executeOutput = []
         openCount = 0
-        for filename in os.listdir(self.e2PWsDir):
-            if filename.endswith(".%s" % self.imageFormat):
-                file = os.path.join(self.e2PWsDir, filename)
-                self.outputFiles.append(file)
-                if openCount < self.maxPossibleWorldsToShow:
-                    openCount += 1
-                    self.executeOutput.append(self.imageViewer.format(file = file))
+        for f in showPW.get_world_graphs():
+            self.outputFiles.append(f)
+            if openCount < self.maxWorldsToShow:
+                openCount += 1
+                self.executeOutput.append(self.imageViewer.format(file = f))
+                    
 @logged
 class IsConsistent(Euler2Command):
     @copy_args_to_public_fields
@@ -728,37 +1001,76 @@ class IsConsistent(Euler2Command):
         if not self.tap.is_euler_ready():
             self.output.append("The tap is not ready: " + self.tap.get_status_message())
             return
-        stdout, stderr, returnCode = self.run_euler(self.alignConsistencyCommand)
-        
-        if self.is_consistent():
-            self.output.append("yes")
+        if is_consistent(self.tap):
+            self.output.append("Yes.")
         else:
-            self.output.append("no")
-    
-@logged 
-class MoreWorldsThan(Euler2Command):
+            self.output.append("No")
+            
+@logged
+class IsAmbiguous(Euler2Command):
     @copy_args_to_public_fields
-    def __init__(self, tap, more):
+    def __init__(self, tap):
         Euler2Command.__init__(self, tap)
-        self.maxN = self.more + 1 #adapt from "more than" to "more than equals"
+    def run(self):
+        Euler2Command.run(self)
+        if not self.tap.is_euler_ready():
+            self.output.append("The tap is not ready: " + self.tap.get_status_message())
+            return
+        if not is_consistent(self.tap):
+            self.output.append("No, the tap is inconsistent.")
+        if is_unique(self.tap):
+            self.output.append("No.")
+        else:
+            self.output.append("Yes.")
+@logged
+class IsUnique(Euler2Command):
+    @copy_args_to_public_fields
+    def __init__(self, tap):
+        Euler2Command.__init__(self, tap)
     def run(self):
         Euler2Command.run(self)
         if not self.tap.is_euler_ready():
             self.output.append("The tap is not ready: " + self.tap.get_status_message())
             return 0
-        
-        stdout, stderr, returnCode = self.run_euler(self.alignConsistencyCommand)
-        if not self.is_consistent():
+        if not is_consistent(self.tap):
+            self.output.append("No, the tap is inconsistent.")
+        if is_unique(self.tap):
+            self.output.append("Yes.")
+        else:
+            self.output.append("No.")
+            
+@logged 
+class MoreWorldsThan(Euler2Command):
+    @copy_args_to_public_fields
+    def __init__(self, tap, more):
+        Euler2Command.__init__(self, tap)
+    def run(self):
+        Euler2Command.run(self)
+        if not self.tap.is_euler_ready():
+            self.output.append("The tap is not ready: " + self.tap.get_status_message())
+            return 0
+        if not is_consistent(self.tap):
             self.output.append("Cannot determine if there are more than {more} worlds. The tap is not consistent".format(more = self.more))
         
-        stdout, stderr, returnCode = self.run_euler(self.alignMaxNCommand)
-        possibleWorldsCount = len(self.get_possible_worlds())
-        if possibleWorldsCount < self.maxN:
-            self.output.append("There are less than or equal to {more} possible worlds. There are {count}.".format(
-                more = self.more, count = possibleWorldsCount))
+        alignMaxN = Euler2()
+        alignMaxN.maxN = self.more + 1 #adapt from "more than" to "more than equals"
+        stdout, stderr, returnCode = alignMaxN.run(Euler2.alignMaxNCommand)
+        worldCount = alignMaxN.get_world_count()
+        if self.maxN >= 2 and worldCount == 1:
+            self.output.append("There is exactly one world. The tap is unique.")
+        elif worldCount < self.maxN:
+            if self.maxN == 1:
+                self.output.append("The tap must be inconsistent. There are no worlds. Something may have gone wrong.")
+            else:
+                self.output.append("There are less than or equal to {more} worlds. In fact, there are {count}. The tap is ambiguous.".format(
+                    more = self.more, count = worldCount))
         else:
-            self.output.append("There are more than {more} possible worlds.".format(
-                more = self.more))
+            if self.maxN == 1:
+                self.output.append("There are more than {more} worlds. It is still unclear is the tap is ambiguous or unique.".format(
+                    more = self.more))
+            else:
+                self.output.append("There are more than {more} worlds. The tap is ambiguous.".format(
+                    more = self.more))
             
 @logged 
 class PrintFix(Euler2Command):
@@ -770,22 +1082,51 @@ class PrintFix(Euler2Command):
         if not self.tap.is_euler_ready():
             self.output.append("The tap is not ready: " + self.tap.get_status_message())
             return
-        
-        stdout, stderr, returnCode = self.run_euler(self.alignConsistencyCommand)
-        if self.is_consistent():
-            self.output.append("The tap is not inconsistent. I have nothing to show.")
+        if is_consistent(self.tap):
+            self.output.append("The tap is consistent. Nothing has been produced.")
             return
         
-        stdout, stderr, returnCode = self.run_euler(self.alignRepairCommand)
-        self.output.append("Suggested repair options")
-        for line in stdout.splitlines():
-            if line.startswith('Repair option'):
-                self.output.append(line.rstrip())
-            if line.startswith('Possible world'):
-                self.output = []
-                self.output.append("The tap is not inconsistent. There is nothing to fix.")
-                return
-                           
+        alignRepair = Euler2(self.tap)
+        stdout, stderr, returnCode = alignRepair.run(Euler2.alignRepairCommand)
+        fixOptionSets = alignRepair.get_fix_option_sets()
+        if fixOptionSets:
+            self.output.append("Remove any of the following sets of articulations:")
+            for i, set in enumerate(fixOptionSets):
+                self.output.append(str(i + 1) + ".\n" + ', '.join(set) + "\n")
+        else:
+            self.output.append("The tap is consistent. Nothing has been produced.")
+
+@logged 
+class UseFix(ModelCommand):
+    @copy_args_to_public_fields
+    def __init__(self, tap, setId):
+        ModelCommand.__init__(self)
+        self.setId = setId - 1
+    def run(self):
+        ModelCommand.run(self)
+        if not self.tap.is_euler_ready():
+            self.output.append("The tap is not ready: " + self.tap.get_status_message())
+            return
+        if is_consistent(self.tap):
+            self.output.append("The tap is consistent. Nothing has been produced.")
+            return
+        
+        alignRepair = Euler2(self.tap)
+        stdout, stderr, returnCode = alignRepair.run(Euler2.alignRepairCommand)
+        fixOptionSets = alignRepair.get_fix_option_sets()
+        if not fixOptionSets:
+            self.output.append("No fixes available.")
+        if self.setId < 0 or self.setId >= len(fixOptionSets):
+           self.output.append("Invalid fix set id.")
+           return
+       
+        import e3_io
+        for a in fixOptionSets[self.setId]:
+            articulation = e3_io.CleantaxReader().get_articulation_from_cleantax("[" + a + "]")
+            self.tap.remove_articulation(articulation)
+        self.tapManager.set_current_tap(self.tap)
+        self.output.append("Tap: " + self.tapManager.get_tap_name_and_status(self.tap.get_id()))
+
 @logged
 class GraphInconsistency(Euler2Command):
     @copy_args_to_public_fields
@@ -795,60 +1136,72 @@ class GraphInconsistency(Euler2Command):
         Euler2Command.run(self)
         if not self.tap.is_euler_ready():
             self.output.append("The tap is not ready: " + self.tap.get_status_message())
-            return 
-                
-        stdout, stderr, returnCode = self.run_euler(self.alignConsistencyCommand)
-        if self.is_consistent():
-            self.output.append("The tap is not inconsistent. I have nothing to show.")
+            return
+        if is_consistent(self.tap):
+            self.output.append("The tap is consistent. Nothing has been produced.")
             return
         
-        stdout, stderr, returnCode = self.run_euler(self.alignCommand)
+        align = Euler2(self.tap)
+        stdout, stderr, returnCode = align.run(Euler2.alignCommand)
         if self.type == "reduced":
-            stdout, stderr, returnCode = self.run_euler(self.showInconLatReducedCommand)
+            showInconLatReduced = Euler2(self.tap)
+            stdout, stderr, returnCode = showInconLatReduced.run(Euler2.showInconLatReducedCommand)
+            graphs = showInconLatReduced.get_inconsistency_lattice_graphs()
         elif self.type == "full":
-            stdout, stderr, returnCode = self.run_euler(self.showInconLatFullCommand)
+            showInconLatFull = Euler2(self.tap)
+            stdout, stderr, returnCode = showInconLatFull.run(Euler2.showInconLatFullCommand)
+            graphs = showInconLatReduced.get_inconsistency_lattice_graphs()
         else:
-            stdout, stderr, returnCode = self.run_euler(self.showInconLatCommand)
+            showInconLat = Euler2(self.tap)
+            stdout, stderr, returnCode = showInconLat.run(Euler2.showInconLatCommand)
+            graphs = showInconLatReduced.get_inconsistency_lattice_graphs()
         
-        self.output.append("Take a look at the graph")
+        self.output.append("Take a look at the produced graph.")
         self.executeOutput = []
-        for filename in os.listdir(self.e2LatticesDir):
-            if filename.endswith(".%s" % self.imageFormat):
-                file = os.path.join(self.e2LatticesDir, filename)
-                self.executeOutput.append(self.imageViewer.format(file = file)) 
-                self.outputFiles.append(file)
-            
+        for f in graphs:
+            self.executeOutput.append(self.imageViewer.format(file = file)) 
+            self.outputFiles.append(file)
+        
 @logged
 class PrintWorlds(Euler2Command):
     @copy_args_to_public_fields
-    def __init__(self, tap):
+    def __init__(self, tap, maxWorlds):
         Euler2Command.__init__(self, tap)
     def run(self):
         Euler2Command.run(self)
+        if self.maxWorlds is not None and self.maxWorlds <= 0:
+            self.output.append("Can only produce a positive number of worlds.")
+            return
         if not self.tap.is_euler_ready():
             self.output.append("The tap is not ready: " + self.tap.get_status_message())
             return
-        
-        stdout, stderr, returnCode = self.run_euler(self.alignConsistencyCommand)
-        if not self.is_consistent():
-            self.output.append("The tap is inconsistent. I have nothing to show.")
+        if not is_consistent(self.tap):
+            self.output.append("The tap is inconsistent. Nothing has been produced.")
             return
         
-        stdout, stderr, returnCode = self.run_euler(self.alignCommand)
-        possibleWorlds = self.get_possible_worlds()
-        possibleWorldsCount = len(possibleWorlds)
-        if possibleWorldsCount == 0:
-            self.output.append("There are no possible worlds.")
-        elif possibleWorldsCount <= self.maxPossibleWorldsToShow:
-            self.output.append("There are {count} possible worlds. I show them all to you.".format(
-                count = len(possibleWorlds)))
+        if self.maxWorlds is not None:
+            alignMaxN = Euler2(self.tap)
+            alignMaxN.maxN = self.maxWorlds
+            stdout, stderr, returnCode = alignMaxN.run(Euler2.alignMaxNCommand)
+            worlds = alignMaxN.get_worlds()
+            worldCount = alignMaxN.get_world_count()
         else:
-            self.output.append("There are {count} possible worlds. I will only show {maxCount} of them to you.".format(
-                count = len(possibleWorlds), maxCount = self.maxPossibleWorldsToShow))
-        for world in possibleWorlds:
-            self.output.append(world)
-      
-@logged 
+            align = Euler2(self.tap)
+            stdout, stderr, returnCode = align.run(Euler2.alignCommand)
+            worlds = align.get_worlds()
+            worldCount = align.get_world_count()
+        if worldCount == 0:
+            self.output.append("There are no worlds.")
+        else:
+            self.output.append("{count} worlds have been produced.".format(
+                count = worldCount) + "\n")
+        for i, world in enumerate(worlds):
+            if i + 1 <= self.maxWorldsToShow:
+                self.output.append("\n" + str(i + 1) + ". World")
+                self.output.extend(world)
+            else: break
+            
+@logged
 class GraphTap(Euler2Command):
     @copy_args_to_public_fields
     def __init__(self, tap):
@@ -858,14 +1211,13 @@ class GraphTap(Euler2Command):
         if not self.tap.is_euler_ready():
             self.output.append("The tap is not ready: " + self.tap.get_status_message())
             return
-        stdout, stderr, returnCode = self.run_euler(self.showIVCommand)
-        self.output.append("Take a look at the graph")
+        showIV = Euler2(self.tap)
+        stdout, stderr, returnCode = showIV.run(Euler2.showIVCommand)
+        self.output.append("Take a look at the produced graph.")
         self.executeOutput = []
-        for filename in os.listdir(self.e2InputDir):
-            if filename.endswith(".%s" % self.imageFormat):
-                file = os.path.join(self.e2InputDir, filename)
-                self.executeOutput.append(self.imageViewer.format(file = file))
-                self.outputFiles.append(file)
+        for f in showIV.get_input_graphs():
+            self.executeOutput.append(self.imageViewer.format(file = f))
+            self.outputFiles.append(f)
 @logged 
 class GraphFourInOne(Euler2Command):
     @copy_args_to_public_fields
@@ -877,19 +1229,20 @@ class GraphFourInOne(Euler2Command):
             self.output.append("The tap is not ready: " + self.tap.get_status_message())
             return
         # This can be executed on consistent and inconsistent taps!
-        stdout, stderr, returnCode = self.run_euler(self.alignFoundInOneCommand)
-        stdout, stderr, returnCode = self.run_euler(self.showFourInOneCommand)
+        
+        alignFourInOne = Euler2(self.tap)
+        stdout, stderr, returnCode = alignFourInOne.run(Euler2.alignFourInOneCommand)
+        showFourInOne = Euler2(self.tap)
+        stdout, stderr, returnCode = showFourInOne.run(Euler2.showFourInOneCommand)
         #if "This is a consistent example, no 4-in-1 lattice generated" in stdout:
             #self.output.append("The tap is consistent")
             #return
         
-        self.output.append("Take a look at the graph")
+        self.output.append("Take a look at the produced graph.")
         self.executeOutput = []
-        for filename in os.listdir(self.e2LatticesDir):
-            if filename.endswith(".%s" % self.imageFormat):
-                file = os.path.join(self.e2LatticesDir, filename)
-                self.executeOutput.append(self.imageViewer.format(file = file))
-                self.outputFiles.append(file)
+        for f in showFourInOne.get_four_in_one_lattice_graphs():
+            self.executeOutput.append(self.imageViewer.format(file = f))
+            self.outputFiles.append(f)
 @logged 
 class GraphSummary(Euler2Command):
     @copy_args_to_public_fields
@@ -900,22 +1253,21 @@ class GraphSummary(Euler2Command):
         if not self.tap.is_euler_ready():
             self.output.append("The tap is not ready: " + self.tap.get_status_message())
             return
-        
-        stdout, stderr, returnCode = self.run_euler(self.alignConsistencyCommand)
-        if not self.is_consistent():
-            self.output.append("The tap is inconsistent. I have nothing to show.")
+        if not is_consistent(self.tap):
+            self.output.append("The tap is inconsistent. Nothing has been produced.")
             return
         
-        stdout, stderr, returnCode = self.run_euler(self.alignCommand)
-        stdout, stderr, returnCode = self.run_euler(self.showPWCommand)
-        stdout, stderr, returnCode = self.run_euler(self.showSummaryCommand)
-        self.output.append("Take a look at the graph")
+        align = Euler2(self.tap)
+        stdout, stderr, returnCode = align.run(Euler2.alignCommand)
+        showPW = Euler2(self.tap)
+        stdout, stderr, returnCode = showPW.run(Euler2.showPWCommand)
+        showSummary = Euler2(self.tap)
+        stdout, stderr, returnCode = showSummary.run(Euler2.showSummaryCommand)
+        self.output.append("Take a look at the produced graph.")
         self.executeOutput = []
-        for filename in os.listdir(self.e2AggregatesDir):
-            if filename.endswith(".%s" % self.imageFormat):
-                file = os.path.join(self.e2AggregatesDir, filename)
-                self.executeOutput.append(self.imageViewer.format(file = file))
-                self.outputFiles.append(file)
+        for f in showSummary.get_summary_graphs():
+            self.executeOutput.append(self.imageViewer.format(file = f))
+            self.outputFiles.append(f)
 @logged
 class GraphAmbiguity(Euler2Command):
     @copy_args_to_public_fields
@@ -926,28 +1278,424 @@ class GraphAmbiguity(Euler2Command):
         if not self.tap.is_euler_ready():
             self.output.append("The tap is not ready: " + self.tap.get_status_message())
             return
-        
-        stdout, stderr, returnCode = self.run_euler(self.alignConsistencyCommand)
-        if not self.is_consistent():
-            self.output.append("The tap is inconsistent. I have nothing to show.")
+        if not is_consistent(self.tap):
+            self.output.append("The tap is inconsistent. Nothing has been produced.")
             return
         
-        self.maxN = 2
-        stdout, stderr, returnCode = self.run_euler(self.alignMaxNCommand)
-        possibleWorldsCount = len(self.get_possible_worlds())
-        if possibleWorldsCount == self.maxN:
-            self.output.append("The tap is ambiguous. There is more than one possible worlds")
+        alignMaxN = Euler2(self.tap)
+        alignMaxN.maxN = 2
+        stdout, stderr, returnCode = alignMaxN.run(Euler2.alignMaxNCommand)
+        worldCount = alignMaxN.get_world_count()
+        if worldCount == alignMaxN.maxN:
+            self.output.append("The tap is ambiguous. Nothing has been produced.")
             return
         
-        stdout, stderr, returnCode = self.run_euler(self.alignArtRemCommand)
-        stdout, stderr, returnCode = self.run_euler(self.showAmbLatCommand)
+        alignArtRem = Euler2(self.tap)
+        stdout, stderr, returnCode = alignArtRem.run(Euler2.alignArtRemCommand)
+        showAmbLat = Euler2(self.tap)
+        stdout, stderr, returnCode = showAmbLat.run(Euler2.showAmbLatCommand)
         if "No MUS generated for this example" in stdout:
-            self.output.append("The tap is not valid for graph ambiguity")
+            self.output.append("The tap is not valid for graph ambiguity. Nothing has been produced.")
             return
-        self.output.append("Take a look at the graph")
+        
+        self.output.append("Take a look at the produced graph.")
         self.executeOutput = []
-        for filename in os.listdir(self.e2LatticesDir):
-            if filename.endswith(".%s" % self.imageFormat):
-                file = os.path.join(self.e2LatticesDir, filename)
-                self.executeOutput.append(self.imageViewer.format(file = file))
-                self.outputFiles.append(file)
+        for f in showAmbLat.get_ambiguity_lattice_graphs():
+            self.executeOutput.append(self.imageViewer.format(file = f))
+            self.outputFiles.append(f)
+
+@logged
+class PrintMinimalArticulations(Euler2Command):
+    @copy_args_to_public_fields
+    def __init__(self, tap):
+        Euler2Command.__init__(self, tap)
+    def run(self):
+        Euler2Command.run(self)
+        if not self.tap.is_euler_ready():
+            self.output.append("The tap is not ready: " + self.tap.get_status_message())
+            return
+        if not is_consistent(self.tap):
+            self.output.append("The tap is inconsistent. Nothing has been produced.")
+            return
+        
+        alignMaxN = Euler2(self.tap)
+        alignMaxN.maxN = 2
+        stdout, stderr, returnCode = alignMaxN.run(Euler2.alignMaxNCommand)
+        worldCount = alignMaxN.get_world_count()
+        if worldCount != 1:
+            self.output.append("The tap is ambiguous. Nothing has been produced.")
+            return
+        
+        alignArtRem = Euler2(self.tap)
+        alignArtRem.maxN = 2
+        stdout, stderr, returnCode = alignArtRem.run(Euler2.alignArtRemCommand)
+        
+        uniqueArticulationSets = alignArtRem.get_unique_articulation_sets()
+        for i, set in enumerate(uniqueArticulationSets):
+            self.output.append(str(i + 1) + ".\n" + ', '.join(set) + "\n")
+
+@logged
+class UseMinimalArticulations(ModelCommand):
+    @copy_args_to_public_fields
+    def __init__(self, tap, minimalArticulationSetId):
+        ModelCommand.__init__(self)
+        self.minimalArticulationSetId = minimalArticulationSetId - 1
+    def run(self):
+        ModelCommand.run(self)
+        if not self.tap.is_euler_ready():
+            self.output.append("The tap is not ready: " + self.tap.get_status_message())
+            return
+        if not is_consistent(self.tap):
+            self.output.append("The tap is inconsistent. Nothing has been produced.")
+            return
+        
+        alignMaxN = Euler2(self.tap)
+        alignMaxN.maxN = 2
+        stdout, stderr, returnCode = alignMaxN.run(Euler2.alignMaxNCommand)
+        worldCount = alignMaxN.get_world_count()
+        if worldCount != 1:
+            self.output.append("The tap is ambiguous. Nothing has been produced.")
+            return
+        
+        alignArtRem = Euler2(self.tap)
+        alignArtRem.maxN = 2
+        stdout, stderr, returnCode = alignArtRem.run(Euler2.alignArtRemCommand)
+        uniqueArticulationSets = alignArtRem.get_unique_articulation_sets()
+        if self.minimalArticulationSetId < 0 or self.minimalArticulationSetId >= len(uniqueArticulationSets):
+           self.output.append("Invalid minimal articulation set id.")
+           return
+        
+        import e3_io
+        self.tap.articulations = []
+        for a in uniqueArticulationSets[self.minimalArticulationSetId]:
+            articulation = e3_io.CleantaxReader().get_articulation_from_cleantax("[" + a + "]")
+            self.tap.add_articulation(articulation)
+        self.tapManager.set_current_tap(self.tap)
+        self.output.append("Tap: " + self.tapManager.get_tap_name_and_status(self.tap.get_id()))
+
+@logged
+class PrintMaximalArticulations(Euler2Command):
+    @copy_args_to_public_fields
+    def __init__(self, tap):
+        Euler2Command.__init__(self, tap)
+    def run(self):
+        Euler2Command.run(self)
+        if not self.tap.is_euler_ready():
+            self.output.append("The tap is not ready: " + self.tap.get_status_message())
+            return
+        if not is_consistent(self.tap):
+            self.output.append("The tap is inconsistent. Nothing has been produced.")
+            return
+        
+        alignExtractInput = Euler2(self.tap)
+        stdout, stderr, returnCode = alignExtractInput.run(Euler2.alignExtractInputCommand)
+        for i, set in enumerate(alignExtractInput.get_maximal_articulation_sets()):
+            self.output.append(str(i + 1) + ". Set\n" + '\n'.join(set) + "\n")
+            
+@logged
+class UseMaximalArticulations(ModelCommand):
+    @copy_args_to_public_fields
+    def __init__(self, tap, maximalArticulationSetId):
+        ModelCommand.__init__(self)
+        self.maximalArticulationSetId = maximalArticulationSetId - 1
+    def run(self):
+        ModelCommand.run(self)
+        if not self.tap.is_euler_ready():
+            self.output.append("The tap is not ready: " + self.tap.get_status_message())
+            return
+        if not is_consistent(self.tap):
+            self.output.append("The tap is inconsistent. Nothing has been produced.")
+            return
+        
+        alignExtractInput = Euler2(self.tap)
+        stdout, stderr, returnCode = alignExtractInput.run(Euler2.alignExtractInputCommand)
+        maximalArticulationSets = alignExtractInput.get_maximal_articulation_sets()
+        if self.maximalArticulationSetId < 0 or self.maximalArticulationSetId >= len(maximalArticulationSets):
+           self.output.append("Invalid maximal articulation set id.")
+           return
+        
+        import e3_io
+        self.tap.articulations = []
+        for a in maximalArticulationSets[self.maximalArticulationSetId]:
+            articulation = e3_io.CleantaxReader().get_articulation_from_cleantax("[" + a + "]")
+            self.tap.add_articulation(articulation)
+        self.tapManager.set_current_tap(self.tap)
+        self.output.append("Tap: " + self.tapManager.get_tap_name_and_status(self.tap.get_id()))
+
+@logged
+class UseWorld(ModelCommand):
+    @copy_args_to_public_fields
+    def __init__(self, tap, worldId):
+        ModelCommand.__init__(self)
+        if worldId is not None:
+            self.worldId = worldId - 1
+        else:
+            self.worldId = worldId
+    def run(self):
+        ModelCommand.run(self)
+        if not self.tap.is_euler_ready():
+            self.output.append("The tap is not ready: " + self.tap.get_status_message())
+            return
+        if not is_consistent(self.tap):
+            self.output.append("The tap is inconsistent. Nothing has been produced.")
+            return
+        
+        if self.worldId is None and not unique(self.tap):
+            self.output.append("The tap is not unique.")
+            return
+        else:
+            if self.worldId is None:
+                self.worldId = 0
+            align = Euler2(self.tap)
+            stdout, stderr, returnCode = align.run(Euler2.alignCommand)
+            worlds = align.get_worlds()
+            if self.worldId < 0 or self.worldId >= len(worlds):
+               self.output.append("Invalid world id.")
+               return
+            world = worlds[self.worldId]
+            
+            import e3_io
+            self.tap.articulations = []
+            for a in world:
+                articulation = e3_io.CleantaxReader().get_articulation_from_cleantax("[" + a + "]")
+                self.tap.add_articulation(articulation)
+            self.tapManager.set_current_tap(self.tap)
+            self.output.append("Tap: " + self.tapManager.get_tap_name_and_status(self.tap.get_id()))
+
+@logged
+class PrintMinimalUniqueness(Euler2Command):
+    @copy_args_to_public_fields
+    def __init__(self, tap):
+        Euler2Command.__init__(self, tap)
+    def run(self):
+        Euler2Command.run(self)
+        if not self.tap.is_euler_ready():
+            self.output.append("The tap is not ready: " + self.tap.get_status_message())
+            return
+        
+        alignFourInOne = Euler2(self.tap)
+        stdout, stderr, returnCode = alignFourInOne.run(Euler2.alignFourInOneCommand)
+        sets = alignFourInOne.get_minimal_uniqueness_sets()
+        for i, set in enumerate(sets):
+            self.output.append(str(i + 1) + ". Set\n" + '\n'.join(set) + "\n")
+        if not sets:
+            self.output.append("Minimal uniqueness is empty.")
+
+@logged
+class UseMinimalUniqueness(ModelCommand):
+    @copy_args_to_public_fields
+    def __init__(self, tap, setId):
+        ModelCommand.__init__(self)
+        self.setId = setId - 1
+    def run(self):
+        ModelCommand.run(self)
+        if not self.tap.is_euler_ready():
+            self.output.append("The tap is not ready: " + self.tap.get_status_message())
+            return
+        
+        alignFourInOne = Euler2(self.tap)
+        stdout, stderr, returnCode = alignFourInOne.run(Euler2.alignFourInOneCommand)
+        sets = alignFourInOne.get_minimal_uniqueness_sets()
+        if not sets:
+            self.output.append("Minimal uniqueness is empty.")
+        if self.setId < 0 or self.setId >= len(sets):
+           self.output.append("Invalid minimal uniqueness set id.")
+           return
+       
+        import e3_io
+        self.tap.articulations = []
+        for a in sets[self.setId]:
+            articulation = e3_io.CleantaxReader().get_articulation_from_cleantax("[" + a + "]")
+            self.tap.add_articulation(articulation)
+        self.tapManager.set_current_tap(self.tap)
+        self.output.append("Tap: " + self.tapManager.get_tap_name_and_status(self.tap.get_id()))
+
+            
+@logged
+class PrintMinimalInconsistency(Euler2Command):
+    @copy_args_to_public_fields
+    def __init__(self, tap):
+        Euler2Command.__init__(self, tap)
+    def run(self):
+        Euler2Command.run(self)
+        if not self.tap.is_euler_ready():
+            self.output.append("The tap is not ready: " + self.tap.get_status_message())
+            return
+        
+        alignFourInOne = Euler2(self.tap)
+        stdout, stderr, returnCode = alignFourInOne.run(Euler2.alignFourInOneCommand)
+        sets = alignFourInOne.get_minimal_inconsistency_sets()
+        for i, set in enumerate(sets):
+            self.output.append(str(i + 1) + ". Set\n" + '\n'.join(set) + "\n")
+        if not sets:
+            self.output.append("Minimal inconsistency is empty.")
+
+@logged
+class UseMinimalInconsistency(ModelCommand):
+    @copy_args_to_public_fields
+    def __init__(self, tap, setId):
+        ModelCommand.__init__(self)
+        self.setId = setId - 1
+    def run(self):
+        ModelCommand.run(self)
+        if not self.tap.is_euler_ready():
+            self.output.append("The tap is not ready: " + self.tap.get_status_message())
+            return
+        
+        alignFourInOne = Euler2(self.tap)
+        stdout, stderr, returnCode = alignFourInOne.run(Euler2.alignFourInOneCommand)
+        sets = alignFourInOne.get_minimal_inconsistency_sets()
+        if not sets:
+            self.output.append("Minimal inconsistency is empty.")
+        if self.setId < 0 or self.setId >= len(sets):
+           self.output.append("Invalid minimal inconsistency set id.")
+           return
+       
+        import e3_io
+        self.tap.articulations = []
+        for a in sets[self.setId]:
+            articulation = e3_io.CleantaxReader().get_articulation_from_cleantax("[" + a + "]")
+            self.tap.add_articulation(articulation)
+        self.tapManager.set_current_tap(self.tap)
+        self.output.append("Tap: " + self.tapManager.get_tap_name_and_status(self.tap.get_id()))
+
+            
+@logged
+class PrintMaximalConsistency(Euler2Command):
+    @copy_args_to_public_fields
+    def __init__(self, tap):
+        Euler2Command.__init__(self, tap)
+    def run(self):
+        Euler2Command.run(self)
+        if not self.tap.is_euler_ready():
+            self.output.append("The tap is not ready: " + self.tap.get_status_message())
+            return
+        
+        alignFourInOne = Euler2(self.tap)
+        stdout, stderr, returnCode = alignFourInOne.run(Euler2.alignFourInOneCommand)
+        sets = alignFourInOne.get_maximal_consistency_sets()
+        for i, set in enumerate(sets):
+            self.output.append(str(i + 1) + ". Set\n" + '\n'.join(set) + "\n")
+        if not sets:
+            self.output.append("Maximal consistency is empty.")
+
+@logged
+class UseMaximalConsistency(ModelCommand):
+    @copy_args_to_public_fields
+    def __init__(self, tap, setId):
+        ModelCommand.__init__(self)
+        self.setId = setId - 1
+    def run(self):
+        ModelCommand.run(self)
+        if not self.tap.is_euler_ready():
+            self.output.append("The tap is not ready: " + self.tap.get_status_message())
+            return
+        
+        alignFourInOne = Euler2(self.tap)
+        stdout, stderr, returnCode = alignFourInOne.run(Euler2.alignFourInOneCommand)
+        sets = alignFourInOne.get_maximal_consistency_sets()
+        if not sets:
+            self.output.append("Maximal consistency is empty.")
+        if self.setId < 0 or self.setId >= len(sets):
+           self.output.append("Invalid maximal consistency set id.")
+           return
+       
+        import e3_io
+        self.tap.articulations = []
+        for a in sets[self.setId]:
+            articulation = e3_io.CleantaxReader().get_articulation_from_cleantax("[" + a + "]")
+            self.tap.add_articulation(articulation)
+        self.tapManager.set_current_tap(self.tap)
+        self.output.append("Tap: " + self.tapManager.get_tap_name_and_status(self.tap.get_id()))
+
+@logged
+class PrintMaximalAmbiguity(Euler2Command):
+    @copy_args_to_public_fields
+    def __init__(self, tap):
+        Euler2Command.__init__(self, tap)
+    def run(self):
+        Euler2Command.run(self)
+        if not self.tap.is_euler_ready():
+            self.output.append("The tap is not ready: " + self.tap.get_status_message())
+            return
+        
+        alignFourInOne = Euler2(self.tap)
+        stdout, stderr, returnCode = alignFourInOne.run(Euler2.alignFourInOneCommand)
+        sets = alignFourInOne.get_maximal_ambiguity_sets()
+        for i, set in enumerate(sets):
+            self.output.append(str(i + 1) + ". Set\n" + '\n'.join(set) + "\n")
+        if not sets:
+            self.output.append("Maximal ambiguity is empty.")
+
+@logged
+class UseMaximalAmbiguity(ModelCommand):
+    @copy_args_to_public_fields
+    def __init__(self, tap, setId):
+        ModelCommand.__init__(self)
+        self.setId = setId - 1
+    def run(self):
+        ModelCommand.run(self)
+        if not self.tap.is_euler_ready():
+            self.output.append("The tap is not ready: " + self.tap.get_status_message())
+            return
+        
+        alignFourInOne = Euler2(self.tap)
+        stdout, stderr, returnCode = alignFourInOne.run(Euler2.alignFourInOneCommand)
+        sets = alignFourInOne.get_maximal_ambiguity_sets()
+        if not sets:
+            self.output.append("Maximal ambiguity is empty.")
+        if self.setId < 0 or self.setId >= len(sets):
+           self.output.append("Invalid maximal ambiguity set id.")
+           return
+       
+        import e3_io
+        self.tap.articulations = []
+        for a in sets[self.setId]:
+            articulation = e3_io.CleantaxReader().get_articulation_from_cleantax("[" + a + "]")
+            self.tap.add_articulation(articulation)
+        self.tapManager.set_current_tap(self.tap)
+        self.output.append("Tap: " + self.tapManager.get_tap_name_and_status(self.tap.get_id()))
+
+@logged
+class IsTrue(Euler2Command):
+    @copy_args_to_public_fields
+    def __init__(self, tap, articulationLine):
+        Euler2Command.__init__(self, tap)
+    def run(self):
+        Euler2Command.run(self)
+        if not self.tap.is_euler_ready():
+            self.output.append("The tap is not ready: " + self.tap.get_status_message())
+            return
+        if not is_consistent(self.tap):
+            self.output.append("No. (The tap is inconsistent, nothing will be true)")
+            return
+        
+        align = Euler2(self.tap)
+        stdout, stderr, returnCode = align.run(Euler2.alignCommand)
+        worldCount = align.get_world_count()
+        
+        self.articulationLine = "[" + self.articulationLine + "]"
+        import e3_io
+        articulation = e3_io.CleantaxReader().get_articulation_from_cleantax(self.articulationLine)
+        if articulation is  None:
+            self.output.append("This is not a valid articulation.")
+        else:
+            import e3_validation
+            if e3_validation.ModelValidator().is_valid_new_articulation(articulation, self.tap):
+                self.tap.add_articulation(articulation)
+            self.tapManager.store_tap(self.tap)
+            if not is_consistent(self.tap):
+                self.output.append("No.")
+                return
+            align = Euler2(self.tap)
+            stdout, stderr, returnCode = align.run(Euler2.alignCommand)
+            worldCount = align.get_world_count()
+            if worldCount == worldCount:
+                self.output.append("Yes.")
+            else:
+                self.output.append("No.")
+
+'''
+sort articulations (and nodes?) 
+update readme e3 new commands
+'''

@@ -34,7 +34,7 @@ class ResetParser(CommandParser):
         else:
             raise Exception('Unrecognized command line')
     def get_help(self):
-        return "reset\nResets e3 to factory settings"
+        return "reset\nResets to factory settings."
     
 @logged
 class ClearParser(CommandParser):
@@ -60,7 +60,7 @@ class ResetConfigParser(CommandParser):
         else:
             raise Exception('Unrecognized command line')
     def get_help(self):
-        return "reset config\nResets the config to the default"
+        return "reset config\nResets the configuration to default."
     
 @logged
 class ClearHistoryParser(CommandParser):
@@ -73,7 +73,7 @@ class ClearHistoryParser(CommandParser):
         else:
             raise Exception('Unrecognized command line')
     def get_help(self):
-        return "clear history\nClears the history"
+        return "clear history\nClears the history."
 @logged               
 class ByeParser(CommandParser):
     def __init__(self):
@@ -85,7 +85,7 @@ class ByeParser(CommandParser):
         else:
             raise Exception('Unrecognized command line')
     def get_help(self):
-        return "bye\nExit e3"
+        return "bye\nExit e3."
     
 @logged               
 class HelpParser(CommandParser):
@@ -98,7 +98,7 @@ class HelpParser(CommandParser):
         else:
             raise Exception('Unrecognized command line')
     def get_help(self):
-        return "help\nShows this help"
+        return "help\nShows this help."
     
 @logged               
 class GitPullParser(CommandParser):
@@ -111,20 +111,20 @@ class GitPullParser(CommandParser):
         else:
             raise Exception('Unrecognized command line')
     def get_help(self):
-        return "git pull\nClones or pulls e3_data workspace from the configured git repository"
+        return "git pull\nClones or pulls an e3_data workspace with the <name> from the configured git repository."
 
 @logged               
-class GitCachePullParser(CommandParser):
+class GitStatePullParser(CommandParser):
     def __init__(self):
-        CommandParser.__init__(self, '^git cache pull')
+        CommandParser.__init__(self, '^git state pull')
     def get_command(self, input):
         match = self.is_input(input)
         if match:
-            return e3_command.GitCachePull()
+            return e3_command.GitStatePull()
         else:
             raise Exception('Unrecognized command line')
     def get_help(self):
-        return "git cache pull\nClones or pulls the .e3 cache from the configured git repository"
+        return "git state pull\nClones or pulls the e3 state from the configured git repository."
     
 @logged
 class ShowHistoryParser(CommandParser):
@@ -137,7 +137,7 @@ class ShowHistoryParser(CommandParser):
         else:
             raise Exception('Unrecognized command line')
     def get_help(self):
-        return "show history\nShows the html rendered history"
+        return "show history\nShows the html rendered history."
 
 @logged               
 class SetGitCredentialsParser(CommandParser):
@@ -150,7 +150,7 @@ class SetGitCredentialsParser(CommandParser):
         else:
             raise Exception('Unrecognized command line')
     def get_help(self):
-        return "git credentials <host> <username> \"<password>\"\nSets the username and password for the git host"
+        return "git credentials <host> <username> \"<password>\"\nSets the <username> and <password> for the git <host>."
 
 @logged               
 class GitPushParser(CommandParser):
@@ -166,23 +166,23 @@ class GitPushParser(CommandParser):
         else:
             raise Exception('Unrecognized command line')
     def get_help(self):
-        return "git push <name> <message>\nCommits and pushes the e3_data workspace to the configured git repository"
+        return "git push <name> <message>\nCommits (with <message>) and pushes the e3_data workspace as <name> to the configured git repository."
 
 @logged               
-class GitCachePushParser(CommandParser):
+class GitStatePushParser(CommandParser):
     def __init__(self):
-        CommandParser.__init__(self, '^git cache push(?: (?P<message>.*))?$')
+        CommandParser.__init__(self, '^git state push(?: (?P<message>.*))?$')
     def get_command(self, input):
         match = self.is_input(input)
         if match:
             if match.group("message"):
-                return e3_command.GitCachePush(match.group("message"))
+                return e3_command.GitStatePush(match.group("message"))
             else:
-                return e3_command.GitCachePush("e3 git cache push") 
+                return e3_command.GitStatePush("e3 git state push") 
         else:
             raise Exception('Unrecognized command line')
     def get_help(self):
-        return "git cache push <message>\nCommits and pushes the .e3 cache to the configured git repository"
+        return "git state push <message>\nCommits (with <message>) and pushes the e3 state to the configured git repository."
 
 class LoadTapParser(CommandParser):
     def __init__(self):
@@ -196,7 +196,7 @@ class LoadTapParser(CommandParser):
         else:
             raise Exception('Unrecognized command line')
     def get_help(self):
-        return "load tap <cleantax file>\nLoads a tap from a cleantax file"
+        return "load tap <cleantax file>\nLoads a tap from a cleantax file."
 
 class ClearTapParser(CommandParser):
     def __init__(self):
@@ -210,7 +210,25 @@ class ClearTapParser(CommandParser):
         else:
             raise Exception('Unrecognized command line')
     def get_help(self):
-        return "clear tap\nSets the empty tap as the current tap"
+        return "clear tap\nSets the empty tap as the current tap."
+    
+class RenameConceptParser(CommandParser):
+    def __init__(self):
+        CommandParser.__init__(self, '^rename concept (?P<taxonomyId>.+) (?P<oldName>.+) (?P<newName>.+)(?: (?P<tap>\S*))?$')
+    def get_command(self, input):
+        match = self.is_input(input)
+        if match:
+            tap = self.tapManager.get_current_tap()
+            if match.group("tap"):
+                tap = self.tapManager.get_tap_from_id_or_name(match.group("tap"))  
+            if tap:   
+                return e3_command.RenameConcept(tap, match.group("taxonomyId"), match.group("oldName"), match.group("newName"))
+            else:
+                raise Exception('Tap %s not found' % match.group("tap"))
+        else:
+            raise Exception('Unrecognized command line')
+    def get_help(self):
+        return "rename concept <taxonomyId> <oldName> <newName> [<tap>]\nRenames the concept in taxonomy with <taxonomyId> from <oldName> to <newName> for the current tap, or the optionally provided <tap>."
     
 class AddChildrenParser(CommandParser):
     def __init__(self):
@@ -228,7 +246,7 @@ class AddChildrenParser(CommandParser):
         else:
             raise Exception('Unrecognized command line')
     def get_help(self):
-        return "add children <taxonomyId> <children> [<tap>]\nAdds children to the taxonomy with <taxonomyId> of the current tap, or the optionally provided <tap>"
+        return "add concept <taxonomyId> (<parentConcepts> <childConcept 1> ... <childConcept n>) [<tap>]\nAdds <childConcept>'s to <parentConcept>, creating non-existing concept's as needed to the taxonomy with <taxonomyId> of the current tap, or the optionally provided <tap>."
 
 class RemoveChildrenParser(CommandParser):
     def __init__(self):
@@ -247,8 +265,8 @@ class RemoveChildrenParser(CommandParser):
         else:
             raise Exception('Unrecognized command line')
     def get_help(self):
-        return "remove children <recrusive> <taxonomyId> <children> [<tap>]\nRemoves children from the taxonomy with <taxonomyId> of the current tap, or the optionally provided <tap>"
-
+        return "remove concept <recursive> <taxonomyId> (<parentConcepts> <childConcept 1> ... <childConcept n>) [<tap>]\nRemoves <childConcept>'s from <parentConcept> in the taxonomy with <taxonomyId> of the current tap, or the optionally provided <tap>."
+    
 class AddTaxonomyParser(CommandParser):
     def __init__(self):
         CommandParser.__init__(self, '^add taxonomy (.+) (.+)( (\S*))?$')
@@ -265,7 +283,7 @@ class AddTaxonomyParser(CommandParser):
         else:
             raise Exception('Unrecognized command line')
     def get_help(self):
-        return "add taxonomy <taxonomyId> <taxonomyName> [<tap>]\nAdds a taxonomy with <taxonomyId> and <taxonomyName> to the current tap, or the optionally provided <tap>"
+        return "add taxonomy <taxonomyId> <taxonomyName> [<tap>]\nAdds a taxonomy with <taxonomyId> and <taxonomyName> to the current tap, or the optionally provided <tap>."
 
 class RemoveTaxonomyParser(CommandParser):
     def __init__(self):
@@ -283,7 +301,7 @@ class RemoveTaxonomyParser(CommandParser):
         else:
             raise Exception('Unrecognized command line')
     def get_help(self):
-        return "remove taxonomy <taxonomyId> [<tap>]\nRemoves the taxonomy with <taxonomyId> and ALL referencing articulations from the current tap, or the optionally provided <tap>"
+        return "remove taxonomy <taxonomyId> [<tap>]\nRemoves the taxonomy with <taxonomyId> and all referencing articulations from the current tap, or the optionally provided <tap>."
 
 class ClearTaxonomyParser(CommandParser):
     def __init__(self):
@@ -301,7 +319,7 @@ class ClearTaxonomyParser(CommandParser):
         else:
             raise Exception('Unrecognized command line')
     def get_help(self):
-        return "clear taxonomy <taxonomyId> [<tap>]\nClears the taxonomy with <taxonomyId> of the current tap, or the optionally provided <tap>"
+        return "clear taxonomy <taxonomyId> [<tap>]\nClears the taxonomy with <taxonomyId> of the current tap, or the optionally provided <tap>."
 
 class ClearArticulationsParser(CommandParser):
     def __init__(self):
@@ -319,7 +337,7 @@ class ClearArticulationsParser(CommandParser):
         else:
             raise Exception('Unrecognized command line')
     def get_help(self):
-        return "clear articulations [<tap>]\nClears the articulations of the current tap, or the optionally provided <tap>"
+        return "clear articulations [<tap>]\nClears the articulations of the current tap, or the optionally provided <tap>."
 
 class SetTaxonomyInfoParser(CommandParser):
     def __init__(self):
@@ -337,7 +355,7 @@ class SetTaxonomyInfoParser(CommandParser):
         else:
             raise Exception('Unrecognized command line')
     def get_help(self):
-        return "set taxonomy info <oldTaxonomyId> <newTaxonomyId> <newTaxonomyName> [<tap>]\nSets the taxonomy info of the taxonomy with <oldTaxonomyId> to <newTaxonomyId> and <newTaxonomyName> of the current tap, or the optionally provided <tap>"
+        return "set taxonomy info <oldTaxonomyId> <newTaxonomyId> <newTaxonomyName> [<tap>]\nSets the <newTaxonomyid> and <newTaxonomyName> to the taxonomy with <oldTaxonomyId> of the current tap, or the optionally provided <tap>."
     
 class AddArticulationParser(CommandParser):
     def __init__(self):
@@ -359,7 +377,7 @@ class AddArticulationParser(CommandParser):
         else:
             raise Exception('Unrecognized command line')
     def get_help(self):
-        return "add articulation <articulation> [<tap>]\nAdds <articulation> to the current tap, or the optionally provided <tap>"
+        return "add articulation <articulation> [<tap>]\nAdds <articulation> to the current tap, or the optionally provided <tap>."
 
 class RemoveArticulationParser(CommandParser):
     def __init__(self):
@@ -367,22 +385,26 @@ class RemoveArticulationParser(CommandParser):
         #remove articulation 1
         #remove articulation 1 2312842819299391
         #remove articulation 1 my_tap_name
-        CommandParser.__init__(self, '^remove articulation (\d+)( (\S*))?$')
+        CommandParser.__init__(self, '^remove articulation (?P<articulation>.+)(?: (?P<tap>\S*))?$')
     def get_command(self, input):
         match = self.is_input(input)
         if match:
             tap = self.tapManager.get_current_tap()
-            if match.group(2) and match.group(3):
-                tap = self.tapManager.get_tap_from_id_or_name(match.group(3))
+            if match.group("tap"):
+                tap = self.tapManager.get_tap_from_id_or_name(match.group("tap"))
             if tap:
-                return e3_command.RemoveArticulation(tap, int(match.group(1)))
+                try:
+                    articulationIndex = int(match.group(articulation))
+                    return e3_command.RemoveArticulationByIndex(tap, articulationIndex) 
+                except Error as e:
+                    return e3_command.RemoveArticulation(tap, articulation)
             else:
                 raise Exception('Tap %s not found' % match.group(3))
         else:
             raise Exception('Unrecognized command line')
     def get_help(self):
-        return "remove articulation <articulation_index> [<tap>]\nRemoves articulation with index <articulation_index> from the current tap, or the optionally provided <tap>"
-
+        return "remove articulation <articulation_index|articulation> [<tap>]\nRemoves articulation with index <articulation_index> or string <articulation> from the current tap, or the optionally provided <tap>."
+        
 class SetCoverageParser(CommandParser):
     def __init__(self):
         CommandParser.__init__(self, '^set coverage (\S+)( (\S*))?$')
@@ -400,7 +422,7 @@ class SetCoverageParser(CommandParser):
         else:
             raise Exception('Unrecognized command line')
     def get_help(self):
-        return "set coverage <true|false> [<tap>]\nSets the reasoning coverage for the current tap, or the optionally provided <tap>"
+        return "set coverage <true|false> [<tap>]\nSets the coverage for the current tap, or the optionally provided <tap>."
 
 class SetConfigParser(CommandParser):
     def __init__(self):
@@ -412,7 +434,7 @@ class SetConfigParser(CommandParser):
         else:
             raise Exception('Unrecognized command line')
     def get_help(self):
-        return "set config <key>=<value>\nSets the configiguration <parameter> with <value>"
+        return "set config <key>=<value>\nSets the configuration <parameter> with <value>."
 
 class PrintConfigParser(CommandParser):
     def __init__(self):
@@ -424,7 +446,7 @@ class PrintConfigParser(CommandParser):
         else:
             raise Exception('Unrecognized command line')
     def get_help(self):
-        return "print config\nPrints the configiguration settings"
+        return "print config\nPrints the configuration settings."
 
 class SetSiblingDisjointnessParser(CommandParser):
     def __init__(self):
@@ -443,7 +465,7 @@ class SetSiblingDisjointnessParser(CommandParser):
         else:
             raise Exception('Unrecognized command line')
     def get_help(self):
-        return "set sibling disjointness <true|false> [<tap>]\nSets the reasoning regions for the current tap, or the optionally provided <tap>"
+        return "set sibling disjointness <true|false> [<tap>]\nSets the sibling disjointness for the current tap, or the optionally provided <tap>."
 
 class SetRegionsParser(CommandParser):
     def __init__(self):
@@ -461,7 +483,7 @@ class SetRegionsParser(CommandParser):
         else:
             raise Exception('Unrecognized command line')
     def get_help(self):
-        return "set regions <mnpw|mncb|mnve|vrpw|vrve> [<tap>]\nSets the reasoning regions for the current tap, or the optionally provided <tap>"
+        return "set regions <mnpw|mncb|mnve|vrpw|vrve> [<tap>]\nSets the regions for the current tap, or the optionally provided <tap>."
 
 
 class NameTapParser(CommandParser):
@@ -480,7 +502,7 @@ class NameTapParser(CommandParser):
         else:
             raise Exception('Unrecognized command line')
     def get_help(self):
-        return "name tap <name> [<tap>]\nNames the current tap, or the optionally provided <tap> as <name>"
+        return "name tap <name> [<tap>]\nNames the current tap, or the optionally provided <tap> as <name>."
 
 class PrintNamesParser(CommandParser):
     def __init__(self):
@@ -492,7 +514,7 @@ class PrintNamesParser(CommandParser):
         else:
             raise Exception('Unrecognized command line')
     def get_help(self):
-        return "print names\nShows all stored names and their corresponding taps"
+        return "print names\nShows all stored names and their corresponding taps."
     
 class UseTapParser(CommandParser):
     def __init__(self):
@@ -508,7 +530,7 @@ class UseTapParser(CommandParser):
         else:
             raise Exception('Unrecognized command line')
     def get_help(self):
-        return "use tap <tap>\nMakes <tap> the current tap"
+        return "use tap <tap>\nMakes <tap> the current tap."
     
 class PrintTapParser(CommandParser):
     def __init__(self):
@@ -526,7 +548,7 @@ class PrintTapParser(CommandParser):
         else:
             raise Exception('Unrecognized command line')
     def get_help(self):
-        return "print tap [<tap>]\nPrints the current tap, or the optionally provided <tap>"
+        return "print tap [<tap>]\nPrints the current tap, or the optionally provided <tap>."
         
 class PrintTaxonomiesParser(CommandParser):
     def __init__(self):
@@ -544,7 +566,7 @@ class PrintTaxonomiesParser(CommandParser):
         else:
             raise Exception('Unrecognized command line')   
     def get_help(self):
-        return "print taxonomies [<tap>]\nPrints the taxonomies of the current tap, or the optionally provided <tap>"
+        return "print taxonomies [<tap>]\nPrints the taxonomies of the current tap, or the optionally provided <tap>."
          
 class PrintArticulationsParser(CommandParser):
     def __init__(self):
@@ -562,7 +584,7 @@ class PrintArticulationsParser(CommandParser):
         else:
             raise Exception('Unrecognized command line')
     def get_help(self):
-        return "print articulations [<tap>]\nPrints the articulations of the current tap, or the optionally provided <tap>"
+        return "print articulations [<tap>]\nPrints the articulations of the current tap, or the optionally provided <tap>."
 
 class MoreWorldsThanParser(CommandParser):
     def __init__(self):
@@ -580,11 +602,11 @@ class MoreWorldsThanParser(CommandParser):
         else:
             raise Exception('Unrecognized command line')
     def get_help(self):
-        return "more than <count> worlds [<tap>]\nChecks if there are more than <count> number of possible worlds in the current tap, or the optionally provided <tap>"
+        return "more than <count> worlds [<tap>]\nChecks if there are more than <count> number of worlds in the current tap, or the optionally provided <tap>."
 
-class GraphWorldsParser(CommandParser):
+class IsAmbiguousParser(CommandParser):
     def __init__(self):
-        CommandParser.__init__(self, '^graph worlds( (\S*))?$')
+        CommandParser.__init__(self, '^is ambiguous( (\S*))?$')
     def get_command(self, input):
         match = self.is_input(input)
         if match:
@@ -592,13 +614,52 @@ class GraphWorldsParser(CommandParser):
             if match.group(1) and match.group(2):
                 tap = self.tapManager.get_tap_from_id_or_name(match.group(2))
             if tap:
-                return e3_command.GraphWorlds(tap)
+                return e3_command.IsAmbiguous(tap)
             else:
                 raise Exception('Tap %s not found' % match.group(2))
         else:
             raise Exception('Unrecognized command line')
     def get_help(self):
-        return "graph worlds [<tap>]\nCreates graph visualizations of the possible worlds, if any exist, for the current tap, or the optionally provided <tap>"
+        return "is ambiguous [<tap>]\nChecks if there is more than 1 world for the current tap, or the optionally provided <tap>."
+
+class IsUniqueParser(CommandParser):
+    def __init__(self):
+        CommandParser.__init__(self, '^is unique( (\S*))?$')
+    def get_command(self, input):
+        match = self.is_input(input)
+        if match:
+            tap = self.tapManager.get_current_tap()
+            if match.group(1) and match.group(2):
+                tap = self.tapManager.get_tap_from_id_or_name(match.group(2))
+            if tap:
+                return e3_command.IsUnique(tap)
+            else:
+                raise Exception('Tap %s not found' % match.group(2))
+        else:
+            raise Exception('Unrecognized command line')
+    def get_help(self):
+        return "is unique [<tap>]\nChecks if there is a unique world for the current tap, or the optionally provided <tap>."
+
+class GraphWorldsParser(CommandParser):
+    def __init__(self):
+        CommandParser.__init__(self, '^graph worlds( (?P<maxWorlds>\d+))?( (?P<tap>\S*))?$')
+    def get_command(self, input):
+        match = self.is_input(input)
+        if match:
+            tap = self.tapManager.get_current_tap()
+            if match.group("tap"):
+                tap = self.tapManager.get_tap_from_id_or_name(match.group("tap"))
+            if tap:
+                maxWorlds = None
+                if match.group("maxWorlds"):
+                    maxWorlds = int(match.group("maxWorlds"))
+                return e3_command.GraphWorlds(tap, maxWorlds)
+            else:
+                raise Exception('Tap %s not found' % match.group("tap"))
+        else:
+            raise Exception('Unrecognized command line')
+    def get_help(self):
+        return "graph worlds [<maxWorlds>] [<tap>]\nCreates graph visualizations of the worlds, if any exist, and if provided maximally <maxWorlds> for the current tap, or the optionally provided <tap>."
 
 class GraphTapParser(CommandParser):
     def __init__(self):
@@ -616,7 +677,7 @@ class GraphTapParser(CommandParser):
         else:
             raise Exception('Unrecognized command line')
     def get_help(self):
-        return "graph tap [<tap>]\nCreates a graph visualization of the current tap, or the optionally provided <tap>"
+        return "graph tap [<tap>]\nCreates a graph visualization of the current tap, or the optionally provided <tap>."
     
 class GraphFourInOneParser(CommandParser):
     def __init__(self):
@@ -634,7 +695,7 @@ class GraphFourInOneParser(CommandParser):
         else:
             raise Exception('Unrecognized command line')
     def get_help(self):
-        return "graph four in one [<tap>]\nCreates a four-in-one visualization of the current tap, or the optionally provided <tap>"
+        return "graph four in one [<tap>]\nCreates a four-in-one visualization of the current tap, or the optionally provided <tap>."
     
 class GraphSummaryParser(CommandParser):
     def __init__(self):
@@ -652,7 +713,7 @@ class GraphSummaryParser(CommandParser):
         else:
             raise Exception('Unrecognized command line')
     def get_help(self):
-        return "graph summary [<tap>]\nCreates a summary visualization of the current tap, or the optionally provided <tap>"
+        return "graph summary [<tap>]\nCreates a summary visualization of the current tap, or the optionally provided <tap>."
         
 class GraphAmbiguityParser(CommandParser):
     def __init__(self):
@@ -670,7 +731,7 @@ class GraphAmbiguityParser(CommandParser):
         else:
             raise Exception('Unrecognized command line')
     def get_help(self):
-        return "graph ambiguity [<tap>]\nCreates an ambiguity visualization of the current tap, or the optionally provided <tap>"
+        return "graph ambiguity [<tap>]\nCreates an ambiguity visualization of the current tap, or the optionally provided <tap>."
         
 class IsConsistentParser(CommandParser):
     def __init__(self):
@@ -688,45 +749,48 @@ class IsConsistentParser(CommandParser):
         else:
             raise Exception('Unrecognized command line')
     def get_help(self):
-        return "is consistent [<tap>]\nChecks the consistency of the current tap, or the optionally provided <tap>"
+        return "is consistent [<tap>]\nChecks the consistency of the current tap, or the optionally provided <tap>."
                              
 class PrintWorldsParser(CommandParser):
     def __init__(self):
-        CommandParser.__init__(self, '^print worlds( (\S*))?$')
+        CommandParser.__init__(self, '^print worlds( (?P<maxWorlds>\d+))?( (?P<tap>\S*))?$')
     def get_command(self, input):
         match = self.is_input(input)
         if match:
             tap = self.tapManager.get_current_tap()
-            if match.group(1) and match.group(2):
-                tap = self.tapManager.get_tap_from_id_or_name(match.group(2))
+            if match.group("tap"):
+                tap = self.tapManager.get_tap_from_id_or_name(match.group("tap"))
             if tap:
-                return e3_command.PrintWorlds(tap)
+                maxWorlds = None
+                if match.group("maxWorlds"):
+                    maxWorlds = int(match.group("maxWorlds"))
+                return e3_command.PrintWorlds(tap, maxWorlds)
             else:
-                raise Exception('Tap %s not found' % match.group(2))
+                raise Exception('Tap %s not found' % match.group("tap"))
         else:
             raise Exception('Unrecognized command line')
     def get_help(self):
-        return "print worlds [<tap>]\nPrints the possible worlds, if any exist, of the current tap, or the optionally provided <tap>"
-                       
+        return "print worlds [<maxWorlds>] [<tap>]\nPrints the worlds, if any exist, and if provided maximally <maxWorlds> for the current tap, or the optionally provided <tap>."
+        
 class GraphInconsistencyParser(CommandParser):
     def __init__(self):
-        CommandParser.__init__(self, '^graph\s+(?:(?P<type>full|reduced)\s+)?inconsistency( (?P<tapName>\S+))?$')
+        CommandParser.__init__(self, '^graph\s+(?:(?P<type>full|reduced)\s+)?inconsistency( (?P<tap>\S+))?$')
     def get_command(self, input):
         match = self.is_input(input)
         if match:
             tap = self.tapManager.get_current_tap()
             type = match.group("type")
-            tapName = match.group("tapName")
+            tapName = match.group("tap")
             if tapName:
                 tap = self.tapManager.get_tap_from_id_or_name(tapName)
             if tap:
                 return e3_command.GraphInconsistency(tap, type)
             else:
-                raise Exception('Tap %s not found' % match.group(2))
+                raise Exception('Tap %s not found' % match.group("tap"))
         else:
             raise Exception('Unrecognized command line')   
     def get_help(self):
-        return "graph inconsistency [<tap>]\nCreates a graph visualization of the inconsistency, if any exists, for the current tap, or the optionally provided <tap>"
+        return "graph inconsistency [<tap>]\nCreates a graph visualization of the inconsistency, if any exists, for the current tap, or the optionally provided <tap>."
     
 class PrintFixParser(CommandParser):
     def __init__(self):
@@ -744,8 +808,306 @@ class PrintFixParser(CommandParser):
         else:
             raise Exception('Unrecognized command line')
     def get_help(self):
-        return "print fix [<tap>]\nPrints a suggested fix of the inconsistency, if any exists, for the current tap, or the optionally provided <tap>"
-                  
+        return "print fix [<tap>]\nPrints a suggested fix of the inconsistency, if any exists, for the current tap, or the optionally provided <tap>."
+     
+class PrintMinimalArticulationsParser(CommandParser):
+    def __init__(self):
+        CommandParser.__init__(self, '^print minimal articulations( (\S*))?$')
+    def get_command(self, input):
+        match = self.is_input(input)
+        if match:
+            tap = self.tapManager.get_current_tap()
+            if match.group(1) and match.group(2):
+                tap = self.tapManager.get_tap_from_id_or_name(match.group(2))
+            if tap:
+                return e3_command.PrintMinimalArticulations(tap)
+            else:
+                raise Exception('Tap %s not found' % match.group(2))
+        else:
+            raise Exception('Unrecognized command line')
+    def get_help(self):
+        return "print minimal articulations [<tap>]\nPrints minimal sets articulations for the unique world of the current tap, or the optionally provided <tap>."
+
+class UseMinimalArticulationsParser(CommandParser):
+    def __init__(self):
+        CommandParser.__init__(self, '^use minimal articulations (?P<minimalArticulationSetId>\d+)( (?P<tap>\S*))?$')
+    def get_command(self, input):
+        match = self.is_input(input)
+        if match:
+            tap = self.tapManager.get_current_tap()
+            if match.group("tap"):
+                tap = self.tapManager.get_tap_from_id_or_name(match.group("tap"))
+            if tap:
+                minimalArticulationSetId = int(match.group("minimalArticulationSetId"))
+                return e3_command.UseMinimalArticulations(tap, minimalArticulationSetId)
+            else:
+                raise Exception('Tap %s not found' % match.group(2))
+        else:
+            raise Exception('Unrecognized command line')
+    def get_help(self):
+        return "use minimal articulations <minimal articulation set id> [<tap>]\nReplaces the articulations of the current tap or the optionally provided <tap> with the articulations of the given <minimal articulation set id>."
+
+class UseMinimalUniquenessParser(CommandParser):
+    def __init__(self):
+        CommandParser.__init__(self, '^use minimal uniqueness (?P<setId>\d+)( (?P<tap>\S*))?$')
+    def get_command(self, input):
+        match = self.is_input(input)
+        if match:
+            tap = self.tapManager.get_current_tap()
+            if match.group("tap"):
+                tap = self.tapManager.get_tap_from_id_or_name(match.group("tap"))
+            if tap:
+                setId = int(match.group("setId"))
+                return e3_command.UseMinimalUniqueness(tap, setId)
+            else:
+                raise Exception('Tap %s not found' % match.group(2))
+        else:
+            raise Exception('Unrecognized command line')
+    def get_help(self):
+        return "use minimal uniqueness <set id> [<tap>]\nReplaces the articulations of the current tap or the optionally provided <tap> with the articulations of the given minimal uniqueness <set id>."
+
+class UseMinimalInconsistencyParser(CommandParser):
+    def __init__(self):
+        CommandParser.__init__(self, '^use minimal inconsistency (?P<setId>\d+)( (?P<tap>\S*))?$')
+    def get_command(self, input):
+        match = self.is_input(input)
+        if match:
+            tap = self.tapManager.get_current_tap()
+            if match.group("tap"):
+                tap = self.tapManager.get_tap_from_id_or_name(match.group("tap"))
+            if tap:
+                setId = int(match.group("setId"))
+                return e3_command.UseMinimalInconsistency(tap, setId)
+            else:
+                raise Exception('Tap %s not found' % match.group(2))
+        else:
+            raise Exception('Unrecognized command line')
+    def get_help(self):
+        return "use minimal inconsistency <set id> [<tap>]\nReplaces the articulations of the current tap or the optionally provided <tap> with the articulations of the given minimal inconsistency <set id>."
+
+class UseMaximalConsistencyParser(CommandParser):
+    def __init__(self):
+        CommandParser.__init__(self, '^use maximal consistency (?P<setId>\d+)( (?P<tap>\S*))?$')
+    def get_command(self, input):
+        match = self.is_input(input)
+        if match:
+            tap = self.tapManager.get_current_tap()
+            if match.group("tap"):
+                tap = self.tapManager.get_tap_from_id_or_name(match.group("tap"))
+            if tap:
+                setId = int(match.group("setId"))
+                return e3_command.UseMaximalConsistency(tap, setId)
+            else:
+                raise Exception('Tap %s not found' % match.group(2))
+        else:
+            raise Exception('Unrecognized command line')
+    def get_help(self):
+        return "use maximal consistency <set id> [<tap>]\nReplaces the articulations of the current tap or the optionally provided <tap> with the articulations of the given maximal consistency <set id>."
+
+class UseMaximalAmbiguityParser(CommandParser):
+    def __init__(self):
+        CommandParser.__init__(self, '^use maximal ambiguity (?P<setId>\d+)( (?P<tap>\S*))?$')
+    def get_command(self, input):
+        match = self.is_input(input)
+        if match:
+            tap = self.tapManager.get_current_tap()
+            if match.group("tap"):
+                tap = self.tapManager.get_tap_from_id_or_name(match.group("tap"))
+            if tap:
+                setId = int(match.group("setId"))
+                return e3_command.UseMaximalAmbiguity(tap, setId)
+            else:
+                raise Exception('Tap %s not found' % match.group(2))
+        else:
+            raise Exception('Unrecognized command line')
+    def get_help(self):
+        return "use maximal ambiguity <set id> [<tap>]\nReplaces the articulations of the current tap or the optionally provided <tap> with the articulations of the given maximal ambiguity <set id>."
+
+class UseMaximalArticulationsParser(CommandParser):
+    def __init__(self):
+        CommandParser.__init__(self, '^use maximal articulations (?P<maximalArticulationSetId>\d+)( (?P<tap>\S*))?$')
+    def get_command(self, input):
+        match = self.is_input(input)
+        if match:
+            tap = self.tapManager.get_current_tap()
+            if match.group("tap"):
+                tap = self.tapManager.get_tap_from_id_or_name(match.group("tap"))
+            if tap:
+                maximalArticulationSetId = int(match.group("maximalArticulationSetId"))
+                return e3_command.UseMaximalArticulations(tap, maximalArticulationSetId)
+            else:
+                raise Exception('Tap %s not found' % match.group(2))
+        else:
+            raise Exception('Unrecognized command line')
+    def get_help(self):
+        return "use maximal articulations <maximal articulation set id> [<tap>]\nReplaces the articulations of the current tap or the optionally provided <tap> with the articulations of the given <maximal articulation set id>."
+
+class UseWorldParser(CommandParser):
+    def __init__(self):
+        CommandParser.__init__(self, '^use world( (?P<worldId>\d+))?( (?P<tap>\S*))?$')
+    def get_command(self, input):
+        match = self.is_input(input)
+        if match:
+            tap = self.tapManager.get_current_tap()
+            if match.group("tap"):
+                tap = self.tapManager.get_tap_from_id_or_name(match.group("tap"))
+            if tap:
+                worldId = int(match.group("worldId"))
+                return e3_command.UseWorld(tap, worldId)
+            else:
+                raise Exception('Tap %s not found' % match.group(2))
+        else:
+            raise Exception('Unrecognized command line')
+    def get_help(self):
+        return "use world [<worldId>] [<tap>]\nReplaces the articulations of the current tap or the optionally provided <tap> with all the articulations extracted from the given <worldId> or the unique world of the tap, if applicable and no <worldId> is given."
+
+class CreateTapFromWorldsParser(CommandParser):
+    def __init__(self):
+        CommandParser.__init__(self, '^create tap from worlds(?: (.*))?$')
+    def get_command(self, input):
+        match = self.is_input(input)
+        if match:
+            taps = []
+            match
+            for tapId in match.group(1).split():
+                tap = self.tapManager.get_tap_from_id_or_name(tapId)
+                if not tap:
+                    raise Exception('Tap %s not found' % tapId)
+                taps.append(tap)
+            return e3_command.CreateTapFromWorlds(taps)
+        else:
+            raise Exception('Unrecognized command line')
+    def get_help(self):
+        return "create tap from worlds <tap_1> ... <tap_n> \nCreates a tap with the unique worlds of <tap_1> ... <tap_n> as taxonomies."
+
+class PrintMaximalArticulationsParser(CommandParser):
+    def __init__(self):
+        CommandParser.__init__(self, '^print maximal articulations( (?P<tap>\S*))?$')
+    def get_command(self, input):
+        match = self.is_input(input)
+        if match:
+            tap = self.tapManager.get_current_tap()
+            if match.group("tap"):
+                tap = self.tapManager.get_tap_from_id_or_name(match.group("tap"))
+            if tap:
+                return e3_command.PrintMaximalArticulations(tap)
+            else:
+                raise Exception('Tap %s not found' % match.group("tap"))
+        else:
+            raise Exception('Unrecognized command line')
+    def get_help(self):
+        return "print maximal articulations [<tap>]\nPrints maximal sets of articulations for all worlds of the current tap, or the optionally provided <tap>."
+    
+class PrintMinimalUniquenessParser(CommandParser):
+    def __init__(self):
+        CommandParser.__init__(self, '^print minimal uniqueness( (?P<tap>\S*))?$')
+    def get_command(self, input):
+        match = self.is_input(input)
+        if match:
+            tap = self.tapManager.get_current_tap()
+            if match.group("tap"):
+                tap = self.tapManager.get_tap_from_id_or_name(match.group("tap"))
+            if tap:
+                return e3_command.PrintMinimalUniqueness(tap)
+            else:
+                raise Exception('Tap %s not found' % match.group("tap"))
+        else:
+            raise Exception('Unrecognized command line')
+    def get_help(self):
+        return "print minimal uniqueness [<tap>]\nPrints the minimal subsets of articulations that create uniqueness for the current tap, or the optionally provided <tap>."
+        
+class PrintMinimalInconsistencyParser(CommandParser):
+    def __init__(self):
+        CommandParser.__init__(self, '^print minimal inconsistency( (?P<tap>\S*))?$')
+    def get_command(self, input):
+        match = self.is_input(input)
+        if match:
+            tap = self.tapManager.get_current_tap()
+            if match.group("tap"):
+                tap = self.tapManager.get_tap_from_id_or_name(match.group("tap"))
+            if tap:
+                return e3_command.PrintMinimalInconsistency(tap)
+            else:
+                raise Exception('Tap %s not found' % match.group("tap"))
+        else:
+            raise Exception('Unrecognized command line')
+    def get_help(self):
+        return "print minimal inconsistency [<tap>]\nPrints the minimal subsets of articulations that create inconsistency for the current tap, or the optionally provided <tap>."
+
+class PrintMaximalConsistencyParser(CommandParser):
+    def __init__(self):
+        CommandParser.__init__(self, '^print maximal consistency( (?P<tap>\S*))?$')
+    def get_command(self, input):
+        match = self.is_input(input)
+        if match:
+            tap = self.tapManager.get_current_tap()
+            if match.group("tap"):
+                tap = self.tapManager.get_tap_from_id_or_name(match.group("tap"))
+            if tap:
+                return e3_command.PrintMaximalConsistency(tap)
+            else:
+                raise Exception('Tap %s not found' % match.group("tap"))
+        else:
+            raise Exception('Unrecognized command line')
+    def get_help(self):
+        return "print maximal consistency [<tap>]\nPrints the maximal subsets of articulations that create consistency for the current tap, or the optionally provided <tap>."
+
+class PrintMaximalAmbiguityParser(CommandParser):
+    def __init__(self):
+        CommandParser.__init__(self, '^print maximal ambiguity( (?P<tap>\S*))?$')
+    def get_command(self, input):
+        match = self.is_input(input)
+        if match:
+            tap = self.tapManager.get_current_tap()
+            if match.group("tap"):
+                tap = self.tapManager.get_tap_from_id_or_name(match.group("tap"))
+            if tap:
+                return e3_command.PrintMaximalAmbiguity(tap)
+            else:
+                raise Exception('Tap %s not found' % match.group("tap"))
+        else:
+            raise Exception('Unrecognized command line')
+    def get_help(self):
+        return "print maximal ambiguity [<tap>]\nPrints the maximal subsets of articulations that create ambiguity for the current tap, or the optionally provided <tap>."
+
+class UseFixParser(CommandParser):
+    def __init__(self):
+        CommandParser.__init__(self, '^use fix (?P<setId>\d+)( (?P<tap>\S*))?$')
+    def get_command(self, input):
+        match = self.is_input(input)
+        if match:
+            tap = self.tapManager.get_current_tap()
+            if match.group("tap"):
+                tap = self.tapManager.get_tap_from_id_or_name(match.group("tap"))
+            if tap:
+                setId = int(match.group("setId"))
+                return e3_command.UseFix(tap, setId)
+            else:
+                raise Exception('Tap %s not found' % match.group("tap"))
+        else:
+            raise Exception('Unrecognized command line')
+    def get_help(self):
+        return "use fix <fix set id> [<tap>]\nUses the fix with <fix set id> to create a consistent input from the current tap, or the optionally provided <tap>."
+
+class IsTrueParser(CommandParser):
+    def __init__(self):
+        CommandParser.__init__(self, '^is true\s+(?P<articulation>.+)( (?P<tap>\S*))?$')
+    def get_command(self, input):
+        match = self.is_input(input)
+        if match:
+            tap = self.tapManager.get_current_tap()
+            if match.group("tap"):
+                tap = self.tapManager.get_tap_from_id_or_name(match.group("tap"))
+            if tap:
+                articulation = match.group("articulation")
+                return e3_command.IsTrue(tap, articulation)
+            else:
+                raise Exception('Tap %s not found' % match.group("tap"))
+        else:
+            raise Exception('Unrecognized command line')
+    def get_help(self):
+        return "is true <articulation> [<tap>]\nChecks if the articulation holds true for the current tap, or the optionally provided <tap>."
+
 commandParsers = [  ByeParser(),
                     HelpParser(), 
                     ResetParser(),
@@ -762,6 +1124,7 @@ commandParsers = [  ByeParser(),
                     AddTaxonomyParser(),
                     RemoveTaxonomyParser(),
                     SetTaxonomyInfoParser(),
+                    RenameConceptParser(),
                     AddChildrenParser(),
                     RemoveChildrenParser(),
                     ClearTaxonomyParser(),
@@ -776,6 +1139,8 @@ commandParsers = [  ByeParser(),
                     UseTapParser(), 
                     GraphTapParser(), 
                     IsConsistentParser(),
+                    IsAmbiguousParser(),
+                    IsUniqueParser(),
                     MoreWorldsThanParser(),
                     GraphWorldsParser(), 
                     PrintWorldsParser(),
@@ -784,14 +1149,30 @@ commandParsers = [  ByeParser(),
                     GraphInconsistencyParser(),
                     GraphAmbiguityParser(),
                     PrintFixParser(),
+                    PrintMinimalArticulationsParser(),
+                    UseMinimalArticulationsParser(),
+                    PrintMaximalArticulationsParser(),
+                    UseMaximalArticulationsParser(),
+                    UseWorldParser(),
+                    CreateTapFromWorldsParser(),
+                    PrintMinimalUniquenessParser(),
+                    UseMinimalUniquenessParser(),
+                    PrintMinimalInconsistencyParser(),
+                    UseMinimalInconsistencyParser(),
+                    PrintMaximalConsistencyParser(),
+                    UseMaximalConsistencyParser(),
+                    PrintMaximalAmbiguityParser(),
+                    UseMaximalAmbiguityParser(),
+                    UseFixParser(),
+                    IsTrueParser(),
                     GitPullParser(),
                     GitPushParser(),
-                    GitCachePullParser(),
-                    GitCachePushParser(),
+                    GitStatePullParser(),
+                    GitStatePushParser(),
                     SetGitCredentialsParser(),
                     ShowHistoryParser()
-                ]              
-                                                
+                ]
+
 class CommandProvider(object):
     def __init__(self):
         #self.commands = Command.__subclasses__()#

@@ -180,9 +180,9 @@ class Interactive(Run):
             print "Tap: None"
         while True:
             input = raw_input('e3 > ')
-            #try:
-            command = self.commandProvider.provide(input)
-            self.executeCommand(input, command)
-            #except Exception as e:
-            #    tb = traceback.format_exc()
-            #    print "Something went wrong: " + tb
+            try:
+                command = self.commandProvider.provide(input)
+                self.executeCommand(input, command)
+            except Exception as e:
+                tb = traceback.format_exc()
+                print "Something went wrong: " + tb

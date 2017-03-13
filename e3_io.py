@@ -408,27 +408,6 @@ class TapManager(object):
                 pass
         return cleantax_file
     
-    def get_0_input_dir(self, tapId):
-        return os.path.join(self.get_taps_dir(), self.get_tap_name(tapId).replace(" ", ""), "0-Input")
-    
-    def get_1_asp_input_dir(self, tapId):
-        return os.path.join(self.get_taps_dir(), self.get_tap_name(tapId).replace(" ", ""), "1-ASP-input-code")
-    
-    def get_2_asp_output_dir(self, tapId):
-        return os.path.join(self.get_taps_dir(), self.get_tap_name(tapId).replace(" ", ""), "2-ASP-output")
-    
-    def get_3_mir_dir(self, tapId):
-        return os.path.join(self.get_taps_dir(), self.get_tap_name(tapId).replace(" ", ""), "3-MIR")
-    
-    def get_4_pws_dir(self, tapId):
-        return os.path.join(self.get_taps_dir(), self.get_tap_name(tapId).replace(" ", ""), "4-PWs")
-    
-    def get_5_aggregates_dir(self, tapId):
-        return os.path.join(self.get_taps_dir(), self.get_tap_name(tapId).replace(" ", ""), "5-Aggregates")
-    
-    def get_6_lattices_dir(self, tapId):
-        return os.path.join(self.get_taps_dir(), self.get_tap_name(tapId).replace(" ", ""), "6-Lattices")
-    
     def get_tap_dir(self, tapId):
         tap_name = self.get_tap_name(tapId)
         if tap_name is None:
@@ -543,7 +522,7 @@ class ConfigManager(object):
         defaultConfig = OrderedDict()
         defaultConfig['cli behavior'] = OrderedDict()
         defaultConfig['cli behavior']['imageFormat'] = 'svg'
-        defaultConfig['cli behavior']['maxPossibleWorldsToShow'] = 5
+        defaultConfig['cli behavior']['maxWorldsToShow'] = 5
         defaultConfig['cli behavior']['showOutputFileLocation'] = False
         defaultConfig['environment'] = OrderedDict()
         defaultConfig['environment']['euler2Executable'] = 'euler2'
@@ -556,7 +535,7 @@ class ConfigManager(object):
         defaultConfig['reasoning']['reasoner'] = 'dlv'
         defaultConfig['reasoning']['repairMethod'] = 'topdown'
         defaultConfig['sharing'] = OrderedDict()
-        defaultConfig['sharing']['cacheGitRepo'] = ''
+        defaultConfig['sharing']['stateGitRepo'] = ''
         defaultConfig['sharing']['workspaceGitRepo'] = ''
         return defaultConfig
     
