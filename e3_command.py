@@ -276,6 +276,8 @@ class Euler2(object):
                 file = os.path.join(self.e2PWsDir, filename)
                 files.append(file)
         return files
+    def get_world_graphs_count(self):
+        return len(self.get_world_graphs())
     def get_fix_option_sets(self):
         sets = []
         for line in self.stdout.splitlines():
@@ -977,7 +979,7 @@ class GraphWorlds(Euler2Command):
         showPW = Euler2(self.tap)
         showPW.maxN = self.maxWorlds
         stdout, stderr, returnCode = showPW.run(Euler2.showPWCommand)
-        worldCount = showPW.get_world_count()
+        worldCount = showPW.get_world_graphs_count()
         if worldCount == 0:
             self.output.append("There are no worlds.")
         else:
