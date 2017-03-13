@@ -110,6 +110,8 @@ create tap from worlds \<tap_1\> ... \<tap_n\> | Creates a tap with the unique w
  * pinject
  * pyyaml
  * networkx
+ * gitpython
+ * matplotlib
  * beautifulsoup4
  * html5lib
 * [EulerX](https://github.com/EulerProject/EulerX) 
