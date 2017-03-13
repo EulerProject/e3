@@ -514,9 +514,10 @@ class ConfigManager(object):
         config = None
         with open(self.get_config_file(), 'r') as f:
             config = ordered_yaml_load(f, yaml.SafeLoader)
-            if(config):
+            if config:
                 return config
-        self.store_config(self.get_default_config())
+        config = self.get_default_config()
+        self.store_config(config)
         return config
     
     def get_default_config(self):
