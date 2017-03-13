@@ -259,7 +259,8 @@ class TapManager(object):
             import e3_model
             json.dump(jsonData, historyFile)#, cls = HistoryJSONEncoder)
     def clear_history(self):
-        history = e3_model.History()
+        import e3_model
+        history = e3_model.History(None)
         self.store_history(history)
     def add_history_edge(self, fromTapId, toTapId, attributesDict):
         history = self.get_history()

@@ -96,8 +96,8 @@ class Run(object):
             with open(os.path.join(tapDir, "input.txt"), 'w+') as i:
                 i.write(tapAfterExecution.get_cleantax())
                 
-            self.graphCreator.create_history_graph(e3DataDir)
-            self.graphCreator.create_tap_graph(tapDir)
+        self.graphCreator.create_history_graph(e3DataDir)
+        self.graphCreator.create_tap_graph(tapDir)
         return runDirOutputFiles
                     
     def process_execute_result(self, command, runDirOutputFiles):
