@@ -122,6 +122,9 @@ create tap from worlds <tap_1> ... <tap_n> | Creates a tap with the unique world
  * e3 > set config euler2Executable = \<your_path_to_EulerX_src-el\>/euler2
 
 ### File organization
+
+e3 workspace:
+
 Directory                              | Description
 -----------------------------------------------------------------|------------
 $CWD/e3_data | e3 workspace files.
@@ -130,6 +133,8 @@ $CWD/e3_data/{tap}/index.html | {tap} as browsable HTML.
 $CWD/e3_data/{tap}/input.txt | {tap} as cleantax file.
 $CWD/e3_data/{tap}/{command}/config.txt | Configuration at the time of {command} execution on {tap}.
 $CWD/e3_data/{tap}/{command}/* | Output files created by {command} execution on {tap}.
+
+e3 state:
 
 Directory                              | Description
 -----------------------------------------------------------------|------------
