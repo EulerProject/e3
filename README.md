@@ -62,7 +62,7 @@ add articulation \<articulation\> [\<tap\>] | Adds \<articulation\> to the curre
 remove articulation \<articulation_index\|articulation\> [\<tap\>] | Removes articulation with index \<articulation_index\> or string \<articulation\> from the current tap, or the optionally provided \<tap\>.
 clear articulations [\<tap\>] | Clears the articulations of the current tap, or the optionally provided \<tap\>.
 set sibling disjointness \<true\|false\> [\<tap\>] | Sets the sibling disjointness for the current tap, or the optionally provided \<tap\>.
-set coverage \<true|false\> [\<tap\>] | Sets the coverage for the current tap, or the optionally provided \<tap\>.
+set coverage \<true\|false\> [\<tap\>] | Sets the coverage for the current tap, or the optionally provided \<tap\>.
 set regions \<mnpw\|mncb\|mnve\|vrpw\|vrve\> [\<tap\>] | Sets the regions for the current tap, or the optionally provided \<tap\>.
 load tap \<cleantax file\> | Loads a tap from the \<cleantax file\>.
 clear tap | Sets the empty tap as the current tap.
