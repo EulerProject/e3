@@ -304,11 +304,16 @@ class Taxonomy(object):
         return result
     def add_cleantax_stringyfied_edges(self, collector, src):
         line = "(" + src
-        for successor in sorted(self.g.successors(src)):
-            line = line + " " + successor
-            self.add_cleantax_stringyfied_edges(collector, successor)
-        line = line + ")"
-        collector.insert(0, line)
+        if self.g.successors(src):
+            for successor in sorted(self.g.successors(src)):
+                line = line + " " + successor
+                self.add_cleantax_stringyfied_edges(collector, successor)
+            line = line + ")"
+            collector.insert(0, line)
+        else:
+            if not self.g.predecessors(src):
+                line = line + ")"
+                collector.insert(0, line)
             
 combinedRCC5s = "{ equals|includes|is_included_in|overlaps|disjoint }"
 relations = [ "lsum", "l3sum", "l4sum", "rsum", "r3sum", "r4sum", "ldiff", "rdiff", "e4sum", "i4sum", "equals", "includes", 
