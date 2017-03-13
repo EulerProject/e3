@@ -25,7 +25,8 @@ width="180" height="120"></a>
 width="180" height="120"></a>
 
 ### Command-Manual
-Miscellaneous Command
+Miscellaneous Commands
+
 Command                              | Description
 -----------------------------------------------------------------|------------
 exit | Exit e3.
@@ -43,7 +44,8 @@ git push <name> <message> | Commits (with <message>) and pushes the e3_data work
 git state pull | Clones or pulls the e3 state from the configured git repository.
 git state push <message> | Commits (with <message> and pushes the e3 state to the configured git repository.
 
-TAP Command
+Tap Commands
+
 Command                              | Description
 -----------------------------------------------------------------|------------
 print tap [<tap>] | Prints the current tap, or the optionally provided <tap>
@@ -68,7 +70,8 @@ print names | Shows all stored names and their corresponding taps.
 name tap <name> [<tap>] | Names the current tap, or the optionally provided <tap> as <name>.
 use tap <tap> | Makes <tap> the current tap.
 
-Euler Command
+Euler Commands
+
 Command                              | Description
 -----------------------------------------------------------------|------------
 graph tap [<tap>] | Creates a graph visualization of the current tap, or the optionally provided <tap>.
