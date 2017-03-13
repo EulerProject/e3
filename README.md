@@ -111,6 +111,7 @@ create tap from worlds \<tap_1\> ... \<tap_n\> | Creates a tap with the unique w
  * pyyaml
  * networkx
  * gitpython
+ * python-numpy
  * matplotlib
  * beautifulsoup4
  * html5lib
