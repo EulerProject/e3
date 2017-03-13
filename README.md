@@ -24,60 +24,84 @@ width="180" height="120"></a>
 <a target="_blank" href="http://content.screencast.com/users/thomas.rodenhausen/folders/Jing/media/87bb6699-1bd4-41c2-87fe-8502bb1a9760/2016-12-09_1442.swf&blurover=false"><img src="https://img.youtube.com/vi/BbqY7htrY5U/0.jpg" alt="Tap naming and refinement on-the-go" 
 width="180" height="120"></a>
 
-#### Projects
-<a target="_blank" href="http://content.screencast.com/users/thomas.rodenhausen/folders/Jing/media/f9be00bf-18c7-4e76-a308-4d7d5b7e4f1c/2016-12-05_1354.swf&blurover=false"><img src="https://img.youtube.com/vi/BbqY7htrY5U/0.jpg" alt="Projects" 
-width="180" height="120"></a>
-
 ### Command-Manual
+Miscellaneous Commands
+
 Command                              | Description
 -----------------------------------------------------------------|------------
-bye							| Exit e3
-help							| Shows this help
-reset							| Resets e3 to factory settings
-set config \<key\>=\<value\>				| Sets the configuration \<parameter\> with \<value\>
-print config						| Prints the configuration settings
-load tap \<cleantax file\>				| Loads a tap (taxonomy alignment problem) from a CleanTax file
-clear tap | Sets the empty tap as the current tap
-print tap [\<tap\>]					| Prints the current tap, or the optionally provided \<tap\>
-print taxonomies [\<tap\>]				| Prints the input taxonomies of the current tap, or the optionally provided \<tap\>
-print articulations [\<tap\>]				| Prints the input articulations of the current tap, or the optionally provided \<tap\>
-add taxonomy \<taxonomyId\> \<taxonomyName\> [\<tap\>] | Adds a taxonomy with \<taxonomyId\> and \<taxonomyName\> to the current tap, or the optionally provided \<tap\>
-remove taxonomy \<taxonomyId\> [\<tap\>] | Removes the taxonomy with \<taxonomyId\> and ALL referencing articulations from the current tap, or the optionally provided \<tap\>
-set taxonomy info \<oldTaxonomyId\> \<newTaxonomyId\> \<newTaxonomyName\> [\<tap\>] | Sets the taxonomy info of the taxonomy with \<oldTaxonomyId\> to \<newTaxonomyId\> and \<newTaxonomyName\> of the current tap, or the optionally provided \<tap\>
-add children \<taxonomyId\> \<children\> [\<tap\>] | Adds children to the taxonomy with \<taxonomyId\> of the current tap, or the optionally provided \<tap\> 
-remove children \<taxonomyId\> \<children\> [\<tap\>] | Removes children from the taxonomy with \<taxonomyId\> of the current tap, or the optionally provided \<tap\>
-clear taxonomy \<taxonomyId\> [\<tap\>] | Clears the taxonomy with \<taxonomyId\> of the current tap, or the optionally provided \<tap\>
-add articulation \<articulation\> [\<tap\>] | Adds \<articulation\> to the current tap, or the optionally provided \<tap\>
-remove articulation \<articulation_index\> [\<tap\>] | Removes articulation with index \<articulation_index\> from the current tap, or the optionally provided \<tap\> 
-clear articulations [\<tap\>] | Clears the articulations of the current tap, or the optionally provided \<tap\>
-set sibling disjointness \<true\|false\> [\<tap\>]		| Sets the "sibling disjointness" reasoning constraint for the current tap, or the optionally provided \<tap\>
-set coverage \<true\|false\> [\<tap\>]			| Sets the "coverage" reasoning constraint for the current tap, or the optionally provided \<tap\>
-set regions \<mnpw\|mncb\|mnve\|vrpw\|vrve\> [\<tap\>]		| Sets the "region encoding" constraints for the current tap, or the optionally provided \<tap\>
-name tap \<name\> [\<tap\>]					| Names the current tap, or the optionally provided \<tap\> as \<name\>
-print names						| Shows all stored names and their corresponding taps
-use tap \<tap\>						| Makes \<tap\> the current tap
-graph tap [\<tap\>]					| Creates an input graph visualization of the current tap, or the optionally provided \<tap\>
-is consistent [\<tap\>]					| Checks the logical consistency of the current tap, or the optionally provided \<tap\>
-more than \<count\> worlds [\<tap\>]				| Checks if there are more than <count> number of possible worlds in the current tap, or the optionally provided \<tap\>
-graph worlds [\<tap\>]					| Creates output graph visualizations of the possible worlds - if any exist - for the current tap, or the optionally provided \<tap\>
-print worlds [\<tap\>]					| Prints the possible worlds - if any exist - of the current tap, or the optionally provided \<tap\>
-graph summary [\<tap\>]					| Creates a summary visualization of the current tap, or the optionally provided \<tap\>
-graph four in one [\<tap\>]				| Creates a "four-in-one" diagnostic visualization for the "level" of constraint specification of the current tap, or the optionally provided \<tap\>
-graph inconsistency [\<tap\>]				|Creates a graph visualization of the inconsistency - if any exists - for the current tap, or the optionally provided \<tap\>
-graph ambiguity [\<tap\>]					| Creates an ambiguity visualization of the current tap, or the optionally provided \<tap\>
-print fix [\<tap\>]					| Prints a suggested fix of the inconsistency - if any exists - for the current tap, or the optionally provided \<tap\>
-create project \<name\>					| Creates a project with \<name\>, including managable command history
-print projects						| Prints an overview of the existing projects
-open project \<name\>					| Opens an existing project with \<name\>
-close project						| Closes the current project
-remove project \<name\>					| Removes the project with \<name\>
-clear projects						| Clears all projects
-print project history					| Prints the project's command history
-remove project history \<index\>				| Removes command with \<index\> and all dependent commands from the project's command history
-git pull | Clones or pulls the e3 state from the configured git repository
-git push \<message\> | Commits with \<message\> and pushes the e3 state to the configured git repository
-git credentials \<host\> \<username\> "\<password\>" | Sets the \<username\> and \<password\> for the git \<host\>
+exit | Exit e3.
+help | Shows this help.
+reset | Resets to factory settings.
+reset config | Resets the configuration to default.
+clear | Clears the history and cache. Keeps the config.
+clear history | Clears the history.
+show history | Shows the html rendered history.
+print config | Prints the configuration settings.
+set config \<key\>=\<value\> | Sets the configuration \<parameter\> with \<value\>.
+git credentials \<host\> \<username\> "\<password\>" | Sets the \<username\> and \<password\> for the git \<host\>.
+git pull \<name\> | Clones or pulls an e3_data workspace with the \<name\> from the configured git repository.
+git push \<name\> \<message\> | Commits (with \<message\>) and pushes the e3_data workspace as \<name\> to the configured git repository.
+git state pull | Clones or pulls the e3 state from the configured git repository.
+git state push \<message\> | Commits (with \<message\> and pushes the e3 state to the configured git repository.
 
+Tap Commands
+
+Command                              | Description
+-----------------------------------------------------------------|------------
+print tap [\<tap\>] | Prints the current tap, or the optionally provided \<tap\>
+print taxonomies [\<tap\>] | Prints the taxonomies of the current tap, or the optionally provided \<tap\>.
+print articulations [\<tap\>] | Prints the articulations of the current tap, or the optionally provided \<tap\>.
+add taxonomy \<taxonomyId\> \<taxonomyName\> [\<tap\>] | Adds a taxonomy with \<taxonomyId\> and \<taxonomyName\> to the current tap, or the optionally provided \<tap\>.
+remove taxonomy \<taxonomyId\> [\<tap\>] | Removes the taxonomy with \<taxonomyId\> and all referencing articulations from the current tap, or the optionally provided \<tap\>.
+set taxonomy info \<oldTaxonomyId\> \<newTaxonomyId\> \<newTaxonomyName\> [\<tap\>] | Sets the \<newTaxonomyid\> and \<newTaxonomyName\> to the taxonomy with \<oldTaxonomyId\> of the current tap, or the optionally provided \<tap\>.
+add concept \<taxonomyId\> (\<parentConcepts\> \<childConcept 1\> ... \<childConcept n\>) [\<tap\>] | Adds \<childConcept\>'s to \<parentConcept\>, creating non-existing concept's as needed to the taxonomy with \<taxonomyId\> of the current tap, or the optionally provided \<tap\>.
+remove concept \<recursive\> \<taxonomyId\> (\<parentConcepts\> \<childConcept 1\> ... \<childConcept n\>) [\<tap\>] | Removes \<childConcept\>'s from \<parentConcept\> in the taxonomy with \<taxonomyId\> of the current tap, or the optionally provided \<tap\>.
+rename concept \<taxonomyId\> \<oldName\> \<newName\> [\<tap\>] | Renames the concept in taxonomy with \<taxonomyId\> from \<oldName\> to \<newName\> for the current tap, or the optionally provided \<tap\>.
+clear taxonomy \<taxonomyId\> [\<tap\>] | Clears the taxonomy with \<taxonomyId\> of the current tap, or the optionally provided \<tap\>.
+add articulation \<articulation\> [\<tap\>] | Adds \<articulation\> to the current tap, or the optionally provided \<tap\>.
+remove articulation \<articulation_index\|articulation\> [\<tap\>] | Removes articulation with index \<articulation_index\> or string \<articulation\> from the current tap, or the optionally provided \<tap\>.
+clear articulations [\<tap\>] | Clears the articulations of the current tap, or the optionally provided \<tap\>.
+set sibling disjointness \<true\|false\> [\<tap\>] | Sets the sibling disjointness for the current tap, or the optionally provided \<tap\>.
+set coverage \<true\|false\> [\<tap\>] | Sets the coverage for the current tap, or the optionally provided \<tap\>.
+set regions \<mnpw\|mncb\|mnve\|vrpw\|vrve\> [\<tap\>] | Sets the regions for the current tap, or the optionally provided \<tap\>.
+load tap \<cleantax file\> | Loads a tap from the \<cleantax file\>.
+clear tap | Sets the empty tap as the current tap.
+print names | Shows all stored names and their corresponding taps.
+name tap \<name\> [\<tap\>] | Names the current tap, or the optionally provided \<tap\> as \<name\>.
+use tap \<tap\> | Makes \<tap\> the current tap.
+
+Euler Commands
+
+Command                              | Description
+-----------------------------------------------------------------|------------
+graph tap [\<tap\>] | Creates a graph visualization of the current tap, or the optionally provided \<tap\>.
+is consistent [\<tap\>] | Checks the consistency of the current tap, or the optionally provided \<tap\>.
+is unique [\<tap\>] | Checks if there is a unique world for the current tap, or the optionally provided \<tap\>.
+is ambiguous [\<tap\>] | Checks if there is more than 1 world for the current tap, or the optionally provided \<tap\>.
+is true \<articulation\> [\<tap\>] | Checks if the articulation holds true for the current tap, or the optionally provided \<tap\>.
+more than \<count\> worlds [\<tap\>] | Checks if there are more than \<count\> number of worlds in the current tap, or the optionally provided \<tap\>.
+graph worlds [\<maxWorlds\>] [\<tap\>] | Creates graph visualizations of the worlds, if any exist, and if provided maximally \<maxWorlds\> for the current tap, or the optionally provided \<tap\>.
+print worlds [\<maxWorlds\>] [\<tap\>] | Prints the worlds, if any exist, and if provided maximally \<maxWorlds\> for the current tap, or the optionally provided \<tap\>.
+use world [\<worldId\>] [\<tap\>] | Replaces the articulations of the current tap or the optionally provided \<tap\> with all the articulations extracted from the given \<worldId\> or the unique world of the tap, if applicable and no \<worldId\> is given.
+print minimal articulations [\<tap\>] | Prints minimal sets articulations for the unique world of the current tap, or the optionally provided \<tap\>.
+use minimal articulations \<minimal articulation set id\> [\<tap\>] | Replaces the articulations of the current tap or the optionally provided \<tap\> with the articulations of the given \<minimal articulation set id\>.
+print maximal articulations [\<tap\>] | Prints maximal sets of articulations for all worlds of the current tap, or the optionally provided \<tap\>.
+use maximal articulations \<maximal articulation set id\> [\<tap\>] | Replaces the articulations of the current tap or the optionally provided \<tap\> with the articulations of the given \<maximal articulation set id\>.
+graph ambiguity [\<tap\>] | Creates an ambiguity visualization of the current tap, or the optionally provided \<tap\>.
+graph summary [\<tap\>] | Creates a summary visualization of the current tap, or the optionally provided \<tap\>.
+graph four in one [\<tap\>] | Creates a four-in-one visualization of the current tap, or the optionally provided \<tap\>.
+print minimal uniqueness [\<tap\>] | Prints the minimal subsets of articulations that create uniqueness for the current tap, or the optionally provided \<tap\>.
+use minimal uniqueness \<set id\> [\<tap\>] | Replaces the articulations of the current tap or the optionally provided \<tap\> with the articulations of the given minimal uniqueness \<set id\>.
+print minimal inconsistency [\<tap\>] | Prints the minimal subsets of articulations that create inconsistency for the current tap, or the optionally provided \<tap\>.
+use minimal inconsistency \<set id\> [\<tap\>] | Replaces the articulations of the current tap or the optionally provided \<tap\> with the articulations of the given minimal inconsistency \<set id\>.
+print maximal consistency [\<tap\>] | Prints the maximal subsets of articulations that create consistency for the current tap, or the optionally provided \<tap\>.
+use maximal consistency \<set id\> [\<tap\>] | Replaces the articulations of the current tap or the optionally provided \<tap\> with the articulations of the given maximal consistency \<set id\>.
+print maximal ambiguity [\<tap\>] | Prints the maximal subsets of articulations that create ambiguity for the current tap, or the optionally provided \<tap\>.
+use maximal ambiguity \<set id\> [\<tap\>] | Replaces the articulations of the current tap or the optionally provided \<tap\> with the articulations of the given maximal ambiguity \<set id\>.
+graph inconsistency [\<tap\>] | Creates a graph visualization of the inconsistency, if any exists, for the current tap, or the optionally provided \<tap\>.
+print fix [\<tap\>] | Prints a set of suggested fixes of the inconsistency, if any exists, for the current tap, or the optionally provided \<tap\>.
+use fix \<fix set id\> [\<tap\>] | Uses the fix with \<fix set id\> to create a consistent input from the current tap, or the optionally provided \<tap\>.
+create tap from worlds \<tap_1\> ... \<tap_n\> | Creates a tap with the unique worlds of \<tap_1\> ... \<tap_n\> as taxonomies.
 
 ### Prerequisites
 * Python 2.7.x
@@ -86,6 +110,8 @@ git credentials \<host\> \<username\> "\<password\>" | Sets the \<username\> and
  * pinject
  * pyyaml
  * networkx
+ * beautifulsoup4
+ * html5lib
 * [EulerX](https://github.com/EulerProject/EulerX) 
 
 ### Setup
@@ -95,14 +121,26 @@ git credentials \<host\> \<username\> "\<password\>" | Sets the \<username\> and
 * If euler2 is not in your $PATH, do: 
  * e3 > set config euler2Executable = \<your_path_to_EulerX_src-el\>/euler2
 
-
 ### File organization
+
+e3 workspace:
+
+Directory                              | Description
+-----------------------------------------------------------------|------------
+$CWD/e3_data | e3 workspace files.
+$CWD/e3_data/index.html | Command history as browsable HTML.
+$CWD/e3_data/{tap}/index.html | {tap} as browsable HTML.
+$CWD/e3_data/{tap}/input.txt | {tap} as cleantax file.
+$CWD/e3_data/{tap}/{command}/config.txt | Configuration at the time of {command} execution on {tap}.
+$CWD/e3_data/{tap}/{command}/* | Output files created by {command} execution on {tap}.
+
+e3 state:
+
 Directory                              | Description
 -----------------------------------------------------------------|------------
 $USER_HOME/.e3 | e3 relevant files
-$USER_HOME/.e3/.config | stores the e3 configuration
+$USER_HOME/.e3/.config | stores the configuration
 $USER_HOME/.e3/.current_tap | stores the current tap
-$USER_HOME/.e3/.current_project | stores the current project
+$USER_HOME/.e3/.history | stores the command history
 $USER_HOME/.e3/.names | stores the tap to name mappings
 $USER_HOME/.e3/taps | stores treated taps and their computed data
-$USER_HOME/.e3/projects | stores user-created projects, their history, commands, inputs and outputs
