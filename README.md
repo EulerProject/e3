@@ -41,8 +41,8 @@ set config \<key\>=\<value\> | Sets the configuration \<parameter\> with \<value
 git credentials \<host\> \<username\> "\<password\>" | Sets the \<username\> and \<password\> for the git \<host\>.
 git pull \<name\> | Clones or pulls an e3_data workspace with the \<name\> from the configured git repository.
 git push \<name\> \<message\> | Commits (with \<message\>) and pushes the e3_data workspace as \<name\> to the configured git repository.
-git state pull \<name\> | Clones or pulls the e3 state from the configured git repository.
-git state push \<name\> \<message\> | Commits (with \<message\> and pushes the e3 state to the configured git repository.
+git state pull \<name\> | Clones or pulls the e3 state with the \<name\>from the configured git repository.
+git state push \<name\> \<message\> | Commits (with \<message\> and pushes the e3 state as \<name\> to the configured git repository.
 
 Tap Commands
 
