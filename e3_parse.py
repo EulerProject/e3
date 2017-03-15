@@ -172,7 +172,7 @@ class GitPushParser(CommandParser):
     def get_command(self, input):
         match = self.is_input(input)
         if match:
-            if match.group("name") and match.group("message"):
+            if match.group("message"):
                 return e3_command.GitPush(match.group("path"), match.group("message"))
             else:
                 return e3_command.GitPush(match.group("path"), "e3 git push") 

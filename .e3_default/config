@@ -13,5 +13,5 @@ reasoning:
   reasoner: dlv
   repairMethod: topdown
 sharing:
-  stateGitRepo: http://github.com/rodenhausen/experiments.git
-  workspaceGitRepo: http://github.com/rodenhausen/experiments.git
+  stateGitRepo: 
+  workspaceGitRepo: 

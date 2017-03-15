@@ -845,6 +845,7 @@ class GraphCreator(object):
                                                     "title" : ("plain", "Tap: " + tapName),
                                                     "cleantax-textarea" : ("insert", tap.get_cleantax()), 
                                                     "visualization" : ("plain", self.create_visualization_data(tap)),
+                                                    "dataAdjacency1x1": ("json", self.create_adjacency1x1_data(tap)),
                                                     "dataAdjacency" : ("json", self.create_adjacency_data(tap)),
                                                      })
         
@@ -865,7 +866,6 @@ class GraphCreator(object):
         
     def create_adjacency_data(self, tap):
         g = nx.MultiDiGraph()
-        i = 0;
         for taxonomy in tap.taxonomies:
             for node in taxonomy.g:
                 g.add_node(taxonomy.id + "." + node, group = taxonomy.id) 
@@ -886,4 +886,15 @@ class GraphCreator(object):
                 if articulation.relation == "is_included_in": 
                     g.add_edge(articulation.rightNodes[0], articulation.leftNodes[0], relation = "includes")
         
+        return json_graph.node_link.node_link_data(g)
+    
+    def create_adjacency1x1_data(self, tap):
+        g = nx.MultiDiGraph()
+        for taxonomy in tap.taxonomies:
+            for node in taxonomy.g:
+                g.add_node(taxonomy.id + "." + node, group = taxonomy.id) 
+        for articulation in tap.articulations:
+            #for now only these: how to deal with other type of relations?
+            if len(articulation.leftNodes) == 1 and len(articulation.rightNodes) == 1:
+                g.add_edge(articulation.leftNodes[0], articulation.rightNodes[0], relation = articulation.relation)
         return json_graph.node_link.node_link_data(g)
