@@ -1,5 +1,5 @@
-<img src="http://euler.cs.ucdavis.edu/_/rsrc/1366832610901/home/logo_small.png" alt="The EulerX toolkit" width="100" height="88">
-#e3
+<img src="http://euler.cs.ucdavis.edu/_/rsrc/1366832610901/home/logo_small.png" alt="The EulerX toolkit" width="100" height="88"></img>
+# e3
 
 ### Introduction
 This repository is for the command line wrapper e3 of the [EulerX](https://github.com/EulerProject/EulerX) toolkit.
@@ -27,8 +27,8 @@ width="180" height="120"></a>
 ### Command-Manual
 Miscellaneous Commands
 
-Command                              | Description
------------------------------------------------------------------|------------
+Command | Description
+------- | -----------
 exit | Exit e3.
 help | Shows this help.
 reset | Resets to factory settings.
@@ -49,8 +49,8 @@ git state push \<path\> \<message\> | Commits (with \<message\> and pushes the e
 
 Tap Commands
 
-Command                              | Description
------------------------------------------------------------------|------------
+Command | Description
+------- | -----------
 print tap [\<tap\>] | Prints the current tap, or the optionally provided \<tap\>
 print taxonomies [\<tap\>] | Prints the taxonomies of the current tap, or the optionally provided \<tap\>.
 print articulations [\<tap\>] | Prints the articulations of the current tap, or the optionally provided \<tap\>.
@@ -75,8 +75,8 @@ use tap \<tap\> | Makes \<tap\> the current tap.
 
 Euler Commands
 
-Command                              | Description
------------------------------------------------------------------|------------
+Command | Description
+------- | -----------
 graph tap [\<tap\>] | Creates a graph visualization of the current tap, or the optionally provided \<tap\>.
 is consistent [\<tap\>] | Checks the consistency of the current tap, or the optionally provided \<tap\>.
 is unique [\<tap\>] | Checks if there is a unique world for the current tap, or the optionally provided \<tap\>.
@@ -109,15 +109,15 @@ create tap from worlds \<tap_1\> ... \<tap_n\> | Creates a tap with the unique w
 ### Prerequisites
 * Python 2.7.x
 * Python modules: 
- * autologging
- * pinject
- * pyyaml
- * networkx
- * gitpython
- * python-numpy
- * matplotlib
- * beautifulsoup4
- * html5lib
+  * autologging
+  * pinject
+  * pyyaml
+  * networkx
+  * gitpython
+  * python-numpy
+  * matplotlib
+  * beautifulsoup4
+  * html5lib
 * [EulerX](https://github.com/EulerProject/EulerX) 
 
 ### Setup
@@ -125,7 +125,7 @@ create tap from worlds \<tap_1\> ... \<tap_n\> | Creates a tap with the unique w
 * Clone this repository
 * Run e3
 * If euler2 is not in your $PATH, do: 
- * e3 > set config euler2Executable = \<your_path_to_EulerX_src-el\>/euler2
+  * e3 > set config euler2Executable = \<your_path_to_EulerX_src-el\>/euler2
 
 ### File organization
 
