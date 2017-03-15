@@ -15,7 +15,7 @@
   <script charset="utf-8" src="https://d3js.org/d3.v3.min.js">
   </script>
   <script type="text/json" id="dataAdjacency"></script>
-  <style type="text/css">
+   <style type="text/css">
 .container {
 	width: initial;
 	padding-right: 0px;
@@ -251,6 +251,14 @@ data['nodes'] = data['nodes'].sort(function(a, b) {
 								});
 //sort links for legend
 data['links'] = data['links'].sort(function(a, b) { 
+								if(a.relation.startsWith("taxonomy") && b.relation.startsWith("taxonomy")) {
+									idA = a.relation.split(".")[1];
+									idB = b.relation.split(".")[1];
+									if (idA == idB) {
+										return d3.ascending(a.relation, b.relation);
+									}
+									return d3.ascending(idA, idB);
+								}
 								return d3.ascending(a.relation, b.relation); 
 							});
 for (i in data['links']) {
@@ -280,6 +288,7 @@ for (i in data['nodes']) {
 				});
 	}
 }
+/*
 c20 = d3.scale.category20();
 colorIndex = 0;
 var colors = { 
@@ -290,11 +299,24 @@ var colors = {
 		"is_included_in" : c20(colorIndex++),
 		"overlaps" : c20(colorIndex++)
 }
+*/
+
+var colors = {
+	"" : "white",
+	"equals" : "#7f7f7f", //dark gray
+	"disjoint" : "#c7c7c7", //light gray
+	"includes" : "#e6550d", //dark orange
+	"is_included_in" : "#fd8d3c", //light orange
+	"overlaps" : "#d62728" //red
+}
+
+var taxonomyPairColors = ["#393b79", "#5254a3", "#637939", "#8ca252", "#8c6d31", "#bd9e39", "#843c39", "#ad494a", "#7b4173", "#a55194"];
+colorIndex = 0;
 for (i in data['links']) {
 	var l = data['links'][i];
 	if (!(l.relation in colors)) {
-		colors[l.relation] = c20(colorIndex);
-		colorIndex = (colorIndex + 1) % 20;
+		colors[l.relation] = taxonomyPairColors[colorIndex];
+		colorIndex = colorIndex + 1 % 4;
 	}
 	cells.push({ 
 				id: l.source + ";" + l.target, 
@@ -323,7 +345,7 @@ adjacencyView = content.append("g")
 	      .attr("x", function (d) {return d.target * cellWidth})
 	      .attr("y", function (d) {return d.source * cellWidth})
 	      .style("fill", function(d) { return colors[d.relation]; })
-	      .style("stroke", "gray")
+	      .style("stroke", "black")
 	      .on("mouseover", mouseover)
 		  .on("mouseout", mouseout);
 		
@@ -362,7 +384,7 @@ adjacencyView.append("g")
 			.attr("transform", "translate(-8,-10) rotate(90)");
 adjacencyView.append("g")
 			.call(yAxis)
-			//.attr("transform", "translate(-10, -10)");
+			.attr("transform", "translate(-10, -10)");
   
 function mouseover(d, i) {
 	d3.selectAll("div#adjacency rect")
@@ -372,8 +394,8 @@ function mouseover(d, i) {
 		.style("stroke-width", function(o) {
 			return (o.source == d.source || o.target == d.target) ? "3px" : "1px";
 		});
-	d3.selectAll("div#adjacency legend g text").classed("activeLegend", function(c, i) { 
-												return c == d.relation
+	d3.selectAll("div#adjacency g#legend g text").classed("activeLegend", function(c, i) { 
+												return c == d.relation;
 											});
 	d3.selectAll("div#adjacency g.tick text").classed("activeTick", function(c, i) {
 												return data['nodes'][d.source].id == c || data['nodes'][d.target].id == c;
@@ -386,7 +408,7 @@ function mouseout() {
 	d3.selectAll("div#adjacency g.tick text").classed("activeTick", false);
 }
 
-content.append("g").append("text").text("From").style("font-weight", "bold").attr("transform", "translate(5, 75)");
+content.append("g").append("text").text("From").style("font-weight", "bold").attr("transform", "translate(5, 70)");
 content.append("g").append("text").text("To").style("font-weight", "bold").attr("transform", "translate(60, 30)");
 
 legend = []
@@ -408,7 +430,7 @@ legendG.append("rect")
   .attr("x", function (d, i) {return 0; })
   .attr("y", function (d, i) {return i * cellWidth})
   .style("fill", function(d) { return colors[d]; })
-  .style("stroke", "gray");
+  .style("stroke", "black");
 legendG.append("text")
   .text(function(d) { return d; })
   .attr("x", function (d, i) { return 40; })
