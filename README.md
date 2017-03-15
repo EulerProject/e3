@@ -32,12 +32,15 @@ Command                              | Description
 exit | Exit e3.
 help | Shows this help.
 reset | Resets to factory settings.
-reset config | Resets the configuration to default.
-clear | Clears the history and cache. Keeps the config.
-clear history | Clears the history.
+clear | Clears the history and cache. Keeps the configuration and style settings.
 show history | Shows the html rendered history.
+clear history | Clears the history.
 print config | Prints the configuration settings.
-set config \<key\>=\<value\> | Sets the configuration \<parameter\> with \<value\>.
+set config \<parameter\>=\<value\> | Sets the configuration \<parameter\> with \<value\>.
+reset config | Resets the configuration to default.
+print style | Prints the style settings.
+set style \<parameterPath\>=\<value\> | Sets the style parameter with <parameterPath> (e.g. aggregate/graphstyle/legend) with <value>.
+reset style | Resets the style to default.
 git credentials \<host\> \<username\> "\<password\>" | Sets the \<username\> and \<password\> for the git \<host\>.
 git pull \<path\> | Clones or pulls an e3_data workspace from the \<path\> at the configured git repository.
 git push \<path\> \<message\> | Commits (with \<message\>) and pushes the e3_data workspace to the \<path\> at the configured git repository.
@@ -141,9 +144,10 @@ e3 state:
 
 Directory                              | Description
 -----------------------------------------------------------------|------------
-$USER_HOME/.e3 | e3 relevant files
-$USER_HOME/.e3/.config | stores the configuration
-$USER_HOME/.e3/.current_tap | stores the current tap
-$USER_HOME/.e3/.history | stores the command history
-$USER_HOME/.e3/.names | stores the tap to name mappings
-$USER_HOME/.e3/taps | stores treated taps and their computed data
+$CWD/.e3 | e3 state files
+$CWD/.e3/config | stores the configuration settings
+$CWD/.e3/current_tap | stores the current tap
+$CWD/.e3/history | stores the command history
+$CWD/.e3/names | stores the tap to name mappings
+$CWD/.e3/style | stores style settings
+$CWD/.e3/taps | stores taps and computed reasoning data

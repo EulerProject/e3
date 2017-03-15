@@ -1,0 +1,17 @@
+cli behavior:
+  imageFormat: svg
+  maxWorldsToShow: 5
+  showOutputFileLocation: false
+environment:
+  euler2Executable: euler2
+  htmlViewer: xdg-open {file}
+  imageViewer: xdg-open {file}
+reasoning:
+  defaultIsCoverage: true
+  defaultIsSiblingDisjointness: true
+  defaultRegions: mnpw
+  reasoner: dlv
+  repairMethod: topdown
+sharing:
+  stateGitRepo: http://github.com/rodenhausen/experiments.git
+  workspaceGitRepo: http://github.com/rodenhausen/experiments.git

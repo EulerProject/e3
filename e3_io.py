@@ -5,6 +5,7 @@ Created on Nov 22, 2016
 '''
 import os.path
 from os.path import expanduser
+import errno
 import shutil
 import uuid
 from subprocess import Popen, PIPE, call
@@ -18,23 +19,34 @@ from bs4 import BeautifulSoup
 import datetime
 from collections import OrderedDict
 
-e3Dir = os.path.join(expanduser("~"), ".e3")
+#e3Dir = os.path.join(expanduser("~"), ".e3")
+e3Dir = os.path.join(os.getcwd(), ".e3")
 
 def get_e3_dir():
-    if not os.path.isdir(e3Dir):
-        os.makedirs(e3Dir)
+    mkdirs_ignore_existing(e3Dir)
     return e3Dir
 
+def get_e3_temp_dir():
+    e3TempDir = os.path.join(os.path.join(expanduser("~"), ".e3", "e3_temp"))
+    mkdirs_ignore_existing(e3TempDir)
+    return e3TempDir
+
+def get_e3_git_dir():
+    e3TempDir = get_e3_temp_dir()
+    e3GitDir = os.path.join(e3TempDir, "e3_git")
+    mkdirs_ignore_existing(e3GitDir)
+    return e3GitDir
+
 def get_e3_data_git_dir():
-    e3Dir = get_e3_dir()
-    e3DataGitDir = os.path.join(e3Dir, "e3_data_git")
-    if not os.path.isdir(e3DataGitDir):
-        os.makedirs(e3DataGitDir)
+    e3TempDir = get_e3_temp_dir()
+    e3DataGitDir = os.path.join(e3TempDir, "e3_data_git")
+    mkdirs_ignore_existing(e3DataGitDir)
     return e3DataGitDir
-    
 
 def get_working_dir():
-    return os.path.join(os.getcwd(), "e3_data")
+    e3DataDir = os.path.join(os.getcwd(), "e3_data")
+    mkdirs_ignore_existing(e3DataDir)
+    return e3DataDir
 
 def get_home_dir():
     return expanduser("~")
@@ -42,8 +54,8 @@ def get_home_dir():
 def clean_e3_dir():
     shutil.rmtree(get_e3_dir())
 
-def clean_e3_data_git_dir():
-    shutil.rmtree(get_e3_data_git_dir())
+def clean_e3_temp_dir():
+    shutil.rmtree(get_e3_temp_dir())
     
 def clean_working_dir():
     workingDir = get_working_dir()
@@ -52,7 +64,9 @@ def clean_working_dir():
     
 def reset():
     clean_e3_dir()
+    clean_e3_temp_dir()
     clean_working_dir()
+    ConfigManager().get_style()
     ConfigManager().get_config()
     tapManager = TapManager()
     tapManager.load_demo_taps()
@@ -61,12 +75,14 @@ def reset():
 def clear():
     configManager = ConfigManager()
     config = configManager.get_config()
+    style = configManager.get_style()
     clean_e3_dir()
     #clean_working_dir()
     tapManager = TapManager()
     tapManager.load_demo_taps()
     tapManager.set_current_tap(tapManager.get_default_tap())
     configManager.store_config(config)
+    configManager.store_style(style)
     
 def set_git_credencials(host, user, password):
     p = Popen("git config --global user.email \"" + user + "\"", stdout=PIPE, stderr=PIPE, shell=True)
@@ -103,7 +119,16 @@ def ordered_yaml_dump(data, stream=None, Dumper=yaml.Dumper, **kwds):
             data.items())
     OrderedDumper.add_representer(OrderedDict, _dict_representer)
     return yaml.dump(data, stream, OrderedDumper, **kwds)
-            
+
+def mkdirs_ignore_existing(path):
+    try:
+        os.makedirs(path)
+    except OSError as e:
+        if e.errno == errno.EEXIST and os.path.isdir(path):
+            pass
+        else:
+            raise
+
 @logged
 class CleantaxReader(object):
     def get_articulation_from_cleantax(self, cleantaxLine):
@@ -205,7 +230,7 @@ class CleantaxReader(object):
 
 class TapManager(object):
     def get_history_file(self):
-        historyFile = os.path.join(get_e3_dir(), ".history")
+        historyFile = os.path.join(get_e3_dir(), "history")
         if not os.path.isfile(historyFile):
             with open(historyFile, 'w') as f:
                 pass
@@ -410,23 +435,21 @@ class TapManager(object):
         return cleantax_file
     
     def get_tap_dir(self, tapId):
-        tap_name = self.get_tap_name(tapId)
-        if tap_name is None:
+        tapName = self.get_tap_name(tapId)
+        if tapName is None:
             return None
-        tap_name = tap_name.replace(" ", "")
-        tap_dir = os.path.join(get_e3_dir(), "taps", tap_name)
-        if not os.path.isdir(tap_dir):
-            os.makedirs(tap_dir)
-        return tap_dir
+        tapName = tapName.replace(" ", "")
+        tapDir = os.path.join(get_e3_dir(), "taps", tapName)
+        mkdirs_ignore_existing(tapDir)
+        return tapDir
     
     def get_taps_dir(self):
-        taps_dir = os.path.join(get_e3_dir(), "taps")
-        if not os.path.isdir(taps_dir):
-            os.makedirs(taps_dir)
-        return taps_dir
+        tapsDir = os.path.join(get_e3_dir(), "taps")
+        mkdirs_ignore_existing(tapsDir)
+        return tapsDir
     
     def get_current_tap_file(self):
-        current_tap_file = os.path.join(get_e3_dir(), ".current_tap")
+        current_tap_file = os.path.join(get_e3_dir(), "current_tap")
         if not os.path.isfile(current_tap_file):
             with open(current_tap_file, 'w') as f:
                 pass
@@ -437,17 +460,15 @@ class TapManager(object):
         oldTapDir = None
         if oldName is not None:
             oldTapDir = self.get_tap_dir(tapId)
-        names = { }
         with open(self.get_names_file(), "r") as namesFile:
-            doc = yaml.load(namesFile)
-            if doc:
-                for key, value in doc.iteritems():
-                    names[key] = value
+            names = ordered_yaml_load(namesFile, yaml.SafeLoader)
+        if not names:
+            names = OrderedDict()
         if oldName in names:
             del names[oldName]
         names[name] = tapId
         with open(self.get_names_file(), "w") as namesFile:
-            yaml.dump(names, namesFile, default_flow_style=False)
+            ordered_yaml_dump(names, stream=namesFile, Dumper=yaml.SafeDumper, default_flow_style=False)
         if oldTapDir is not None:
             for filename in os.listdir(oldTapDir):
                 shutil.move(os.path.join(oldTapDir, filename), self.get_tap_dir(tapId))
@@ -456,7 +477,7 @@ class TapManager(object):
     def get_names(self):
         names = []
         with open(self.get_names_file(), 'r') as namesFile:
-            doc = yaml.load(namesFile)
+            doc = ordered_yaml_load(namesFile, yaml.SafeLoader)
             if doc:
                 for key, value in doc.items():
                     names.append(key + " = " + value)
@@ -487,7 +508,7 @@ class TapManager(object):
     def get_tap_id(self, name):
         name = name.strip()
         with open(self.get_names_file(), 'r') as namesFile:
-            doc = yaml.load(namesFile)
+            doc = ordered_yaml_load(namesFile, yaml.SafeLoader)
             if doc:
                 if name in doc:
                     return doc[name]
@@ -495,7 +516,7 @@ class TapManager(object):
     
     def get_name(self, tapId):
         with open(self.get_names_file(), 'r') as namesFile:
-            doc = yaml.load(namesFile)
+            doc = ordered_yaml_load(namesFile, yaml.SafeLoader)
             if doc:
                 for key, value in doc.items():
                     if value == tapId:
@@ -503,7 +524,7 @@ class TapManager(object):
         return None
     
     def get_names_file(self):
-        namesFile = os.path.join(get_e3_dir(), ".names")
+        namesFile = os.path.join(get_e3_dir(), "names")
         if not os.path.isfile(namesFile):
             with open(namesFile, 'w') as f:
                 pass
@@ -520,37 +541,47 @@ class ConfigManager(object):
         self.store_config(config)
         return config
     
+    def get_style(self):
+        style = None
+        with open(self.get_style_file(), 'r') as f:
+            style = ordered_yaml_load(f, yaml.SafeLoader)
+            if style:
+                return style
+        style = self.get_default_style()
+        self.store_style(style)
+        return style
+    
+    def get_default_style(self):
+        with open(os.path.join(os.path.dirname(os.path.abspath(__file__)), ".e3_default", "style"), 'r') as f:
+            defaultStyle = ordered_yaml_load(f, yaml.SafeLoader)
+            return defaultStyle
+    
     def get_default_config(self):
-        defaultConfig = OrderedDict()
-        defaultConfig['cli behavior'] = OrderedDict()
-        defaultConfig['cli behavior']['imageFormat'] = 'svg'
-        defaultConfig['cli behavior']['maxWorldsToShow'] = 5
-        defaultConfig['cli behavior']['showOutputFileLocation'] = False
-        defaultConfig['environment'] = OrderedDict()
-        defaultConfig['environment']['euler2Executable'] = 'euler2'
-        defaultConfig['environment']['htmlViewer'] = 'xdg-open {file}'
-        defaultConfig['environment']['imageViewer'] = 'xdg-open {file}'
-        defaultConfig['reasoning'] = OrderedDict()
-        defaultConfig['reasoning']['defaultIsCoverage'] = True
-        defaultConfig['reasoning']['defaultIsSiblingDisjointness'] = True
-        defaultConfig['reasoning']['defaultRegions'] = 'mnpw'
-        defaultConfig['reasoning']['reasoner'] = 'dlv'
-        defaultConfig['reasoning']['repairMethod'] = 'topdown'
-        defaultConfig['sharing'] = OrderedDict()
-        defaultConfig['sharing']['stateGitRepo'] = ''
-        defaultConfig['sharing']['workspaceGitRepo'] = ''
-        return defaultConfig
+        with open(os.path.join(os.path.dirname(os.path.abspath(__file__)), ".e3_default", "config"), 'r') as f:
+            defaultConfig = ordered_yaml_load(f, yaml.SafeLoader)
+            return defaultConfig
     
     def store_config(self, config):
         with open(self.get_config_file(), 'w') as f:
             ordered_yaml_dump(config, stream=f, Dumper=yaml.SafeDumper, default_flow_style=False)
             
     def get_config_file(self):
-        config_file = os.path.join(get_e3_dir(), ".config")
+        config_file = os.path.join(get_e3_dir(), "config")
         if not os.path.isfile(config_file):
             with open(config_file, 'w+') as f:
                 pass
         return config_file
+    
+    def store_style(self, style):
+        with open(self.get_style_file(), 'w') as f:
+            ordered_yaml_dump(style, stream=f, Dumper=yaml.SafeDumper, default_flow_style=False)
+            
+    def get_style_file(self):
+        style_file = os.path.join(get_e3_dir(), "style")
+        if not os.path.isfile(style_file):
+            with open(style_file, 'w+') as f:
+                pass
+        return style_file
     
 class GraphCreator(object):
     def create_graph(self, targetDir, templateName, targetName, dataDict):

@@ -22,6 +22,8 @@ class Run(object):
         self.configManager = e3_io.ConfigManager()
         self.tapManager = e3_io.TapManager()
         self.graphCreator = e3_io.GraphCreator()
+        config = self.configManager.get_config()
+        style = self.configManager.get_style()
         pass
     def run(self):
         pass
@@ -38,7 +40,7 @@ class Run(object):
             dstNode = tapAfterExecution.get_id() #e3_model.TapHistoryNode(tapAfterExecution.get_id(), { })
             self.tapManager.add_history_edge(srcNode, dstNode, { "command" : input, "startTime": command.startTime, "endTime" : command.endTime })
             
-    def create_cwd_command_output(self, input, command, tapAfterExecution):
+    def create_e3_data_output(self, input, command, tapAfterExecution):
         config = self.configManager.get_config()
         tapId = self.tapManager.get_tap_name(tapAfterExecution.get_id())
         import e3_io
@@ -51,8 +53,8 @@ class Run(object):
         if isinstance(command, e3_command.Euler2Command):
             
             if command.get_output_files():
-                if not os.path.isdir(runDir):
-                    os.makedirs(runDir)
+                import e3_io
+                e3_io.mkdirs_ignore_existing(runDir)
                 with open(os.path.join(runDir, "config.txt"), 'w+') as cfg:
                     cfg.write("isCoverage: " + str(tapAfterExecution.isCoverage) + "\n")
                     cfg.write("isSiblingDisjointness: " + str(tapAfterExecution.isSiblingDisjointness) + "\n")
@@ -91,13 +93,13 @@ class Run(object):
                 
         import e3_command
         if isinstance(command, e3_command.ModelCommand) or isinstance(command, e3_command.Euler2Command):
-            if not os.path.isdir(tapDir):
-                os.makedirs(tapDir)
+            import e3_io
+            e3_io.mkdirs_ignore_existing(tapDir)
             with open(os.path.join(tapDir, "input.txt"), 'w+') as i:
                 i.write(tapAfterExecution.get_cleantax())
+            self.graphCreator.create_tap_graph(tapDir)
                 
         self.graphCreator.create_history_graph(e3DataDir)
-        self.graphCreator.create_tap_graph(tapDir)
         return runDirOutputFiles
                     
     def process_execute_result(self, command, runDirOutputFiles):
@@ -133,7 +135,7 @@ class Run(object):
                 command.endTime = time.time()
                 tapAfterExecution = self.tapManager.get_current_tap()
                 self.add_to_history(input, command, tapBeforeExecution, tapAfterExecution)
-                runDirOutputFiles = self.create_cwd_command_output(input, command, tapAfterExecution)
+                runDirOutputFiles = self.create_e3_data_output(input, command, tapAfterExecution)
                 self.process_execute_result(command, runDirOutputFiles)
             except Exception as e:
                 tb = traceback.format_exc()
@@ -145,7 +147,6 @@ class Run(object):
 class OneShot(Run):
     @copy_args_to_public_fields
     def __init__(self, commandProvider):
-        
         Run.__init__(self)
     def run(self):
         input = ' '.join(sys.argv[1:])

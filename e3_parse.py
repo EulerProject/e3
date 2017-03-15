@@ -7,7 +7,7 @@ from autologging import logged
 from pinject import copy_args_to_public_fields
 import e3_command
 
-@logged               
+@logged
 class CommandParser(object):
     @copy_args_to_public_fields
     def __init__(self, pattern):
@@ -61,6 +61,19 @@ class ResetConfigParser(CommandParser):
             raise Exception('Unrecognized command line')
     def get_help(self):
         return "reset config\nResets the configuration to default."
+
+@logged
+class ResetStyleParser(CommandParser):
+    def __init__(self):
+        CommandParser.__init__(self, '^reset style$')
+    def get_command(self, input):
+        match = self.is_input(input)
+        if match:
+            return e3_command.ResetStyle()
+        else:
+            raise Exception('Unrecognized command line')
+    def get_help(self):
+        return "reset style\nResets the style to default."
     
 @logged
 class ClearHistoryParser(CommandParser):
@@ -103,28 +116,28 @@ class HelpParser(CommandParser):
 @logged               
 class GitPullParser(CommandParser):
     def __init__(self):
-        CommandParser.__init__(self, '^git pull (?P<name>.+)$')
+        CommandParser.__init__(self, '^git pull (?P<path>.+)$')
     def get_command(self, input):
         match = self.is_input(input)
         if match:
-            return e3_command.GitPull(match.group("name"))
+            return e3_command.GitPull(match.group("path"))
         else:
             raise Exception('Unrecognized command line')
     def get_help(self):
-        return "git pull\nClones or pulls an e3_data workspace with the <name> from the configured git repository."
+        return "git pull <path>\nClones or pulls an e3_data workspace from the <path> at the configured git repository."
 
 @logged               
 class GitStatePullParser(CommandParser):
     def __init__(self):
-        CommandParser.__init__(self, '^git state pull')
+        CommandParser.__init__(self, '^git state pull (?P<path>.+)')
     def get_command(self, input):
         match = self.is_input(input)
         if match:
-            return e3_command.GitStatePull()
+            return e3_command.GitStatePull(match.group("name"))
         else:
             raise Exception('Unrecognized command line')
     def get_help(self):
-        return "git state pull\nClones or pulls the e3 state from the configured git repository."
+        return "git state pull <path>\nClones or pulls the e3 state from the ptah at the configured git repository."
     
 @logged
 class ShowHistoryParser(CommandParser):
@@ -155,34 +168,34 @@ class SetGitCredentialsParser(CommandParser):
 @logged               
 class GitPushParser(CommandParser):
     def __init__(self):
-        CommandParser.__init__(self, '^git push (?P<name>.+)(?: (?P<message>.*))?$')
+        CommandParser.__init__(self, '^git push (?P<path>.+)(?: (?P<message>.*))?$')
     def get_command(self, input):
         match = self.is_input(input)
         if match:
             if match.group("name") and match.group("message"):
-                return e3_command.GitPush(match.group("name"), match.group("message"))
+                return e3_command.GitPush(match.group("path"), match.group("message"))
             else:
-                return e3_command.GitPush(match.group("name"), "e3 git push") 
+                return e3_command.GitPush(match.group("path"), "e3 git push") 
         else:
             raise Exception('Unrecognized command line')
     def get_help(self):
-        return "git push <name> <message>\nCommits (with <message>) and pushes the e3_data workspace as <name> to the configured git repository."
+        return "git push <path> <message>\nCommits (with <message>) and pushes the e3_data workspace to the <path> at the configured git repository."
 
 @logged               
 class GitStatePushParser(CommandParser):
     def __init__(self):
-        CommandParser.__init__(self, '^git state push(?: (?P<message>.*))?$')
+        CommandParser.__init__(self, '^git state push (?P<path>.+)(?: (?P<message>.*))?$')
     def get_command(self, input):
         match = self.is_input(input)
         if match:
             if match.group("message"):
-                return e3_command.GitStatePush(match.group("message"))
+                return e3_command.GitStatePush(match.group("path"), match.group("message"))
             else:
-                return e3_command.GitStatePush("e3 git state push") 
+                return e3_command.GitStatePush(match.group("path"), "e3 git state push") 
         else:
             raise Exception('Unrecognized command line')
     def get_help(self):
-        return "git state push <message>\nCommits (with <message>) and pushes the e3 state to the configured git repository."
+        return "git state push <path> <message>\nCommits (with <message>) and pushes the e3 state to the path at the configured git repository."
 
 class LoadTapParser(CommandParser):
     def __init__(self):
@@ -434,7 +447,19 @@ class SetConfigParser(CommandParser):
         else:
             raise Exception('Unrecognized command line')
     def get_help(self):
-        return "set config <key>=<value>\nSets the configuration <parameter> with <value>."
+        return "set config <parameter>=<value>\nSets the configuration <parameter> with <value>."
+    
+class SetStyleParser(CommandParser):
+    def __init__(self):
+        CommandParser.__init__(self, '^set style (\S+)\s*=\s*(.*)$')
+    def get_command(self, input):
+        match = self.is_input(input)
+        if match:
+            return e3_command.SetStyle(match.group(1), match.group(2))
+        else:
+            raise Exception('Unrecognized command line')
+    def get_help(self):
+        return "set style <parameterPath>=<value>\nSets the style parameter with <parameterPath> (e.g. aggregate/graphstyle/legend) with <value>."
 
 class PrintConfigParser(CommandParser):
     def __init__(self):
@@ -447,6 +472,18 @@ class PrintConfigParser(CommandParser):
             raise Exception('Unrecognized command line')
     def get_help(self):
         return "print config\nPrints the configuration settings."
+
+class PrintStyleParser(CommandParser):
+    def __init__(self):
+        CommandParser.__init__(self, '^print style$')
+    def get_command(self, input):
+        match = self.is_input(input)
+        if match:
+            return e3_command.PrintStyle()
+        else:
+            raise Exception('Unrecognized command line')
+    def get_help(self):
+        return "print style\nPrints the style settings."
 
 class SetSiblingDisjointnessParser(CommandParser):
     def __init__(self):
@@ -1113,9 +1150,12 @@ commandParsers = [  ByeParser(),
                     ResetParser(),
                     ClearParser(),
                     ResetConfigParser(),
+                    ResetStyleParser(),
                     ClearHistoryParser(),
                     SetConfigParser(),
+                    SetStyleParser(),
                     PrintConfigParser(),
+                    PrintStyleParser(),
                     LoadTapParser(),
                     ClearTapParser(),
                     PrintTapParser(),

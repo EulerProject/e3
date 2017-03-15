@@ -8,6 +8,7 @@ import os
 import shutil
 import yaml
 import re
+from collections import OrderedDict
 
 @logged
 class Command(object):
@@ -56,6 +57,32 @@ class Euler2(object):
     showFourInOneCommand = '{euler2Executable} show -o {outputDir} fourinone {imageFormat}'
     showSummaryCommand = '{euler2Executable} show -o {outputDir} sv {imageFormat}'
     showAmbLatCommand = '{euler2Executable} show -o {outputDir} ambLat {imageFormat}'
+    commandStyles = OrderedDict()
+    commandStyles[showIVCommand] = []
+    commandStyles[showIVCommand].append("input")
+    commandStyles[showIVCommand].append("singletoninput")
+    commandStyles[showIVCommand].append("map")
+    commandStyles[showIVCommand].append("ncs")
+    commandStyles[showPWCommand] = []
+    commandStyles[showPWCommand].append("rcg")
+    commandStyles[showPWCommand].append("zoomin")
+    commandStyles[showPWCommand].append("map")
+    commandStyles[showPWCommand].append("ncs")
+    commandStyles[showSummaryCommand] = []
+    commandStyles[showSummaryCommand].append("aggregate")
+    commandStyles[showSummaryCommand].append("cluster")
+    commandStyles[showSummaryCommand].append("map")
+    commandStyles[showSummaryCommand].append("ncs")
+    commandStyles[showAmbLatCommand] = []
+    commandStyles[showAmbLatCommand].append("map")
+    commandStyles[showAmbLatCommand].append("ncs")
+    commandStyles[showFourInOneCommand] = []
+    commandStyles[showFourInOneCommand].append("map")
+    commandStyles[showFourInOneCommand].append("ncs")
+    commandStyles[showInconLatCommand] = []
+    commandStyles[showInconLatCommand].append("map")
+    commandStyles[showInconLatCommand].append("ncs")
+    #not clear what "map" and "ncs" styles are used for hence added for all show commands
     
     @copy_args_to_public_fields
     def __init__(self, tap):    
@@ -63,6 +90,7 @@ class Euler2(object):
         configManager = e3_io.ConfigManager()
         tapManager = e3_io.TapManager()    
         config = configManager.get_config()
+        self.style = configManager.get_style()
         self.euler2Executable = config['environment']['euler2Executable']
         self.reasoner = config['reasoning']['reasoner']
         self.imageFormat = config['cli behavior']['imageFormat']
@@ -97,7 +125,7 @@ class Euler2(object):
         uniqueParameteredRun = '_'.join(uniqueParameteredRun.split())
         outputDir = os.path.join(self.tapDir, uniqueParameteredRun)
         if not os.path.isdir(outputDir):
-            os.makedirs(outputDir)
+            os.mkdir(outputDir)
         self.e2InputDir = self.e2InputDir.format(uniqueParameteredRun = uniqueParameteredRun)
         self.e2AspInputDir = self.e2AspInputDir.format(uniqueParameteredRun = uniqueParameteredRun)
         self.e2AspOutputDir = self.e2AspOutputDir.format(uniqueParameteredRun = uniqueParameteredRun)
@@ -106,51 +134,73 @@ class Euler2(object):
         self.e2AggregatesDir = self.e2AggregatesDir.format(uniqueParameteredRun = uniqueParameteredRun)
         self.e2LatticesDir = self.e2LatticesDir.format(uniqueParameteredRun = uniqueParameteredRun)
         
-        command = command.format(euler2Executable = '{euler2Executable}', 
+        uniqueCommand = command.format(euler2Executable = '{euler2Executable}', 
                 cleantaxFile = '{cleantaxFile}', outputDir = '{outputDir}', 
                 #imageFormat = '{imageFormat}', 
                 #reasoner = '{reasoner}', 
                 repairMethod = self.repairMethod, maxN = self.maxN, regions = self.regions, coverage = coverage, 
                 disjointness = disjointness, imageFormat = imageFormat, reasoner = self.reasoner)
-        command = ' '.join(command.split())
-        stdoutFile = os.path.join(outputDir, '%s.stdout' % command)
-        stderrFile = os.path.join(outputDir, '%s.stderr' % command)
-        returnCodeFile = os.path.join(outputDir, '%s.returncode' % command)
-        if os.path.isfile(stdoutFile) and os.path.isfile(stderrFile) and os.path.isfile(returnCodeFile):
-            with open(stdoutFile,'r') as f:
-                self.stdout = f.read()
-            with open(stderrFile,'r') as f:
-                self.stderr = f.read()
-            with open(returnCodeFile,'r') as f:
-                self.returnCode = f.read()
-            if "Input is inconsistent" in self.stdout:
-                self.isConsistent = False
-            if self.returnCode and self.stderr:
-                print self.stderr.rstrip()
-            return self.stdout, self.stderr, self.returnCode
+        uniqueCommand = ' '.join(uniqueCommand.split())
+        stdoutFile = os.path.join(outputDir, '%s.stdout' % uniqueCommand)
+        stderrFile = os.path.join(outputDir, '%s.stderr' % uniqueCommand)
+        returnCodeFile = os.path.join(outputDir, '%s.returncode' % uniqueCommand)
+        styleFile = os.path.join(outputDir, '%s.styles' % uniqueCommand)
+        currentCommandStyle = OrderedDict()
+        if command in Euler2.commandStyles and Euler2.commandStyles[command]:
+            for style in Euler2.commandStyles[command]:
+                currentCommandStyle[style] = self.style[style]
+        import e3_io
+        if os.path.isfile(stdoutFile) and os.path.isfile(stderrFile) and os.path.isfile(returnCodeFile) and os.path.isfile(styleFile):
+            refreshCommandForced = False
+            if command in Euler2.commandStyles and Euler2.commandStyles[command]:
+                with open(styleFile, 'r') as f:
+                    previousStyle = e3_io.ordered_yaml_load(f, yaml.SafeLoader)
+                if currentCommandStyle != previousStyle:
+                    refreshCommandForced = True
+            if not refreshCommandForced:
+                with open(stdoutFile, 'r') as f:
+                    self.stdout = f.read()
+                with open(stderrFile, 'r') as f:
+                    self.stderr = f.read()
+                with open(returnCodeFile, 'r') as f:
+                    self.returnCode = f.read()
+                if "Input is inconsistent" in self.stdout:
+                    self.isConsistent = False
+                if self.returnCode and self.stderr:
+                    print self.stderr.rstrip()
+                return self.stdout, self.stderr, self.returnCode
+        
+        stylesheetsDir = os.path.join(outputDir, "stylesheets")
+        e3_io.mkdirs_ignore_existing(stylesheetsDir)
+        for key in self.style:
+            with open(os.path.join(stylesheetsDir, key + "style.yaml"), "w") as f:
+                e3_io.ordered_yaml_dump(self.style[key], stream=f, Dumper=yaml.SafeDumper, default_flow_style=False)
+        
         # add remaining parameters
-        command = command.format(euler2Executable = self.euler2Executable, 
+        effectiveCommand = uniqueCommand.format(euler2Executable = self.euler2Executable, 
                 cleantaxFile = self.cleantaxFile, outputDir = outputDir, imageFormat = self.imageFormat, 
                 maxN = self.maxN, reasoner = self.reasoner);
         with open(stdoutFile, 'w+') as out:
             with open(stderrFile, 'w+') as err:
                 with open(returnCodeFile, 'w+') as rc:
-                    #print command
-                    p = Popen(command, stdout=PIPE, stderr=PIPE, shell=True)
-                    self.stdout, self.stderr = p.communicate()
-                    #print stdout
-                    #print stderr
-                    if p.returncode and self.stderr:
-                        print stderr.rstrip()
-                    if "Input is inconsistent" in self.stdout:
-                        self.isConsistent = False
-                    out.write(self.stdout)
-                    err.write(self.stderr)
-                    rc.write('%s' % p.returncode)
-                    if os.path.isfile('report.csv'):
-                        os.remove('report.csv')
-                    self.returncode = p.returncode
-                    return self.stdout, self.stderr, self.returncode
+                    with open(styleFile, 'w+') as s:
+                        #print effectiveCommand
+                        p = Popen(effectiveCommand, stdout=PIPE, stderr=PIPE, shell=True, cwd = outputDir)
+                        self.stdout, self.stderr = p.communicate()
+                        #print self.stdout
+                        #print self.stderr
+                        if p.returncode and self.stderr:
+                            print self.stderr.rstrip()
+                        if "Input is inconsistent" in self.stdout:
+                            self.isConsistent = False
+                        out.write(self.stdout)
+                        err.write(self.stderr)
+                        rc.write('%s' % p.returncode)
+                        e3_io.ordered_yaml_dump(currentCommandStyle, stream=s, Dumper=yaml.SafeDumper, default_flow_style=False)
+                        #if os.path.isfile('report.csv'):
+                        #    os.remove('report.csv') not needed with Popen(..cwd=)
+                        self.returncode = p.returncode
+                        return self.stdout, self.stderr, self.returncode
     def is_consistent(self):
         return self.isConsistent
     def get_world_yaml(self):
@@ -364,6 +414,38 @@ class SetConfig(MiscCommand):
         config[firstLevelKey][self.key] = self.value
         self.configManager.store_config(config)
         self.output.append("Configuration updated: " + self.key + " = " + str(self.value))
+        
+class SetStyle(MiscCommand):
+    @copy_args_to_public_fields
+    def __init__(self, key, value):
+        MiscCommand.__init__(self)
+    def run(self):
+        MiscCommand.run(self)
+        style = self.configManager.get_style()
+        
+        keys = self.key.split("/")
+        currentDict = style
+        pastKey = "/"
+        for i, key in enumerate(keys):
+            if i == len(keys) - 1:
+                break
+            if key in currentDict:
+                currentDict = currentDict[key]
+                pastKey += key + "/"
+            else:
+                self.output.append("Style parameter " + key + " does not exist in " + pastKey)
+                return
+        
+        oldValue = currentDict[keys[i]]
+        if type(oldValue) is bool:
+            self.value = True if not (self.value == 'false' or self.value == 'False') else False
+        if type(oldValue) is int:
+            self.value = int(self.value)
+        if type(oldValue) is str:
+            self.value = str(self.value)
+        currentDict[keys[i]] = self.value
+        self.configManager.store_style(style)
+        self.output.append("Configuration updated: " + self.key + " = " + str(self.value))
 
 class PrintConfig(MiscCommand):
     @copy_args_to_public_fields
@@ -374,14 +456,24 @@ class PrintConfig(MiscCommand):
         config = self.configManager.get_config()
         import e3_io
         print e3_io.ordered_yaml_dump(config, Dumper=yaml.SafeDumper, default_flow_style=False)
-          
-@logged 
-class Reset(ModelCommand):
+        
+class PrintStyle(MiscCommand):
     @copy_args_to_public_fields
     def __init__(self):
-        ModelCommand.__init__(self)
+        MiscCommand.__init__(self)
     def run(self):
-        ModelCommand.run(self)
+        MiscCommand.run(self)
+        style = self.configManager.get_style()
+        import e3_io
+        print e3_io.ordered_yaml_dump(style, Dumper=yaml.SafeDumper, default_flow_style=False)
+          
+@logged 
+class Reset(MiscCommand):
+    @copy_args_to_public_fields
+    def __init__(self):
+        MiscCommand.__init__(self)
+    def run(self):
+        MiscCommand.run(self)
         import e3_io
         e3_io.reset()
         self.output.append("Reset successful")
@@ -397,6 +489,17 @@ class ResetConfig(MiscCommand):
         import e3_io
         self.configManager.store_config(self.configManager.get_default_config())
         self.output.append("Reset config successfully")
+        
+@logged 
+class ResetStyle(MiscCommand):
+    @copy_args_to_public_fields
+    def __init__(self):
+        MiscCommand.__init__(self)
+    def run(self):
+        MiscCommand.run(self)
+        import e3_io
+        self.configManager.store_style(self.configManager.get_default_style())
+        self.output.append("Reset style successfully")
 
 @logged 
 class ClearHistory(MiscCommand):
@@ -445,23 +548,40 @@ class SetGitCredentials(MiscCommand):
 @logged
 class GitStatePull(MiscCommand):
     @copy_args_to_public_fields
-    def __init__(self):
+    def __init__(self, name):
         MiscCommand.__init__(self)
         pass
     def run(self):
         MiscCommand.run(self)
         config = self.configManager.get_config()
+        repo = config['sharing']['stateGitRepo']
+        if repo == None or not repo.strip() :
+            self.output.append("Configuration value stateGitRepo is not set.")
+            return
+        
         import git
         import e3_io
-        g = git.Git(e3_io.get_e3_dir())
+        gitDir = os.path.join(e3_io.get_e3_git_dir(), 
+                              "_".join(re.compile("\W+").split(repo)))
+        if not os.path.isdir(gitDir):
+            os.mkdir(gitDir)
+        g = git.Git(gitDir)
         try:
             g.status()
             g.pull()
         except git.exc.GitCommandError as e:
-            e3_io.clean_e3_dir()
-            g.clone(config['sharing']['stateGitRepo'], e3_io.get_e3_dir())
+            e3_io.clean_e3_git_dir()
+            g.clone(repo, e3_io.get_e3_git_dir())
+        
+        targetDir = os.path.join(gitDir, os.path.join(*(self.name.split("/"))))
+        if not os.path.isdir(targetDir):
+            self.output.append("Pulled successfully but " + self.name + " not found in the repository.")
+            return
+        if os.path.isdir(e3_io.get_e3_dir()):
+            shutil.rmtree(e3_io.get_e3_dir())
+        shutil.copytree(targetDir, e3_io.get_e3_dir())
         self.output.append("Pulled successfully")
-        self.output.append("Tap: " + self.tapManager.get_current_tap_name_and_status())
+        self.output.append("Tap: " + self.tapManager.get_tap_name_and_status(self.tap.get_id()))
         
 @logged
 class GitPull(MiscCommand):
@@ -472,17 +592,26 @@ class GitPull(MiscCommand):
     def run(self):
         MiscCommand.run(self)
         config = self.configManager.get_config()
+        repo = config['sharing']['workspaceGitRepo']
+        if repo == None or not repo.strip() :
+            self.output.append("Configuration value workspaceGitRepo is not set.")
+            return
+        
         import git
         import e3_io
-        g = git.Git(e3_io.get_e3_data_git_dir())
+        gitDir = os.path.join(e3_io.get_e3_data_git_dir(), 
+                              "_".join(re.compile("\W+").split(repo)))
+        if not os.path.isdir(gitDir):
+            os.mkdir(gitDir)
+        g = git.Git(gitDir)
         try:
             g.status()
             g.pull()
         except git.exc.GitCommandError as e:
             e3_io.clean_e3_data_git_dir()
-            g.clone(config['sharing']['workspaceGitRepo'], e3_io.get_e3_data_git_dir())
+            g.clone(repo, e3_io.get_e3_data_git_dir())
             
-        targetDir = os.path.join(e3_io.get_e3_data_git_dir(), self.name)
+        targetDir = os.path.join(gitDir, os.path.join(*(self.name.split("/"))))
         if not os.path.isdir(targetDir):
             self.output.append("Pulled successfully but " + self.name + " not found in the repository.")
             return
@@ -496,28 +625,37 @@ class GitPush(MiscCommand):
     @copy_args_to_public_fields
     def __init__(self, name, message):
         MiscCommand.__init__(self)
-        pass
     def run(self):
         MiscCommand.run(self)
         config = self.configManager.get_config()
-            
+        repo = config['sharing']['workspaceGitRepo']
+        if repo == None or not repo.strip() :
+            self.output.append("Configuration value workspaceGitRepo is not set.")
+            return
+        
         import git
         import e3_io
         try:
-            g = git.Git(e3_io.get_e3_data_git_dir())
+            gitDir = os.path.join(e3_io.get_e3_data_git_dir(), 
+                                  "_".join(re.compile("\W+").split(repo)))
+            if not os.path.isdir(gitDir):
+                os.mkdir(gitDir)
+            g = git.Git(gitDir)
             try:
                 g.status()
             except git.exc.GitCommandError as e:
                 g.init() # can already have a .git folder
-                g.remote("add", "origin", config['sharing']['workspaceGitRepo']) # can already have an "origin"
+                g.remote("add", "origin", repo) # can already have an "origin"
             g.pull("origin", "master") # may not be able to if remote is invalid url
             
-            targetDir = os.path.join(e3_io.get_e3_data_git_dir(), self.name)
+            targetDir = os.path.join(gitDir, os.path.join(*(self.name.split("/"))))
             if os.path.isdir(targetDir):
                 shutil.rmtree(targetDir)
+            import e3_io
+            e3_io.mkdirs_ignore_existing(os.path.abspath(os.path.join(targetDir, os.path.pardir)))
             shutil.copytree(e3_io.get_working_dir(), targetDir)
             g.add(".")
-            try: 
+            try:
                 g.commit("-m", self.message) #could fail if nothing to commit anymore locally, but push missing
             except git.exc.GitCommandError as e:
                 self.output.append(str(e))
@@ -530,22 +668,37 @@ class GitPush(MiscCommand):
 @logged
 class GitStatePush(MiscCommand):
     @copy_args_to_public_fields
-    def __init__(self, message):
+    def __init__(self, name, message):
         MiscCommand.__init__(self)
-        pass
     def run(self):
         MiscCommand.run(self)
         config = self.configManager.get_config()
+        repo = config['sharing']['stateGitRepo']
+        if repo == None or not repo.strip() :
+            self.output.append("Configuration value stateGitRepo is not set.")
+            return
+        
         import git
         import e3_io
         try:
-            g = git.Git(e3_io.get_e3_dir())
+            gitDir = os.path.join(e3_io.get_e3_git_dir(), 
+                      "_".join(re.compile("\W+").split(repo)))
+            if not os.path.isdir(gitDir):
+                os.mkdir(gitDir)
+            g = git.Git(gitDir)
             try:
                 g.status()
             except git.exc.GitCommandError as e:
                 g.init() # can already have a .git folder
-                g.remote("add", "origin", config['sharing']['stateGitRepo']) # can already have an "origin"
-            g.fetch() # may not be able to if remote is invalid url
+                g.remote("add", "origin", repo) # can already have an "origin"
+            g.pull("origin", "master") # may not be able to if remote is invalid url
+            
+            targetDir = os.path.join(gitDir, os.path.join(*(self.name.split("/"))))
+            if os.path.isdir(targetDir):
+                shutil.rmtree(targetDir)
+            import e3_io
+            e3_io.mkdirs_ignore_existing(os.path.abspath(os.path.join(targetDir, os.pardir)))
+            shutil.copytree(e3_io.get_e3_dir(), targetDir)
             g.add(".")
             try: 
                 g.commit("-m", self.message) #could fail if nothing to commit anymore locally, but push missing
@@ -556,7 +709,7 @@ class GitStatePush(MiscCommand):
             self.output.append("Pushed successfully")
         except git.exc.GitCommandError as e:
             self.output.append(str(e))
-         
+            
 @logged 
 class Bye(MiscCommand):
     @copy_args_to_public_fields
@@ -1696,8 +1849,3 @@ class IsTrue(Euler2Command):
                 self.output.append("Yes.")
             else:
                 self.output.append("No.")
-
-'''
-sort articulations (and nodes?) 
-update readme e3 new commands
-'''
