@@ -9,6 +9,7 @@ import shutil
 import yaml
 import re
 from collections import OrderedDict
+import csv
 
 @logged
 class Command(object):
@@ -340,6 +341,54 @@ class Euler2(object):
             if line.startswith('Possible world'):
                 return []
         return sets
+    def get_mir(self):
+        mir = []
+        mirFile = os.path.join(self.e2MirDir, "cleantax_mir.csv")
+        if os.path.isfile(mirFile):
+            with open(mirFile, 'r') as f:
+                lines = f.read().split('\n')
+                for line in lines:
+                    line = line.strip()
+                    if line:
+                        elements = line.split(",")
+                        newElements = []
+                        collectSet = []
+                        insideSet = False
+                        for e in elements:
+                            if not e.startswith("{") and not e.endswith("}") and not insideSet:
+                                newElements.append(e)
+                            else:
+                                collectSet.append(e.replace("{", "").replace("}", "").strip())
+                                if e.startswith("{"):
+                                    insideSet = True
+                                if e.endswith("}"):
+                                    insideSet = False
+                                    newElements.append(','.join(collectSet))
+                                    
+                        import e3_model
+                        relations = []
+                        if "," in newElements[1]:
+                            relations = newElements[1].split(',')
+                        else:
+                            relations.append(newElements[1])
+                        
+                        for relation in relations:
+                            if relation == "!": relation = "disjoint"
+                            if relation == "=": relation = "equals"
+                            if relation == "<": relation = "is_included_in"
+                            if relation == ">": relation = "includes"
+                            if relation == "><": relation = "overlaps"
+                            
+                            leftNodes = []
+                            leftNodes.append(newElements[0])
+                            rightNodes = []
+                            rightNodes.append(newElements[2])
+                            a = e3_model.Articulation(leftNodes, rightNodes, relation)
+                            mir.append({ 
+                                "type": newElements[3],
+                                "articulation": a
+                            })
+        return mir
     def get_inconsistency_lattice_graphs(self):
         graphs = []
         for filename in os.listdir(self.e2LatticesDir):
@@ -377,9 +426,11 @@ class Euler2Command(Command):
         config = self.configManager.get_config()
         self.imageViewer = config['environment']['imageViewer']
         self.maxWorldsToShow = config['cli behavior']['maxWorldsToShow']
+        import e3_io
+        self.graphCreator = e3_io.GraphCreator()
     def run(self):
         Command.run(self)
-    
+
 class ModelCommand(Command):
     @copy_args_to_public_fields                 
     def __init__(self):
@@ -395,20 +446,24 @@ class SetConfig(MiscCommand):
         MiscCommand.run(self)
         config = self.configManager.get_config()
         oldValue = None
+        existsKey = False
         for firstLevelKey in config:
             if self.key in config[firstLevelKey]:
                 oldValue = config[firstLevelKey][self.key]
+                existsKey = True
                 break
         
-        if oldValue is None:
+        if not existsKey:
             self.output.append("Configuration parameter " + self.key + " does not exist.")
             return 
         
         if type(oldValue) is bool:
             self.value = True if not (self.value == 'false' or self.value == 'False') else False
-        if type(oldValue) is int:
+        elif type(oldValue) is int:
             self.value = int(self.value)
-        if type(oldValue) is str:
+        elif type(oldValue) is str:
+            self.value = str(self.value)
+        else:
             self.value = str(self.value)
             
         config[firstLevelKey][self.key] = self.value
@@ -1125,9 +1180,11 @@ class GraphWorlds(Euler2Command):
             alignMaxN = Euler2(self.tap)
             alignMaxN.maxN = self.maxWorlds
             stdout, stderr, returnCode = self.run_euler(Euler2.alignMaxNCommand)
+            self.outputFiles.append(self.graphCreator.create_mir_graph(alignMaxN.get_mir(), alignMaxN.e2MirDir))
         else:
             align = Euler2(self.tap)
             stdout, stderr, returnCode = align.run(Euler2.alignCommand)
+            self.outputFiles.append(self.graphCreator.create_mir_graph(align.get_mir(), align.e2MirDir))
         
         showPW = Euler2(self.tap)
         showPW.maxN = self.maxWorlds
@@ -1207,20 +1264,21 @@ class MoreWorldsThan(Euler2Command):
         if not is_consistent(self.tap):
             self.output.append("Cannot determine if there are more than {more} worlds. The tap is not consistent".format(more = self.more))
         
-        alignMaxN = Euler2()
+        alignMaxN = Euler2(self.tap)
         alignMaxN.maxN = self.more + 1 #adapt from "more than" to "more than equals"
         stdout, stderr, returnCode = alignMaxN.run(Euler2.alignMaxNCommand)
+        self.outputFiles.append(self.graphCreator.create_mir_graph(alignMaxN.get_mir(), alignMaxN.e2MirDir))
         worldCount = alignMaxN.get_world_count()
-        if self.maxN >= 2 and worldCount == 1:
+        if alignMaxN.maxN >= 2 and worldCount == 1:
             self.output.append("There is exactly one world. The tap is unique.")
-        elif worldCount < self.maxN:
-            if self.maxN == 1:
+        elif worldCount < alignMaxN.maxN:
+            if alignMaxN.maxN == 1:
                 self.output.append("The tap must be inconsistent. There are no worlds. Something may have gone wrong.")
             else:
                 self.output.append("There are less than or equal to {more} worlds. In fact, there are {count}. The tap is ambiguous.".format(
                     more = self.more, count = worldCount))
         else:
-            if self.maxN == 1:
+            if alignMaxN.maxN == 1:
                 self.output.append("There are more than {more} worlds. It is still unclear is the tap is ambiguous or unique.".format(
                     more = self.more))
             else:
@@ -1243,6 +1301,7 @@ class PrintFix(Euler2Command):
         
         alignRepair = Euler2(self.tap)
         stdout, stderr, returnCode = alignRepair.run(Euler2.alignRepairCommand)
+        self.outputFiles.append(self.graphCreator.create_mir_graph(alignRepair.get_mir(), alignRepair.e2MirDir))
         fixOptionSets = alignRepair.get_fix_option_sets()
         if fixOptionSets:
             self.output.append("Remove any of the following sets of articulations:")
@@ -1268,6 +1327,7 @@ class UseFix(ModelCommand):
         
         alignRepair = Euler2(self.tap)
         stdout, stderr, returnCode = alignRepair.run(Euler2.alignRepairCommand)
+        self.outputFiles.append(self.graphCreator.create_mir_graph(alignRepair.get_mir(), alignRepair.e2MirDir))
         fixOptionSets = alignRepair.get_fix_option_sets()
         if not fixOptionSets:
             self.output.append("No fixes available.")
@@ -1298,6 +1358,7 @@ class GraphInconsistency(Euler2Command):
         
         align = Euler2(self.tap)
         stdout, stderr, returnCode = align.run(Euler2.alignCommand)
+        self.outputFiles.append(self.graphCreator.create_mir_graph(align.get_mir(), align.e2MirDir))
         if self.type == "reduced":
             showInconLatReduced = Euler2(self.tap)
             stdout, stderr, returnCode = showInconLatReduced.run(Euler2.showInconLatReducedCommand)
@@ -1338,18 +1399,20 @@ class PrintWorlds(Euler2Command):
             alignMaxN = Euler2(self.tap)
             alignMaxN.maxN = self.maxWorlds
             stdout, stderr, returnCode = alignMaxN.run(Euler2.alignMaxNCommand)
+            self.outputFiles.append(self.graphCreator.create_mir_graph(alignMaxN.get_mir(), alignMaxN.e2MirDir))
             worlds = alignMaxN.get_worlds()
             worldCount = alignMaxN.get_world_count()
         else:
             align = Euler2(self.tap)
             stdout, stderr, returnCode = align.run(Euler2.alignCommand)
+            self.outputFiles.append(self.graphCreator.create_mir_graph(align.get_mir(), align.e2MirDir))
             worlds = align.get_worlds()
             worldCount = align.get_world_count()
         if worldCount == 0:
             self.output.append("There are no worlds.")
         else:
             self.output.append("{count} worlds have been produced.".format(
-                count = worldCount) + "\n")
+                count = worldCount))
         for i, world in enumerate(worlds):
             if i + 1 <= self.maxWorldsToShow:
                 self.output.append("\n" + str(i + 1) + ". World")
@@ -1387,6 +1450,7 @@ class GraphFourInOne(Euler2Command):
         
         alignFourInOne = Euler2(self.tap)
         stdout, stderr, returnCode = alignFourInOne.run(Euler2.alignFourInOneCommand)
+        self.outputFiles.append(self.graphCreator.create_mir_graph(alignFourInOne.get_mir(), alignFourInOne.e2MirDir))
         showFourInOne = Euler2(self.tap)
         stdout, stderr, returnCode = showFourInOne.run(Euler2.showFourInOneCommand)
         #if "This is a consistent example, no 4-in-1 lattice generated" in stdout:
@@ -1414,6 +1478,7 @@ class GraphSummary(Euler2Command):
         
         align = Euler2(self.tap)
         stdout, stderr, returnCode = align.run(Euler2.alignCommand)
+        self.outputFiles.append(self.graphCreator.create_mir_graph(align.get_mir(), align.e2MirDir))
         showPW = Euler2(self.tap)
         stdout, stderr, returnCode = showPW.run(Euler2.showPWCommand)
         showSummary = Euler2(self.tap)
@@ -1447,6 +1512,7 @@ class GraphAmbiguity(Euler2Command):
         
         alignArtRem = Euler2(self.tap)
         stdout, stderr, returnCode = alignArtRem.run(Euler2.alignArtRemCommand)
+        self.outputFiles.append(self.graphCreator.create_mir_graph(alignArtRem.get_mir(), alignArtRem.e2MirDir))
         showAmbLat = Euler2(self.tap)
         stdout, stderr, returnCode = showAmbLat.run(Euler2.showAmbLatCommand)
         if "No MUS generated for this example" in stdout:
@@ -1484,6 +1550,7 @@ class PrintMinimalArticulations(Euler2Command):
         alignArtRem = Euler2(self.tap)
         alignArtRem.maxN = 2
         stdout, stderr, returnCode = alignArtRem.run(Euler2.alignArtRemCommand)
+        self.outputFiles.append(self.graphCreator.create_mir_graph(alignArtRem.get_mir(), alignArtRem.e2MirDir))
         
         uniqueArticulationSets = alignArtRem.get_unique_articulation_sets()
         for i, set in enumerate(uniqueArticulationSets):
@@ -1515,6 +1582,7 @@ class UseMinimalArticulations(ModelCommand):
         alignArtRem = Euler2(self.tap)
         alignArtRem.maxN = 2
         stdout, stderr, returnCode = alignArtRem.run(Euler2.alignArtRemCommand)
+        self.outputFiles.append(self.graphCreator.create_mir_graph(alignArtRem.get_mir(), alignArtRem.e2MirDir))
         uniqueArticulationSets = alignArtRem.get_unique_articulation_sets()
         if self.minimalArticulationSetId < 0 or self.minimalArticulationSetId >= len(uniqueArticulationSets):
            self.output.append("Invalid minimal articulation set id.")
@@ -1544,6 +1612,7 @@ class PrintMaximalArticulations(Euler2Command):
         
         alignExtractInput = Euler2(self.tap)
         stdout, stderr, returnCode = alignExtractInput.run(Euler2.alignExtractInputCommand)
+        self.outputFiles.append(self.graphCreator.create_mir_graph(alignExtractInput.get_mir(), alignExtractInput.e2MirDir))
         for i, set in enumerate(alignExtractInput.get_maximal_articulation_sets()):
             self.output.append(str(i + 1) + ". Set\n" + '\n'.join(set) + "\n")
             
@@ -1564,6 +1633,7 @@ class UseMaximalArticulations(ModelCommand):
         
         alignExtractInput = Euler2(self.tap)
         stdout, stderr, returnCode = alignExtractInput.run(Euler2.alignExtractInputCommand)
+        self.outputFiles.append(self.graphCreator.create_mir_graph(alignExtractInput.get_mir(), alignExtractInput.e2MirDir))
         maximalArticulationSets = alignExtractInput.get_maximal_articulation_sets()
         if self.maximalArticulationSetId < 0 or self.maximalArticulationSetId >= len(maximalArticulationSets):
            self.output.append("Invalid maximal articulation set id.")
@@ -1603,6 +1673,7 @@ class UseWorld(ModelCommand):
                 self.worldId = 0
             align = Euler2(self.tap)
             stdout, stderr, returnCode = align.run(Euler2.alignCommand)
+            self.outputFiles.append(self.graphCreator.create_mir_graph(align.get_mir(), align.e2MirDir))
             worlds = align.get_worlds()
             if self.worldId < 0 or self.worldId >= len(worlds):
                self.output.append("Invalid world id.")
@@ -1630,6 +1701,7 @@ class PrintMinimalUniqueness(Euler2Command):
         
         alignFourInOne = Euler2(self.tap)
         stdout, stderr, returnCode = alignFourInOne.run(Euler2.alignFourInOneCommand)
+        self.outputFiles.append(self.graphCreator.create_mir_graph(alignFourInOne.get_mir(), alignFourInOne.e2MirDir))
         sets = alignFourInOne.get_minimal_uniqueness_sets()
         for i, set in enumerate(sets):
             self.output.append(str(i + 1) + ". Set\n" + '\n'.join(set) + "\n")
@@ -1650,6 +1722,7 @@ class UseMinimalUniqueness(ModelCommand):
         
         alignFourInOne = Euler2(self.tap)
         stdout, stderr, returnCode = alignFourInOne.run(Euler2.alignFourInOneCommand)
+        self.outputFiles.append(self.graphCreator.create_mir_graph(alignFourInOne.get_mir(), alignFourInOne.e2MirDir))
         sets = alignFourInOne.get_minimal_uniqueness_sets()
         if not sets:
             self.output.append("Minimal uniqueness is empty.")
@@ -1679,6 +1752,7 @@ class PrintMinimalInconsistency(Euler2Command):
         
         alignFourInOne = Euler2(self.tap)
         stdout, stderr, returnCode = alignFourInOne.run(Euler2.alignFourInOneCommand)
+        self.outputFiles.append(self.graphCreator.create_mir_graph(alignFourInOne.get_mir(), alignFourInOne.e2MirDir))
         sets = alignFourInOne.get_minimal_inconsistency_sets()
         for i, set in enumerate(sets):
             self.output.append(str(i + 1) + ". Set\n" + '\n'.join(set) + "\n")
@@ -1699,6 +1773,7 @@ class UseMinimalInconsistency(ModelCommand):
         
         alignFourInOne = Euler2(self.tap)
         stdout, stderr, returnCode = alignFourInOne.run(Euler2.alignFourInOneCommand)
+        self.outputFiles.append(self.graphCreator.create_mir_graph(alignFourInOne.get_mir(), alignFourInOne.e2MirDir))
         sets = alignFourInOne.get_minimal_inconsistency_sets()
         if not sets:
             self.output.append("Minimal inconsistency is empty.")
@@ -1728,6 +1803,7 @@ class PrintMaximalConsistency(Euler2Command):
         
         alignFourInOne = Euler2(self.tap)
         stdout, stderr, returnCode = alignFourInOne.run(Euler2.alignFourInOneCommand)
+        self.outputFiles.append(self.graphCreator.create_mir_graph(alignFourInOne.get_mir(), alignFourInOne.e2MirDir))
         sets = alignFourInOne.get_maximal_consistency_sets()
         for i, set in enumerate(sets):
             self.output.append(str(i + 1) + ". Set\n" + '\n'.join(set) + "\n")
@@ -1748,6 +1824,7 @@ class UseMaximalConsistency(ModelCommand):
         
         alignFourInOne = Euler2(self.tap)
         stdout, stderr, returnCode = alignFourInOne.run(Euler2.alignFourInOneCommand)
+        self.outputFiles.append(self.graphCreator.create_mir_graph(alignFourInOne.get_mir(), alignFourInOne.e2MirDir))
         sets = alignFourInOne.get_maximal_consistency_sets()
         if not sets:
             self.output.append("Maximal consistency is empty.")
@@ -1776,6 +1853,7 @@ class PrintMaximalAmbiguity(Euler2Command):
         
         alignFourInOne = Euler2(self.tap)
         stdout, stderr, returnCode = alignFourInOne.run(Euler2.alignFourInOneCommand)
+        self.outputFiles.append(self.graphCreator.create_mir_graph(alignFourInOne.get_mir(), alignFourInOne.e2MirDir))
         sets = alignFourInOne.get_maximal_ambiguity_sets()
         for i, set in enumerate(sets):
             self.output.append(str(i + 1) + ". Set\n" + '\n'.join(set) + "\n")
@@ -1796,6 +1874,7 @@ class UseMaximalAmbiguity(ModelCommand):
         
         alignFourInOne = Euler2(self.tap)
         stdout, stderr, returnCode = alignFourInOne.run(Euler2.alignFourInOneCommand)
+        self.outputFiles.append(self.graphCreator.create_mir_graph(alignFourInOne.get_mir(), alignFourInOne.e2MirDir))
         sets = alignFourInOne.get_maximal_ambiguity_sets()
         if not sets:
             self.output.append("Maximal ambiguity is empty.")
@@ -1827,6 +1906,7 @@ class IsTrue(Euler2Command):
         
         align = Euler2(self.tap)
         stdout, stderr, returnCode = align.run(Euler2.alignCommand)
+        self.outputFiles.append(self.graphCreator.create_mir_graph(align.get_mir(), align.e2MirDir))
         worldCount = align.get_world_count()
         
         self.articulationLine = "[" + self.articulationLine + "]"
@@ -1844,6 +1924,7 @@ class IsTrue(Euler2Command):
                 return
             align = Euler2(self.tap)
             stdout, stderr, returnCode = align.run(Euler2.alignCommand)
+            self.outputFiles.append(self.graphCreator.create_mir_graph(align.get_mir(), align.e2MirDir))
             worldCount = align.get_world_count()
             if worldCount == worldCount:
                 self.output.append("Yes.")

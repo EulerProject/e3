@@ -126,9 +126,16 @@ function update(source) {
       .attr("dx", 5.5)
       .text(function(d) { 
 			if ("startTime" in d && "endTime" in d && "runTime" in d) {
-				return d.name + " (runtime: " + d.runTime + "; start: " + d.startTime + "; end: " + d.endTime + ")";
+				if (d.name.length > 40) {
+					return (d.name.substring(0, 40) + " ...") + " (runtime: " + d.runTime + "; start: " + d.startTime + "; end: " + d.endTime + ")";
+				} else {
+					return d.name + " (runtime: " + d.runTime + "; start: " + d.startTime + "; end: " + d.endTime + ")";
+				}
 			}
-			return d.name; 
+			if (d.name.length > 80) {
+				return d.name.substring(0, 80) + " ..."; 
+			}
+			return d.name;
 	  });
 
   // Transition nodes to their new position.

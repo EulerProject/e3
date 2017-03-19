@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html lang="en">
+ <head>
+  <meta charset="utf-8"/>
+  <meta content="IE=edge" http-equiv="X-UA-Compatible"/>
+  <meta content="width=device-width, initial-scale=1" name="viewport"/>
+  <title id="title">
+  </title>
+  <script charset="utf-8" src="https://d3js.org/d3.v3.min.js"></script>
+  <script type="text/json" id="data"> </script>
+  <style type="text/css">
+text.activeTick {
+   fill: khaki;
+   font-weight: bold;
+}
+rect.highlightedCell {
+	stroke-width: 2px;
+}
+text.highlightedText {
+	fill: khaki;
+	font-weight: bold;
+}
+  </style>
+ </head>
+ <body>
+  <script id="mirMatrix">
+   content = createContent();
+createMirMatrix(content);
+
+  function createContent(size) {
+  	var size = {
+  	  width: document.body.clientWidth || window.innerWidth,
+  	  height: document.body.clientHeight || window.innerHeight
+  	}	
+  	
+  	var margin = {top: 0, right: 0, bottom: 0, left: 0},
+  		width = size['width'] - margin.left - margin.right,
+  		height = size['height'] - 1 - margin.top - margin.bottom;
+
+  	var x = d3.scale.linear()
+  		.domain([-width / 2, width / 2])
+  		.range([0, width]);
+
+  	var y = d3.scale.linear()
+  		.domain([-height / 2, height / 2])
+  		.range([height, 0]);
+
+  	var zoom = d3.behavior.zoom()
+  		.x(x)
+  		.y(y)
+  		.scaleExtent([0.1, 32])
+  		.on("zoom", zoom);
+
+  	var canvas = d3.select("body").append("svg")
+  		.attr("width", width + margin.left + margin.right)
+  		.attr("height", height + margin.top + margin.bottom)
+  		.append("g")
+  		.attr("transform", "translate(" + margin.left + "," + margin.top + ")")
+  		.call(zoom);
+  		
+  	function zoom() {
+  		x = d3.event.translate[0]
+  		y = d3.event.translate[1]
+  		content.attr("transform", "translate(" + d3.event.translate + ") scale(" + d3.event.scale + ")");
+  	}
+  	
+  	var content = canvas.append("g");
+  	return content;
+  } 
+   
+  function createMirMatrix(content) {
+  	var cellWidth = 30; // don't pick uneven number for pie cell alignment 
+  	var data = JSON.parse(document.getElementById('data').innerHTML);
+  	
+  	for (i in data['links']) {
+  		l = data['links'][i];
+  		l.source = data['nodes'][l.source].id
+  		l.target = data['nodes'][l.target].id
+  	}
+  	
+  	data['nodes'] = data['nodes'].sort(function(a, b) { 
+  										return d3.ascending(a.id, b.id); 
+  								});
+  	groupNodes = { }
+  	for (i in data['nodes']) {
+  		n = data['nodes'][i];
+  		id = n.group;
+  		if (id in groupNodes) {
+  			groupNodes[id].push(n);
+  		} else {
+  			groupNodes[id] = [];
+  			groupNodes[id].push(n);
+  		}
+  	}
+  	if(Object.keys(groupNodes).length != 2) {
+  		return;
+  	}
+  	dataNodesA = groupNodes[Object.keys(groupNodes)[0]]
+  	dataNodesB = groupNodes[Object.keys(groupNodes)[1]]
+
+  	//sort links for legend
+  	data['links'] = data['links'].sort(function(a, b) { 
+  									return d3.ascending(a.relation, b.relation); 
+  								});
+  	
+  	for (i in data['links']) {
+  		l = data['links'][i];
+  		l.source = dataNodesA.map(function (n) {
+  										return n.id;
+  									}).indexOf(l.source)
+  		l.target = dataNodesB.map(function (n) {
+  										return n.id;
+  									}).indexOf(l.target)
+  	}
+  	
+  	var linksMap = { };
+  	for (i in data['links']) {
+  		var l = data['links'][i];
+  		id = l.source + ";" + l.target
+  		if (!(id in linksMap)) {
+  			linksMap[id] = { };
+  		} 
+  		linksMap[id][l.relation] = l.type;
+  	}
+  	
+  	var cells = [];
+  	var pies = [];
+  	for (i in dataNodesA) {
+  		for (j in dataNodesB) {
+  			var id = i + ";" + j;
+  			relations = id in linksMap ? linksMap[id] : {}
+  			cells.push({ 
+  						id: id,
+  						source: i, 
+  						target: j, 
+  					});
+			
+  			pies.push([ 
+  				{legend: "equals", 
+					value:1, 
+					color: "equals" in relations ? "green" : "white", 
+					type: "equals" in relations ? relations["equals"] : null },
+  				{legend: "overlaps", 
+					value:1, 
+					color: "overlaps" in relations ? "red" : "white", 
+					type: "overlaps" in relations ? relations["overlaps"] : null },
+  				{legend: "includes", 
+					value:1, 
+					color: "includes" in relations ? "blue" : "white", 
+					type: "includes" in relations ? relations["includes"] : null },
+  				{legend: "is_included_in", 
+					value:1, 
+					color: "is_included_in" in relations ? "orange" : "white", 
+					type: "is_included_in" in relations ? relations["is_included_in"] : null },
+  				{legend: "disjoint", 
+					value:1, 
+					color: "disjoint" in relations ? "purple" : "white", 
+					type: "disjoint" in relations ? relations["disjoint"] : null },
+  			]);
+  		}
+  	}
+  	
+  	adjacencyView = content.append("g")
+  			  .attr("transform", "translate(90,90)");
+  	adjacencyView.selectAll("rect")
+  			  .data(cells)
+  			  .enter()
+  			  .append("rect")
+  			  .attr("width", cellWidth)
+  			  .attr("height", cellWidth)
+  			  .attr("x", function (d) {return d.target * cellWidth})
+  			  .attr("y", function (d) {return d.source * cellWidth})
+  			  .style("fill", function(d) { return "white"; })
+  			  .style("stroke", "black")
+  			  .on("mouseover", mouseoverCell)
+  			  .on("mouseout", mouseoutCell);
+  		
+  	var pieCellMargin = 2
+  	var outerRadius = Math.floor(cellWidth/2) - pieCellMargin;
+  	var innerRadius = 0;
+  	var arc = d3.svg.arc()
+  			.outerRadius(outerRadius)
+  			.innerRadius(innerRadius);
+  	var	z = d3.scale.category20c();
+  	
+  	gPie = adjacencyView.selectAll("g.pie")
+  		.data(pies)
+  		.enter().append("g")
+  		.attr("class", "pie")
+  		.attr("transform", function(d, i) {
+  			y = 0;
+  			if (dataNodesB.length > 0) {
+  				y = Math.floor(i / dataNodesB.length);
+  			}
+  			x = i % dataNodesB.length;
+			console.log("x/y: " + x + "/" + y);
+  			return "translate(" + (outerRadius + pieCellMargin + x * cellWidth) + "," + (outerRadius + pieCellMargin + y * cellWidth) + ")";
+  		});
+  			  
+  	gPie.selectAll("path")
+  		.data(d3.layout.pie().sort(null).value(function(d) { return d.value; }))
+  		.enter()
+  		.append("path")
+  		.attr("d", arc)
+		.style("stroke", "black")
+		.style("stroke-width", "0.2")
+  		.style("fill", function(d, i) { return d.data.color; })
+		.style("opacity", function(d, i) { 
+			if(d.data.type == "input") {
+				return 0.1;
+			} else if (d.data.type == "inferred") {
+				return 0.6;
+			} else if (d.data.type == "deduced") {
+				return 1.0;
+			}
+		})
+  		.on("mouseover", mouseoverPie)
+  		.on("mouseout", mouseoutPie);
+	
+  	var matrixScaleA = d3.scale.ordinal()
+  						.domain(dataNodesA.map(function (n) {
+  											return n.id
+  										}))
+  						.rangePoints([0, dataNodesA.length * cellWidth], 1);
+  	var matrixScaleB = d3.scale.ordinal()
+  						.domain(dataNodesB.map(function (n) {
+  											return n.id
+  										}))
+  						.rangePoints([0, dataNodesB.length * cellWidth], 1);						
+  	
+  	xAxis = d3.svg.axis()
+  				.scale(matrixScaleB)
+  				//.tickValues(tickValues)
+  				.orient("top")
+  				.tickSize(0); 
+  	yAxis = d3.svg.axis()
+  				.scale(matrixScaleA)
+  				//.tickValues(tickValues)
+  				.orient("left")
+  				.tickSize(0);    
+  	adjacencyView.append("g")
+  				.call(xAxis)
+  				.selectAll("text")
+  				.style("text-anchor", "end")
+  				.attr("transform", "translate(-8,-10) rotate(90)");
+  	adjacencyView.append("g")
+  				.call(yAxis)
+  				.attr("transform", "translate(-10, 0)");
+
+  	content.append("g").append("text").text("From").style("font-weight", "bold").attr("transform", "translate(5, 70)");
+  	content.append("g").append("text").text("To").style("font-weight", "bold").attr("transform", "translate(60, 30)");	
+	
+	legendData = []
+	legendData.push([ 
+  				{legend: "equals", 
+					value:1, 
+					color: "green", 
+					type: "input" },
+  				{legend: "overlaps", 
+					value:1, 
+					color: "red", 
+					type: "input" },
+  				{legend: "includes", 
+					value:1, 
+					color: "blue", 
+					type: "input" },
+  				{legend: "is_included_in", 
+					value:1, 
+					color: "orange", 
+					type: "input" },
+  				{legend: "disjoint", 
+					value:1, 
+					color: "purple", 
+					type: "input" },
+  			]);
+	legendData.push([ 
+  				{legend: "equals", 
+					value:1, 
+					color: "green", 
+					type: "inferred" },
+  				{legend: "overlaps", 
+					value:1, 
+					color: "red", 
+					type: "inferred" },
+  				{legend: "includes", 
+					value:1, 
+					color: "blue", 
+					type: "inferred" },
+  				{legend: "is_included_in", 
+					value:1, 
+					color: "orange", 
+					type: "inferred" },
+  				{legend: "disjoint", 
+					value:1, 
+					color: "purple", 
+					type: "inferred" },
+  			]);
+	legendData.push([ 
+  				{legend: "equals", 
+					value:1, 
+					color: "green", 
+					type: "deduced" },
+  				{legend: "overlaps", 
+					value:1, 
+					color: "red", 
+					type: "deduced" },
+  				{legend: "includes", 
+					value:1, 
+					color: "blue", 
+					type: "deduced" },
+  				{legend: "is_included_in", 
+					value:1, 
+					color: "orange", 
+					type: "deduced" },
+  				{legend: "disjoint", 
+					value:1, 
+					color: "purple", 
+					type: "deduced" },
+  			]);
+	
+	gLegend = adjacencyView.selectAll("g.legend")
+  		.data(legendData)
+  		.enter().append("g")
+  		.attr("class", "legend")
+  		.attr("transform", function(d, i) {
+  			return "translate(" + (dataNodesB.length * cellWidth + 150) + "," + (120 * i) + ")";
+  		});
+  			  
+  	path = gLegend.selectAll("path")
+  		.data(d3.layout.pie().sort(null).value(function(d) { return d.value; }))
+  		.enter()
+  		.append("path")
+  		.attr("d", arc)
+		.style("stroke", "black")
+		.style("stroke-width", "0.2")
+  		.style("fill", function(d, i) { return d.data.color; })
+		.style("opacity", function(d, i) { 
+			if(d.data.type == "input") {
+				return 0.1;
+			} else if (d.data.type == "inferred") {
+				return 0.6;
+			} else if (d.data.type == "deduced") {
+				return 1.0;
+			}
+		});
+		
+	/*path.append("text")
+	  .text(function(d) { 
+		console.log(d);
+		return "my long text"; })
+		//return d.data.legend; })
+	  .attr("x", function (d, i) { return 0; })
+	  .attr("y", function (d, i) { return 0; })
+	  .attr("transform", "translate(100, 100)");
+    }*/
+  
+  	inputText = content.append("g").append("text").attr("class", "legend title input").text("input").style("font-weight", "bold").attr("transform", "translate(" + (dataNodesB.length * cellWidth + 150) + ", 50)");	
+  	inputEqualsText = content.append("g").append("text").attr("class", "legend input equals").text("equals").attr("transform", "translate(" + (dataNodesB.length * cellWidth + 249) + ", 77)");
+  	inputOverlapsText = content.append("g").append("text").attr("class", "legend input overlaps").text("overlaps").attr("transform", "translate(" + (dataNodesB.length * cellWidth + 255) + ", 100)");	
+  	inputIncludesText = content.append("g").append("text").attr("class", "legend input includes").text("includes").attr("transform", "translate(" + (dataNodesB.length * cellWidth + 215) + ", 120)");	
+  	inputIsIncludedInText = content.append("g").append("text").attr("class", "legend input is_included_in").text("is_included_in").attr("transform", "translate(" + (dataNodesB.length * cellWidth + 130) + ", 100)");	
+  	inputDisjointText = content.append("g").append("text").attr("class", "legend input disjoint").text("disjoint").attr("transform", "translate(" + (dataNodesB.length * cellWidth + 180) + ", 77)");
+	
+  	inferredText = content.append("g").append("text").attr("class", "legend title inferred").text("inferred").style("font-weight", "bold").attr("transform", "translate(" + (dataNodesB.length * cellWidth + 150) + ", 170)");	
+  	inferredEqualsText = content.append("g").append("text").attr("class", "legend inferred equals").text("equals").attr("transform", "translate(" + (dataNodesB.length * cellWidth + 249) + ", 197)");
+  	inferredOverlapsText = content.append("g").append("text").attr("class", "legend inferred overlaps").text("overlaps").attr("transform", "translate(" + (dataNodesB.length * cellWidth + 255) + ", 220)");	
+  	inferredIncludesText = content.append("g").append("text").attr("class", "legend inferred includes").text("includes").attr("transform", "translate(" + (dataNodesB.length * cellWidth + 215) + ", 240)");	
+  	inferredIsIncludedInText = content.append("g").append("text").attr("class", "legend inferred is_included_in").text("is_included_in").attr("transform", "translate(" + (dataNodesB.length * cellWidth + 130) + ", 220)");	
+  	inferredDisjointText = content.append("g").append("text").attr("class", "legend inferred disjoint").text("disjoint").attr("transform", "translate(" + (dataNodesB.length * cellWidth + 180) + ", 197)");
+	
+  	deducedText = content.append("g").append("text").attr("class", "legend title deduced").text("deduced").style("font-weight", "bold").attr("transform", "translate(" + (dataNodesB.length * cellWidth + 150) + ", 290)");	
+  	deducedEqualsText = content.append("g").append("text").attr("class", "legend deduced equals").text("equals").attr("transform", "translate(" + (dataNodesB.length * cellWidth + 249) + ", 317)");
+  	deducedOverlapsText = content.append("g").append("text").attr("class", "legend deduced overlaps").text("overlaps").attr("transform", "translate(" + (dataNodesB.length * cellWidth + 255) + ", 340)");	
+  	deducedIncludesText = content.append("g").append("text").attr("class", "legend deduced includes").text("includes").attr("transform", "translate(" + (dataNodesB.length * cellWidth + 215) + ", 360)");	
+  	deducedIsIncludedInText = content.append("g").append("text").attr("class", "legend deduced is_included_in").text("is_included_in").attr("transform", "translate(" + (dataNodesB.length * cellWidth + 130) + ", 340)");	
+  	deducedDisjointText = content.append("g").append("text").text("disjoint").attr("class", "legend deduced disjoint").attr("transform", "translate(" + (dataNodesB.length * cellWidth + 180) + ", 317)");
+	
+	function mouseoverCell(d, i) {
+  		d3.selectAll("rect").classed("highlightedCell", function(c, i) {
+			return (c.source == d.source || c.target == d.target);
+		});
+  		d3.selectAll("g.tick text").classed("activeTick", function(c, i) {
+			return dataNodesA[d.source].id == c || dataNodesB[d.target].id == c;
+		});
+  	}
+
+  	function mouseoutCell(d, i) {
+  	}
+	
+	
+	function mouseoverPie(d, i) {
+		d3.selectAll("text.legend.title." + d.data.type).classed("highlightedText", true);
+		d3.selectAll("text.legend." + d.data.type + "." + d.data.legend).classed("highlightedText", true);
+  	}
+
+  	function mouseoutPie(d, i) {
+		d3.selectAll("text.legend.title." + d.data.type).classed("highlightedText", false);
+		d3.selectAll("text.legend." + d.data.type + "." + d.data.legend).classed("highlightedText", false);
+  	}
+  }
+  </script>
+ </body>
+</html>

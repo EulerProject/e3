@@ -52,9 +52,9 @@ class Run(object):
         import e3_command
         if isinstance(command, e3_command.Euler2Command):
             
-            if command.get_output_files():
                 import e3_io
                 e3_io.mkdirs_ignore_existing(runDir)
+                
                 with open(os.path.join(runDir, "config.txt"), 'w+') as cfg:
                     cfg.write("isCoverage: " + str(tapAfterExecution.isCoverage) + "\n")
                     cfg.write("isSiblingDisjointness: " + str(tapAfterExecution.isSiblingDisjointness) + "\n")
@@ -62,19 +62,22 @@ class Run(object):
                     cfg.write("\n")
                     import e3_io
                     e3_io.ordered_yaml_dump(config, stream=cfg, Dumper=yaml.SafeDumper, default_flow_style=False)
-                    
+                with open(os.path.join(runDir, "stdout.txt"), 'w+') as stdout:
+                    stdout.write('\n'.join(command.get_output()))
                 for outputFile in command.get_output_files():
-                    newName = input
-                    if(len(command.get_output_files()) > 1):
-                        newName = os.path.basename(outputFile)
-                        if "cleantax" in newName:
-                            newName = newName.replace("cleantax", input)
-                        else:
-                            newName = input + "_" + newName
-                    newName = "_".join(newName.split())
-                    if not newName.endswith("." + config['cli behavior']['imageFormat']):
-                        newName = newName  + "." + config['cli behavior']['imageFormat']
-                    newFile = os.path.join(runDir, newName)
+                    newFile = os.path.join(runDir, os.path.basename(outputFile))
+                    if(outputFile.endswith(config['cli behavior']['imageFormat'])):
+                        newName = input
+                        if(len(command.get_output_files()) > 1):
+                            newName = os.path.basename(outputFile)
+                            if "cleantax" in newName:
+                                newName = newName.replace("cleantax", input)
+                            else:
+                                newName = input + "_" + newName
+                        newName = "_".join(newName.split())
+                        if not newName.endswith("." + config['cli behavior']['imageFormat']):
+                            newName = newName  + "." + config['cli behavior']['imageFormat']
+                        newFile = os.path.join(runDir, newName)
                     shutil.copy(outputFile, newFile)
                     runDirOutputFiles.append(newFile)
                     #indexHtml = [
@@ -90,7 +93,6 @@ class Run(object):
                             execute = execute.replace(outputFile, newFile)
                         newExecuteOutput.append(execute)
                     command.executeOutput = newExecuteOutput
-                
         import e3_command
         if isinstance(command, e3_command.ModelCommand) or isinstance(command, e3_command.Euler2Command):
             import e3_io

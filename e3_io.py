@@ -603,8 +603,30 @@ class GraphCreator(object):
                 elif data[0] == "insert":
                     dataElement.insert(0, data[1])
             htmlDoc = soup.prettify("utf-8")
-            with open(os.path.join(targetDir, targetName + ".html"), "wb") as file:
+            outputFile = os.path.join(targetDir, targetName + ".html")
+            with open(outputFile, "wb") as file:
                 file.write(htmlDoc)
+        return outputFile
+    def create_mir_graph(self, mir, targetDir):
+        tap = TapManager().get_current_tap()
+        tapName = TapManager().get_tap_name(tap.get_id())
+        return self.create_graph(targetDir, "mir", "mir", { 
+                            "title" : ("plain", "Tap: " + tapName),
+                            "data" : ("json", self.create_mir_data(mir))
+                        })
+    def create_mir_data(self, mir):
+        g = nx.MultiDiGraph()
+        for item in mir:
+            for node in item['articulation'].leftNodes:
+                g.add_node(node, group = node.split(".")[0]) 
+            for node in item['articulation'].rightNodes:
+                g.add_node(node, group = node.split(".")[0]) 
+            
+            #for now only these: how to deal with other type of relations?
+            if len(item['articulation'].leftNodes) == 1 and len(item['articulation'].rightNodes) == 1:
+                g.add_edge(item['articulation'].leftNodes[0], item['articulation'].rightNodes[0], relation = item['articulation'].relation, type = item['type'])
+        return json_graph.node_link.node_link_data(g)
+    
     def create_history_graph(self, targetDir):
         history = TapManager().get_named_history()
         jsonData = json_graph.node_link.node_link_data(history.g)
@@ -841,7 +863,7 @@ class GraphCreator(object):
                                                         "sectionF-textarea" : ("insert", tap.get_cleantax())
                                                     })
         #print jsonData'''
-        self.create_graph(targetDir, "tap", "index", { 
+        return self.create_graph(targetDir, "tap", "index", { 
                                                     "title" : ("plain", "Tap: " + tapName),
                                                     "cleantax-textarea" : ("insert", tap.get_cleantax()), 
                                                     "visualization" : ("plain", self.create_visualization_data(tap)),
