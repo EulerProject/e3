@@ -610,7 +610,7 @@ class GraphCreator(object):
     def create_mir_graph(self, mir, targetDir):
         tap = TapManager().get_current_tap()
         tapName = TapManager().get_tap_name(tap.get_id())
-        return self.create_graph(targetDir, "most informative relations", "most informative relations", { 
+        return self.create_graph(targetDir, "most_informative_relations", "most_informative_relations", { 
                             "title" : ("plain", "Tap: " + tapName),
                             "data" : ("json", self.create_mir_data(mir))
                         })
