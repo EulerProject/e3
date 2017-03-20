@@ -18,6 +18,8 @@ class Command(object):
         import e3_io
         self.tapManager = e3_io.TapManager()
         self.configManager = e3_io.ConfigManager()
+        import e3_io
+        self.graphCreator = e3_io.GraphCreator()
         self.output = []
         self.outputFiles = []
         self.executeOutput = []
@@ -426,8 +428,6 @@ class Euler2Command(Command):
         config = self.configManager.get_config()
         self.imageViewer = config['environment']['imageViewer']
         self.maxWorldsToShow = config['cli behavior']['maxWorldsToShow']
-        import e3_io
-        self.graphCreator = e3_io.GraphCreator()
     def run(self):
         Command.run(self)
 
