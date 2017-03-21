@@ -118,6 +118,7 @@ create tap from worlds \<tap_1\> ... \<tap_n\> | Creates a tap with the unique w
   * matplotlib
   * beautifulsoup4
   * html5lib
+  * ruamel.yaml
 * [EulerX](https://github.com/EulerProject/EulerX) 
 
 ### Setup
