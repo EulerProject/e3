@@ -407,10 +407,10 @@ class RemoveArticulationParser(CommandParser):
                 tap = self.tapManager.get_tap_from_id_or_name(match.group("tap"))
             if tap:
                 try:
-                    articulationIndex = int(match.group(articulation))
+                    articulationIndex = int(match.group("articulation"))
                     return e3_command.RemoveArticulationByIndex(tap, articulationIndex) 
                 except ValueError as e:
-                    return e3_command.RemoveArticulation(tap, articulation)
+                    return e3_command.RemoveArticulation(tap, match.group("articulation"))
             else:
                 raise Exception('Tap %s not found' % match.group(3))
         else:
