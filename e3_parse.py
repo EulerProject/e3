@@ -409,7 +409,7 @@ class RemoveArticulationParser(CommandParser):
                 try:
                     articulationIndex = int(match.group(articulation))
                     return e3_command.RemoveArticulationByIndex(tap, articulationIndex) 
-                except Error as e:
+                except ValueError as e:
                     return e3_command.RemoveArticulation(tap, articulation)
             else:
                 raise Exception('Tap %s not found' % match.group(3))
