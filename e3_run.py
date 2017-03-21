@@ -11,7 +11,7 @@ import readline
 import os
 from subprocess import Popen, PIPE, call
 import shutil
-import yaml
+from ruamel import yaml
 import time
 import traceback
 
@@ -60,8 +60,7 @@ class Run(object):
                     cfg.write("isSiblingDisjointness: " + str(tapAfterExecution.isSiblingDisjointness) + "\n")
                     cfg.write("regions: " + tapAfterExecution.regions + "\n")
                     cfg.write("\n")
-                    import e3_io
-                    e3_io.ordered_yaml_dump(config, stream=cfg, Dumper=yaml.SafeDumper, default_flow_style=False)
+                    yaml.dump(config, cfg, Dumper=yaml.RoundTripDumper, default_flow_style=False)
                 with open(os.path.join(runDir, "stdout.txt"), 'w+') as stdout:
                     stdout.write('\n'.join(command.get_output()))
                 for outputFile in command.get_output_files():

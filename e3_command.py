@@ -6,7 +6,7 @@ from pinject import copy_args_to_public_fields
 from subprocess import Popen, PIPE, call
 import os
 import shutil
-import yaml
+from ruamel import yaml
 import re
 from collections import OrderedDict
 import csv
@@ -157,7 +157,7 @@ class Euler2(object):
             refreshCommandForced = False
             if command in Euler2.commandStyles and Euler2.commandStyles[command]:
                 with open(styleFile, 'r') as f:
-                    previousStyle = e3_io.ordered_yaml_load(f, yaml.SafeLoader)
+                    previousStyle = yaml.load(f, Loader=yaml.RoundTripLoader, preserve_quotes=True)
                 if currentCommandStyle != previousStyle:
                     refreshCommandForced = True
             if not refreshCommandForced:
@@ -176,10 +176,16 @@ class Euler2(object):
         stylesheetsDir = os.path.join(outputDir, "stylesheets")
         e3_io.mkdirs_ignore_existing(stylesheetsDir)
         for key in self.style:
-            with open(os.path.join(stylesheetsDir, key + "style.yaml"), "w") as f:
-                e3_io.ordered_yaml_dump(self.style[key], stream=f, Dumper=yaml.SafeDumper, default_flow_style=False)
-        
-        # add remaining parameters
+            with open(os.path.join(stylesheetsDir, key + "style_src.yaml"), "w") as src:
+                yaml.dump(self.style[key], src, Dumper=yaml.RoundTripDumper, default_flow_style=False)
+            #to conform to the expectation of Euler's y2d that the stylesheet yaml files require an extra identation (see default-stylesheets)
+            with open(os.path.join(stylesheetsDir, key + "style_src.yaml"), "r") as src:
+                with open(os.path.join(stylesheetsDir, key + "style.yaml"), "w") as fileExpectedFormat:
+                   for line in src:
+                       fileExpectedFormat.write('  ' + line)
+            os.remove(os.path.join(stylesheetsDir, key + "style_src.yaml"))
+            
+         # add remaining parameters
         effectiveCommand = uniqueCommand.format(euler2Executable = self.euler2Executable, 
                 cleantaxFile = self.cleantaxFile, outputDir = outputDir, imageFormat = self.imageFormat, 
                 maxN = self.maxN, reasoner = self.reasoner);
@@ -188,6 +194,7 @@ class Euler2(object):
                 with open(returnCodeFile, 'w+') as rc:
                     with open(styleFile, 'w+') as s:
                         #print effectiveCommand
+                        #print outputDir
                         p = Popen(effectiveCommand, stdout=PIPE, stderr=PIPE, shell=True, cwd = outputDir)
                         self.stdout, self.stderr = p.communicate()
                         #print self.stdout
@@ -199,7 +206,7 @@ class Euler2(object):
                         out.write(self.stdout)
                         err.write(self.stderr)
                         rc.write('%s' % p.returncode)
-                        e3_io.ordered_yaml_dump(currentCommandStyle, stream=s, Dumper=yaml.SafeDumper, default_flow_style=False)
+                        yaml.dump(currentCommandStyle, s, Dumper=yaml.RoundTripDumper, default_flow_style=False)
                         #if os.path.isfile('report.csv'):
                         #    os.remove('report.csv') not needed with Popen(..cwd=)
                         self.returncode = p.returncode
@@ -509,8 +516,7 @@ class PrintConfig(MiscCommand):
     def run(self):
         MiscCommand.run(self)
         config = self.configManager.get_config()
-        import e3_io
-        print e3_io.ordered_yaml_dump(config, Dumper=yaml.SafeDumper, default_flow_style=False)
+        print yaml.dump(config, Dumper=yaml.RoundTripDumper, default_flow_style=False)
         
 class PrintStyle(MiscCommand):
     @copy_args_to_public_fields
@@ -519,8 +525,7 @@ class PrintStyle(MiscCommand):
     def run(self):
         MiscCommand.run(self)
         style = self.configManager.get_style()
-        import e3_io
-        print e3_io.ordered_yaml_dump(style, Dumper=yaml.SafeDumper, default_flow_style=False)
+        print yaml.dump(style, Dumper=yaml.RoundTripDumper, default_flow_style=False)
           
 @logged 
 class Reset(MiscCommand):

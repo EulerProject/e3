@@ -14,7 +14,7 @@ from pinject import copy_args_to_public_fields
 import networkx as nx
 from networkx.readwrite import json_graph
 import json
-import yaml
+from ruamel import yaml
 from bs4 import BeautifulSoup
 import datetime
 from collections import OrderedDict
@@ -99,27 +99,6 @@ def set_git_credencials(host, user, password):
             f.write("login " + user + "\n")
             f.write("password " + password + "\n")
             
-def ordered_yaml_load(stream, Loader=yaml.Loader, object_pairs_hook=OrderedDict):
-    class OrderedLoader(Loader):
-        pass
-    def construct_mapping(loader, node):
-        loader.flatten_mapping(node)
-        return object_pairs_hook(loader.construct_pairs(node))
-    OrderedLoader.add_constructor(
-        yaml.resolver.BaseResolver.DEFAULT_MAPPING_TAG,
-        construct_mapping)
-    return yaml.load(stream, OrderedLoader)
-
-def ordered_yaml_dump(data, stream=None, Dumper=yaml.Dumper, **kwds):
-    class OrderedDumper(Dumper):
-        pass
-    def _dict_representer(dumper, data):
-        return dumper.represent_mapping(
-            yaml.resolver.BaseResolver.DEFAULT_MAPPING_TAG,
-            data.items())
-    OrderedDumper.add_representer(OrderedDict, _dict_representer)
-    return yaml.dump(data, stream, OrderedDumper, **kwds)
-
 def mkdirs_ignore_existing(path):
     try:
         os.makedirs(path)
@@ -461,14 +440,14 @@ class TapManager(object):
         if oldName is not None:
             oldTapDir = self.get_tap_dir(tapId)
         with open(self.get_names_file(), "r") as namesFile:
-            names = ordered_yaml_load(namesFile, yaml.SafeLoader)
+            names = yaml.load(namesFile, Loader=yaml.RoundTripLoader, preserve_quotes=True)
         if not names:
             names = OrderedDict()
         if oldName in names:
             del names[oldName]
         names[name] = tapId
         with open(self.get_names_file(), "w") as namesFile:
-            ordered_yaml_dump(names, stream=namesFile, Dumper=yaml.SafeDumper, default_flow_style=False)
+            yaml.dump(names, namesFile, Dumper=yaml.RoundTripDumper, default_flow_style=False)
         if oldTapDir is not None:
             for filename in os.listdir(oldTapDir):
                 shutil.move(os.path.join(oldTapDir, filename), self.get_tap_dir(tapId))
@@ -477,7 +456,7 @@ class TapManager(object):
     def get_names(self):
         names = []
         with open(self.get_names_file(), 'r') as namesFile:
-            doc = ordered_yaml_load(namesFile, yaml.SafeLoader)
+            doc = yaml.load(namesFile, Loader=yaml.RoundTripLoader, preserve_quotes=True)
             if doc:
                 for key, value in doc.items():
                     names.append(key + " = " + value)
@@ -508,7 +487,7 @@ class TapManager(object):
     def get_tap_id(self, name):
         name = name.strip()
         with open(self.get_names_file(), 'r') as namesFile:
-            doc = ordered_yaml_load(namesFile, yaml.SafeLoader)
+            doc = yaml.load(namesFile, Loader=yaml.RoundTripLoader, preserve_quotes=True)
             if doc:
                 if name in doc:
                     return doc[name]
@@ -516,7 +495,7 @@ class TapManager(object):
     
     def get_name(self, tapId):
         with open(self.get_names_file(), 'r') as namesFile:
-            doc = ordered_yaml_load(namesFile, yaml.SafeLoader)
+            doc = yaml.load(namesFile, Loader=yaml.RoundTripLoader, preserve_quotes=True)
             if doc:
                 for key, value in doc.items():
                     if value == tapId:
@@ -534,7 +513,7 @@ class ConfigManager(object):
     def get_config(self):
         config = None
         with open(self.get_config_file(), 'r') as f:
-            config = ordered_yaml_load(f, yaml.SafeLoader)
+            config = yaml.load(f, Loader=yaml.RoundTripLoader, preserve_quotes=True)
             if config:
                 return config
         config = self.get_default_config()
@@ -544,7 +523,7 @@ class ConfigManager(object):
     def get_style(self):
         style = None
         with open(self.get_style_file(), 'r') as f:
-            style = ordered_yaml_load(f, yaml.SafeLoader)
+            style = yaml.load(f, Loader=yaml.RoundTripLoader, preserve_quotes=True)
             if style:
                 return style
         style = self.get_default_style()
@@ -553,17 +532,17 @@ class ConfigManager(object):
     
     def get_default_style(self):
         with open(os.path.join(os.path.dirname(os.path.abspath(__file__)), ".e3_default", "style"), 'r') as f:
-            defaultStyle = ordered_yaml_load(f, yaml.SafeLoader)
+            defaultStyle = yaml.load(f, Loader=yaml.RoundTripLoader, preserve_quotes=True)
             return defaultStyle
     
     def get_default_config(self):
         with open(os.path.join(os.path.dirname(os.path.abspath(__file__)), ".e3_default", "config"), 'r') as f:
-            defaultConfig = ordered_yaml_load(f, yaml.SafeLoader)
+            defaultConfig = yaml.load(f, Loader=yaml.RoundTripLoader, preserve_quotes=True)
             return defaultConfig
     
     def store_config(self, config):
         with open(self.get_config_file(), 'w') as f:
-            ordered_yaml_dump(config, stream=f, Dumper=yaml.SafeDumper, default_flow_style=False)
+            yaml.dump(config, f, Dumper=yaml.RoundTripDumper, default_flow_style=False)
             
     def get_config_file(self):
         config_file = os.path.join(get_e3_dir(), "config")
@@ -574,7 +553,7 @@ class ConfigManager(object):
     
     def store_style(self, style):
         with open(self.get_style_file(), 'w') as f:
-            ordered_yaml_dump(style, stream=f, Dumper=yaml.SafeDumper, default_flow_style=False)
+            yaml.dump(style, f, Dumper=yaml.RoundTripDumper, default_flow_style=False)
             
     def get_style_file(self):
         style_file = os.path.join(get_e3_dir(), "style")
