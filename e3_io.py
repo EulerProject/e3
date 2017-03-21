@@ -77,7 +77,7 @@ def clear():
     config = configManager.get_config()
     style = configManager.get_style()
     clean_e3_dir()
-    #clean_working_dir()
+    clean_working_dir()
     tapManager = TapManager()
     tapManager.load_demo_taps()
     tapManager.set_current_tap(tapManager.get_default_tap())
