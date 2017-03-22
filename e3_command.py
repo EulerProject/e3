@@ -1026,16 +1026,22 @@ class RemoveArticulationByIndex(ModelCommand):
 @logged
 class RemoveArticulation(ModelCommand):
     @copy_args_to_public_fields
-    def __init__(self, tap, articulation):
+    def __init__(self, tap, articulationLine):
         ModelCommand.__init__(self)
     def run(self):
         ModelCommand.run(self)
-        if not self.tap.contains_articulation(articulation):
-            self.output.append("The tap does not contain the articulation: " + self.articulation)
-            return
-        self.tap.remove_articulation(self.articulation)
-        self.tapManager.set_current_tap(self.tap)
-        self.output.append("Tap: " + self.tapManager.get_tap_name_and_status(self.tap.get_id()))
+        
+        import e3_io
+        articulation = e3_io.CleantaxReader().get_articulation_from_cleantax("[" + self.articulationLine + "]")
+        if articulation is  None:
+            self.output.append("This is not a valid articulation: " + self.articulationLine)
+        else:
+            if not self.tap.contains_articulation(articulation):
+                self.output.append("The tap does not contain the articulation: " + self.articulationLine)
+                return
+            self.tap.remove_articulation(articulation)
+            self.tapManager.set_current_tap(self.tap)
+            self.output.append("Tap: " + self.tapManager.get_tap_name_and_status(self.tap.get_id()))
     
     
 class UseTap(ModelCommand):
