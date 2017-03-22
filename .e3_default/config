@@ -11,7 +11,7 @@ reasoning:
   defaultIsSiblingDisjointness: true
   defaultRegions: mnpw
   reasoner: dlv
-  repairMethod: topdown
+  fixMethod: topdown
 sharing:
   stateGitRepo: 
   workspaceGitRepo: 
