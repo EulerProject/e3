@@ -10,6 +10,7 @@ from ruamel import yaml
 import re
 from collections import OrderedDict
 import csv
+from ruamel.yaml.scalarstring import SingleQuotedScalarString, DoubleQuotedScalarString
 
 @logged
 class Command(object):
@@ -470,8 +471,10 @@ class SetConfig(MiscCommand):
             self.value = int(self.value)
         elif type(oldValue) is str:
             self.value = str(self.value)
-        else:
-            self.value = str(self.value)
+        if type(oldValue) is DoubleQuotedScalarString:
+            self.value = DoubleQuotedScalarString(self.value)
+        if type(oldValue) is SingleQuotedScalarString:
+            self.value = SingleQuotedScalarString(self.value)
             
         config[firstLevelKey][self.key] = self.value
         self.configManager.store_config(config)
@@ -505,6 +508,10 @@ class SetStyle(MiscCommand):
             self.value = int(self.value)
         if type(oldValue) is str:
             self.value = str(self.value)
+        if type(oldValue) is DoubleQuotedScalarString:
+            self.value = DoubleQuotedScalarString(self.value)
+        if type(oldValue) is SingleQuotedScalarString:
+            self.value = SingleQuotedScalarString(self.value)
         currentDict[keys[i]] = self.value
         self.configManager.store_style(style)
         self.output.append("Configuration updated: " + self.key + " = " + str(self.value))
