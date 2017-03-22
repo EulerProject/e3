@@ -1135,7 +1135,9 @@ class CreateTapFromWorlds(ModelCommand):
         createdTap = self.tapManager.get_default_tap()
         for srcTap in self.srcTaps:
             srcTapName = self.tapManager.get_tap_name(srcTap.get_id())
-            if is_unique(srcTap):
+            unique, align = is_unique(srcTap)
+            self.graphCreator.create_mir_graph(align.get_mir(), align.e2MirDir)
+            if unique:
                 align = Euler2(srcTap)
                 stdout, stderr, returnCode = align.run(Euler2.alignCommand)
                 showPW = Euler2(srcTap)
@@ -1162,7 +1164,7 @@ def is_unique(tap):
     alignMaxN.maxN = 2
     stdout, stderr, returnCode = alignMaxN.run(Euler2.alignMaxNCommand)
     worldCount = alignMaxN.get_world_count()
-    return worldCount == 1
+    return worldCount == 1, alignMaxN
 
 @logged 
 class GraphWorlds(Euler2Command):
@@ -1235,7 +1237,9 @@ class IsAmbiguous(Euler2Command):
             return
         if not is_consistent(self.tap):
             self.output.append("No, the tap is inconsistent.")
-        if is_unique(self.tap):
+        unique, align = is_unique(self.tap)
+        self.graphCreator.create_mir_graph(align.get_mir(), align.e2MirDir)
+        if unique:
             self.output.append("No.")
         else:
             self.output.append("Yes.")
@@ -1251,7 +1255,9 @@ class IsUnique(Euler2Command):
             return 0
         if not is_consistent(self.tap):
             self.output.append("No, the tap is inconsistent.")
-        if is_unique(self.tap):
+        unique, align = is_unique(self.tap)
+        self.graphCreator.create_mir_graph(align.get_mir(), align.e2MirDir)
+        if unique:
             self.output.append("Yes.")
         else:
             self.output.append("No.")

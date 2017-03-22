@@ -24,7 +24,7 @@ text.highlightedText {
  </head>
  <body>
   <script id="mirMatrix">
-   content = createContent();
+content = createContent();
 createMirMatrix(content);
 
   function createContent(size) {
@@ -72,11 +72,21 @@ createMirMatrix(content);
   	var cellWidth = 30; // don't pick uneven number for pie cell alignment 
   	var data = JSON.parse(document.getElementById('data').innerHTML);
   	
+	dataNodesA = []
+	dataNodesB = []
   	for (i in data['links']) {
   		l = data['links'][i];
-  		l.source = data['nodes'][l.source].id
-  		l.target = data['nodes'][l.target].id
+		dataNodesA.push(data['nodes'][l.source]);
+		dataNodesB.push(data['nodes'][l.target]);
+  		l.source = data['nodes'][l.source].id;
+  		l.target = data['nodes'][l.target].id;
   	}
+	dataNodesA = dataNodesA.filter(function(item, pos) {
+		return dataNodesA.indexOf(item) == pos;
+	});
+	dataNodesB = dataNodesB.filter(function(item, pos) {
+		return dataNodesB.indexOf(item) == pos;
+	});
   	
   	data['nodes'] = data['nodes'].sort(function(a, b) { 
   										return d3.ascending(a.id, b.id); 
@@ -95,8 +105,6 @@ createMirMatrix(content);
   	if(Object.keys(groupNodes).length != 2) {
   		return;
   	}
-  	dataNodesA = groupNodes[Object.keys(groupNodes)[0]]
-  	dataNodesB = groupNodes[Object.keys(groupNodes)[1]]
 
   	//sort links for legend
   	data['links'] = data['links'].sort(function(a, b) { 
@@ -193,7 +201,6 @@ createMirMatrix(content);
   				y = Math.floor(i / dataNodesB.length);
   			}
   			x = i % dataNodesB.length;
-			console.log("x/y: " + x + "/" + y);
   			return "translate(" + (outerRadius + pieCellMargin + x * cellWidth) + "," + (outerRadius + pieCellMargin + y * cellWidth) + ")";
   		});
   			  
