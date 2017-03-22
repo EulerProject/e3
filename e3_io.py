@@ -891,11 +891,26 @@ class GraphCreator(object):
     
     def create_adjacency1x1_data(self, tap):
         g = nx.MultiDiGraph()
+        if len(tap.taxonomies) != 2:
+            return
+        
+        sourceTaxonomy = tap.taxonomies[0]
+        targetTaxonomy = tap.taxonomies[1]
         for taxonomy in tap.taxonomies:
             for node in taxonomy.g:
                 g.add_node(taxonomy.id + "." + node, group = taxonomy.id) 
         for articulation in tap.articulations:
             #for now only these: how to deal with other type of relations?
             if len(articulation.leftNodes) == 1 and len(articulation.rightNodes) == 1:
-                g.add_edge(articulation.leftNodes[0], articulation.rightNodes[0], relation = articulation.relation)
+                if articulation.leftNodes[0].split(".")[0] == sourceTaxonomy.id:
+                    g.add_edge(articulation.leftNodes[0], articulation.rightNodes[0], relation = articulation.relation)
+                elif articulation.leftNodes[0].split(".")[0] == targetTaxonomy.id:
+                    g.add_edge(articulation.rightNodes[0], articulation.leftNodes[0], relation = get_opposite_relation(articulation.relation))
         return json_graph.node_link.node_link_data(g)
+    def get_opposite_relation(self, relation):
+        if relation  == "equals" or relation  == "disjoint" or relation  == "overlaps":
+            return relation
+        if relation == "includes": 
+            return "is_included_in"
+        if relation == "is_included_in": 
+            return "includes"
