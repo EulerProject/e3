@@ -98,7 +98,7 @@ class Euler2(object):
         self.euler2Executable = config['environment']['euler2Executable']
         self.reasoner = config['reasoning']['reasoner']
         self.imageFormat = config['cli behavior']['imageFormat']
-        self.repairMethod = config['reasoning']['repairMethod']
+        self.repairMethod = config['reasoning']['fixMethod']
         self.isCoverage = self.tap.isCoverage
         self.isSiblingDisjointness = self.tap.isSiblingDisjointness
         self.regions = self.tap.regions
