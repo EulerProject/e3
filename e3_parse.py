@@ -259,7 +259,7 @@ class AddConceptsParser(CommandParser):
         else:
             raise Exception('Unrecognized command line')
     def get_help(self):
-        return "add concept <taxonomyId> (<parentConcepts> <childConcept 1> ... <childConcept n>) [<tap>]\nAdds <childConcept>'s to <parentConcept>, creating non-existing concept's as needed to the taxonomy with <taxonomyId> of the current tap, or the optionally provided <tap>."
+        return "add concepts <taxonomyId> (<parentConcepts> <childConcept 1> ... <childConcept n>) [<tap>]\nAdds set of <childConcept> to <parentConcept>, creating non-existing concept's as needed to the taxonomy with <taxonomyId> of the current tap, or the optionally provided <tap>."
 
 class RemoveConceptsParser(CommandParser):
     def __init__(self):
@@ -278,7 +278,7 @@ class RemoveConceptsParser(CommandParser):
         else:
             raise Exception('Unrecognized command line')
     def get_help(self):
-        return "remove concept <recursive> <taxonomyId> (<parentConcepts> <childConcept 1> ... <childConcept n>) [<tap>]\nRemoves <childConcept>'s from <parentConcept> in the taxonomy with <taxonomyId> of the current tap, or the optionally provided <tap>."
+        return "remove concepts <recursive> <taxonomyId> (<parentConcepts> <childConcept 1> ... <childConcept n>) [<tap>]\nRemoves set of <childConcept> from <parentConcept> in the taxonomy with <taxonomyId> of the current tap, or the optionally provided <tap>."
     
 class AddTaxonomyParser(CommandParser):
     def __init__(self):
