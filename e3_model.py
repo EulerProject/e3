@@ -124,6 +124,9 @@ class Tap(object):
         else:
             raise ValueError("Taxonomy with id " + taxonomyId + " does not exist.")
     
+    def remove_node(self, taxonomyId, node):
+        taxonomy = self.get_taxonomy(taxonomyId)
+        taxonomy.remove_node(node)
     def add_node(self, taxonomyId, node):
         taxonomy = self.get_taxonomy(taxonomyId)
         taxonomy.add_node(node);
@@ -242,6 +245,8 @@ class Taxonomy(object):
         nx.relabel_nodes(self.g, map, False)
     def clear(self):
         self.g.clear()
+    def remove_node(self, node):
+        self.g.remove_node(node)
     def add_node(self, node):
         self.g.add_node(node)
     def add_children(self, parent, children):

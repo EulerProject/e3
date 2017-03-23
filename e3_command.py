@@ -893,22 +893,26 @@ class AddConcepts(ModelCommand):
         ModelCommand.run(self)
         
         parts = self.children[1:-1].split()
-        if len(parts) <= 1:
-            self.output.append("Taxonomy line with <= 1 nodes is invalid.")
-            return
+        #1 part will add concept as root
+        #if len(parts) <= 1:
+        #    self.output.append("Taxonomy line with <= 1 nodes is invalid.")
+        #    return
         
         import e3_validation
         try:
-            self.tap.add_children(self.taxonomyId, parts[0], parts[1:])
+            if len(parts) == 1:
+                self.tap.add_node(self.taxonomyId, parts[0])
+            elif len(parts) > 1:
+                self.tap.add_children(self.taxonomyId, parts[0], parts[1:])
             self.tapManager.set_current_tap(self.tap)
+            self.output.append("Tap: " + self.tapManager.get_tap_name_and_status(self.tap.get_id()))
         except ValueError as e:
             self.output.append(str(e))
             return
         except e3_validation.ValidationException as e:
             self.output.append(str(e))
             return
-        
-        self.output.append("Tap: " + self.tapManager.get_tap_name_and_status(self.tap.get_id()))
+
 
 class RemoveConcepts(ModelCommand):
     @copy_args_to_public_fields
@@ -918,22 +922,25 @@ class RemoveConcepts(ModelCommand):
         ModelCommand.run(self)
         
         parts = self.children[1:-1].split()
-        if len(parts) <= 1:
-            self.output.append("Taxonomy line with <= 1 nodes is invalid.")
-            return
+        #1 part will remove concept as root
+        #if len(parts) <= 1:
+        #    self.output.append("Taxonomy line with <= 1 nodes is invalid.")
+        #    return
         
         import e3_validation
         try:
-            self.tap.remove_children(self.taxonomyId, parts[0], parts[1:], self.recursive)
+            if len(parts) == 1:
+                self.tap.remove_node(self.taxonomyId, parts[0])
+            elif len(parts) > 1:
+                self.tap.remove_children(self.taxonomyId, parts[0], parts[1:], self.recursive)
             self.tapManager.set_current_tap(self.tap)
+            self.output.append("Tap: " + self.tapManager.get_tap_name_and_status(self.tap.get_id()))
         except ValueError as e:
             self.output.append(str(e))
             return
         except e3_validation.ValidationException as e:
             self.output.append(str(e))
             return
-        
-        self.output.append("Tap: " + self.tapManager.get_tap_name_and_status(self.tap.get_id()))
 
 class AddTaxonomy(ModelCommand):
     @copy_args_to_public_fields
