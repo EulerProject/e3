@@ -944,6 +944,7 @@ class AddTaxonomy(ModelCommand):
         if self.tap.has_taxonomy(self.id):
             self.output.append("Taxonomy with id: " + self.id + " already exists")
             
+        import e3_model
         self.tap.add_taxonomy(e3_model.Taxonomy(self.id, self.name))
         self.tapManager.set_current_tap(self.tap)
         self.output.append("Tap: " + self.tapManager.get_tap_name_and_status(self.tap.get_id()))
