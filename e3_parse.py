@@ -243,9 +243,9 @@ class RenameConceptParser(CommandParser):
     def get_help(self):
         return "rename concept <taxonomyId> <oldName> <newName> [<tap>]\nRenames the concept in taxonomy with <taxonomyId> from <oldName> to <newName> for the current tap, or the optionally provided <tap>."
     
-class AddChildrenParser(CommandParser):
+class AddConceptsParser(CommandParser):
     def __init__(self):
-        CommandParser.__init__(self, '^add children (.+) (\\(.+\\))( (\S*))?$')
+        CommandParser.__init__(self, '^add concepts (.+) (\\(.+\\))( (\S*))?$')
     def get_command(self, input):
         match = self.is_input(input)
         if match:
@@ -253,7 +253,7 @@ class AddChildrenParser(CommandParser):
             if match.group(3) and match.group(4):
                 tap = self.tapManager.get_tap_from_id_or_name(match.group(4))  
             if tap:   
-                return e3_command.AddChildren(tap, match.group(1), match.group(2))
+                return e3_command.AddConcepts(tap, match.group(1), match.group(2))
             else:
                 raise Exception('Tap %s not found' % match.group(4))
         else:
@@ -261,18 +261,18 @@ class AddChildrenParser(CommandParser):
     def get_help(self):
         return "add concept <taxonomyId> (<parentConcepts> <childConcept 1> ... <childConcept n>) [<tap>]\nAdds <childConcept>'s to <parentConcept>, creating non-existing concept's as needed to the taxonomy with <taxonomyId> of the current tap, or the optionally provided <tap>."
 
-class RemoveChildrenParser(CommandParser):
+class RemoveConceptsParser(CommandParser):
     def __init__(self):
-        CommandParser.__init__(self, '^remove children(?: recursive)? (.+) (\\(.+\\))( (\S*))?$')
+        CommandParser.__init__(self, '^remove concepts(?: recursive)? (.+) (\\(.+\\))( (\S*))?$')
     def get_command(self, input):
         match = self.is_input(input)
-        recursive = input.startswith("remove children recursive")
+        recursive = input.startswith("remove concepts recursive")
         if match:
             tap = self.tapManager.get_current_tap()        
             if match.group(3) and match.group(4):
                 tap = self.tapManager.get_tap_from_id_or_name(match.group(4))  
             if tap:   
-                return e3_command.RemoveChildren(tap, match.group(1), match.group(2), recursive)
+                return e3_command.RemoveConcepts(tap, match.group(1), match.group(2), recursive)
             else:
                 raise Exception('Tap %s not found' % match.group(4))
         else:
@@ -1165,8 +1165,8 @@ commandParsers = [  ByeParser(),
                     RemoveTaxonomyParser(),
                     SetTaxonomyInfoParser(),
                     RenameConceptParser(),
-                    AddChildrenParser(),
-                    RemoveChildrenParser(),
+                    AddConceptsParser(),
+                    RemoveConceptsParser(),
                     ClearTaxonomyParser(),
                     AddArticulationParser(),
                     RemoveArticulationParser(),

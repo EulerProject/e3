@@ -885,7 +885,7 @@ class ClearTap(ModelCommand):
         self.tapManager.set_current_tap(tap)
         self.output.append("Tap: " + self.tapManager.get_tap_name_and_status(currentTap.get_id()))
 
-class AddChildren(ModelCommand):
+class AddConcepts(ModelCommand):
     @copy_args_to_public_fields
     def __init__(self, tap, taxonomyId, children):
         ModelCommand.__init__(self)
@@ -910,7 +910,7 @@ class AddChildren(ModelCommand):
         
         self.output.append("Tap: " + self.tapManager.get_tap_name_and_status(self.tap.get_id()))
 
-class RemoveChildren(ModelCommand):
+class RemoveConcepts(ModelCommand):
     @copy_args_to_public_fields
     def __init__(self, tap, taxonomyId, children, recursive):
         ModelCommand.__init__(self)
