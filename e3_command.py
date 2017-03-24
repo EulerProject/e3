@@ -53,6 +53,7 @@ class Euler2(object):
     alignConsistencyCommand = '{euler2Executable} align {cleantaxFile} -o {outputDir} -r {reasoner} -e {regions} {disjointness} {coverage} --consistency'
     alignMaxNCommand = '{euler2Executable} align {cleantaxFile} -o {outputDir} -r {reasoner} -e {regions} {disjointness} {coverage} -n {maxN}'
     alignRepairCommand = '{euler2Executable} align {cleantaxFile} -o {outputDir} -r {reasoner} -e {regions} {disjointness} {coverage} --repair={repairMethod}'
+    alignRepairHSTCommand = '{euler2Executable} align {cleantaxFile} -o {outputDir} -r {reasoner} -e {regions} {disjointness} {coverage} --repair=HST'
     showIVCommand = '{euler2Executable} show iv {cleantaxFile} -o {outputDir} {imageFormat}';
     showPWCommand = '{euler2Executable} show -o {outputDir} pw {imageFormat}'
     showInconLatCommand = '{euler2Executable} show -o {outputDir} inconLat {imageFormat}'
@@ -1388,9 +1389,9 @@ class GraphInconsistency(Euler2Command):
             self.output.append("The tap is consistent. Nothing has been produced.")
             return
         
-        align = Euler2(self.tap)
-        stdout, stderr, returnCode = align.run(Euler2.alignCommand)
-        self.outputFiles.append(self.graphCreator.create_mir_graph(align.get_mir(), align.e2MirDir))
+        alignRepairHST = Euler2(self.tap)
+        stdout, stderr, returnCode = alignRepairHST.run(Euler2.alignRepairHSTCommand)
+        self.outputFiles.append(self.graphCreator.create_mir_graph(alignRepairHST.get_mir(), alignRepairHST.e2MirDir))
         if self.type == "reduced":
             showInconLatReduced = Euler2(self.tap)
             stdout, stderr, returnCode = showInconLatReduced.run(Euler2.showInconLatReducedCommand)
@@ -1398,17 +1399,17 @@ class GraphInconsistency(Euler2Command):
         elif self.type == "full":
             showInconLatFull = Euler2(self.tap)
             stdout, stderr, returnCode = showInconLatFull.run(Euler2.showInconLatFullCommand)
-            graphs = showInconLatReduced.get_inconsistency_lattice_graphs()
+            graphs = showInconLatFull.get_inconsistency_lattice_graphs()
         else:
             showInconLat = Euler2(self.tap)
             stdout, stderr, returnCode = showInconLat.run(Euler2.showInconLatCommand)
-            graphs = showInconLatReduced.get_inconsistency_lattice_graphs()
+            graphs = showInconLat.get_inconsistency_lattice_graphs()
         
         self.output.append("Take a look at the produced graph.")
         self.executeOutput = []
         for f in graphs:
-            self.executeOutput.append(self.imageViewer.format(file = file)) 
-            self.outputFiles.append(file)
+            self.executeOutput.append(self.imageViewer.format(file = f)) 
+            self.outputFiles.append(f)
         
 @logged
 class PrintWorlds(Euler2Command):
