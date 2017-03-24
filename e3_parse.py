@@ -827,7 +827,7 @@ class GraphInconsistencyParser(CommandParser):
         else:
             raise Exception('Unrecognized command line')   
     def get_help(self):
-        return "graph inconsistency [<tap>]\nCreates a graph visualization of the inconsistency, if any exists, for the current tap, or the optionally provided <tap>."
+        return "graph [<full|reduced>] inconsistency [<tap>]\nCreates a graph visualization of the inconsistency, if any exists, for the current tap, or the optionally provided <tap>."
     
 class PrintFixParser(CommandParser):
     def __init__(self):
