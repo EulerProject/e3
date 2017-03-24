@@ -617,24 +617,17 @@ class GraphCreator(object):
         #for node in jsonData['nodes']:
         #    newJsonDataNodes.append(node)
         
-        import e3_parse
-        commandProvider = e3_parse.CommandProvider()
         jsonData['link'] = jsonData['links'].sort(key=lambda l: l['startTime'], reverse=False)
         lastTapNode = None
         e3DataDir = get_working_dir()
         for link in jsonData['links']:
             link['source'] = jsonData['nodes'][link['source']]
             link['target'] = jsonData['nodes'][link['target']]
-            command = commandProvider.provide(link['command'])
+            type = link['type']
             startTime = datetime.datetime.utcfromtimestamp(link['startTime']).strftime('%m/%d/%Y %H:%M:%S')
             endTime = datetime.datetime.utcfromtimestamp(link['endTime']).strftime('%m/%d/%Y %H:%M:%S')
             runTime =  str(round(link['endTime'] - link['startTime'], 2)) + " sec."
             
-            #if isinstance(command, Euler2Command):
-            #    child = {}
-            #    child['name'] = link['command']
-            #    child['children'] = []
-            #    data['children'].append(child)
             if lastTapNode is None:
                 sourceNode = {}
                 sourceNode['name'] = link['source']['id']
@@ -644,8 +637,7 @@ class GraphCreator(object):
                 data['children'].append(sourceNode)
                 lastTapNode = sourceNode
                 
-            import e3_command
-            if isinstance(command, e3_command.ModelCommand):
+            if type == "ModelCommand":
                 commandNode = {}
                 commandNode['name'] = link['command']
                 commandNode['type'] = "modelCommand"
@@ -663,7 +655,7 @@ class GraphCreator(object):
                 data['children'].append(targetNode)
                 lastTapNode = targetNode
                 
-            if isinstance(command, e3_command.Euler2Command):
+            if type == "Euler2Command":
                 commandNode = {}
                 commandNode['name'] = link['command']
                 commandNode['type'] = "euler2Command"
@@ -693,7 +685,7 @@ class GraphCreator(object):
                         targetNode['children'].append(outputNode)
                 commandNode['children'].append(targetNode)
                 
-            if isinstance(command, e3_command.MiscCommand):
+            if type == "MiscCommand":
                 commandNode = {}
                 commandNode['name'] = link['command']
                 commandNode['type'] = link['miscCommand']

@@ -30,15 +30,23 @@ class Run(object):
     def add_to_history(self, input, command, tapBeforeExecution, tapAfterExecution):
         import e3_command
         import e3_model
+        type = "MiscCommand"
+        if isinstance(command, e3_command.Euler2Command):
+            type = "Euler2Command"
+        if isinstance(command, e3_command.ModelCommand):
+            type = "ModelCommand"
+        if isinstance(command, e3_command.MiscCommand):
+            type = "MiscCommand"
+        
         if isinstance(command, e3_command.Euler2Command):
             srcNode = tapBeforeExecution.get_id()#e3_model.TapHistoryNode(tapBeforeExecution.get_id(), { })
             dstNode = tapBeforeExecution.get_id() + "/" +input#e3_model.Euler2CommandHistoryNode(tapBeforeExecution.get_id(), input, { "output" : '; '.join(command.get_output()) })
             self.tapManager.add_history_node(dstNode, { "output" : '; '.join(command.get_output()) })
-            self.tapManager.add_history_edge(srcNode, dstNode, { "command" : input, "startTime": command.startTime, "endTime" : command.endTime })
+            self.tapManager.add_history_edge(srcNode, dstNode, { "command" : input, "type" : type, "startTime": command.startTime, "endTime" : command.endTime })
         if isinstance(command, e3_command.ModelCommand):
             srcNode = tapBeforeExecution.get_id() #e3_model.TapHistoryNode(tapBeforeExecution.get_id(), { })
             dstNode = tapAfterExecution.get_id() #e3_model.TapHistoryNode(tapAfterExecution.get_id(), { })
-            self.tapManager.add_history_edge(srcNode, dstNode, { "command" : input, "startTime": command.startTime, "endTime" : command.endTime })
+            self.tapManager.add_history_edge(srcNode, dstNode, { "command" : input, "type" : type, "startTime": command.startTime, "endTime" : command.endTime })
             
     def create_e3_data_output(self, input, command, tapAfterExecution):
         config = self.configManager.get_config()
