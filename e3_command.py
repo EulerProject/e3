@@ -113,6 +113,7 @@ class Euler2(object):
         self.e2PWsDir = os.path.join(self.tapDir, "{uniqueParameteredRun}", "4-PWs")
         self.e2AggregatesDir = os.path.join(self.tapDir, "{uniqueParameteredRun}", "5-Aggregates")
         self.e2LatticesDir = os.path.join(self.tapDir, "{uniqueParameteredRun}", "6-Lattices")
+        self.e2ExtractInputDir = os.path.join(self.tapDir, "{uniqueParameteredRun}", "11-ExtractInput")
         self.isConsistent = True
         if not hasattr(self, 'maxN'):
             self.maxN = None
@@ -138,6 +139,7 @@ class Euler2(object):
         self.e2PWsDir = self.e2PWsDir.format(uniqueParameteredRun = uniqueParameteredRun)
         self.e2AggregatesDir = self.e2AggregatesDir.format(uniqueParameteredRun = uniqueParameteredRun)
         self.e2LatticesDir = self.e2LatticesDir.format(uniqueParameteredRun = uniqueParameteredRun)
+        self.e2ExtractInputDir = self.e2ExtractInputDir.format(uniqueParameteredRun = uniqueParameteredRun)
         
         uniqueCommand = command.format(euler2Executable = '{euler2Executable}', 
                 cleantaxFile = '{cleantaxFile}', outputDir = '{outputDir}', 
@@ -250,10 +252,10 @@ class Euler2(object):
         return len(self.get_worlds())
     def get_maximal_articulation_sets(self):
         sets = []
-        for filename in os.listdir(self.e2InputDir):
+        for filename in os.listdir(self.e2ExtractInputDir):
             if filename.startswith("cleantax-alt"):
                 set = []
-                file = os.path.join(self.e2InputDir, filename)
+                file = os.path.join(self.e2ExtractInputDir, filename)
                 import e3_io
                 tap = e3_io.CleantaxReader().get_tap_from_cleantax_file(file)
                 for a in tap.articulations:
@@ -264,13 +266,13 @@ class Euler2(object):
     def get_unique_articulation_sets(self):
         uniqueArtSets = []
         for line in self.stdout.splitlines():
-            if line.startswith('Min articulation subset that makes unique PW'):
+            if 'Min articulation subset that makes unique PW' in line:
                 uniqueArtSet = []
                 articulationsLine = line.split('[')[1]
-                articulations = re.compile(":|,|]").split(articulationsLine)
+                articulationsLine = articulationsLine.split(']')[0].strip()
+                articulations = articulationsLine.split(" , ")
                 for i, articulation in enumerate(articulations):
-                    if i%2 == 1:
-                        uniqueArtSet.append(articulation.strip())
+                    uniqueArtSet.append(articulation.strip())
                 uniqueArtSets.append(uniqueArtSet)
         return uniqueArtSets
     
@@ -1588,13 +1590,12 @@ class PrintMinimalArticulations(Euler2Command):
             return
         
         alignArtRem = Euler2(self.tap)
-        alignArtRem.maxN = 2
         stdout, stderr, returnCode = alignArtRem.run(Euler2.alignArtRemCommand)
         self.outputFiles.append(self.graphCreator.create_mir_graph(alignArtRem.get_mir(), alignArtRem.e2MirDir))
         
         uniqueArticulationSets = alignArtRem.get_unique_articulation_sets()
         for i, set in enumerate(uniqueArticulationSets):
-            self.output.append(str(i + 1) + ".\n" + ', '.join(set) + "\n")
+            self.output.append(str(i + 1) + ".\n" + '\n'.join(set) + "\n")
 
 @logged
 class UseMinimalArticulations(ModelCommand):
