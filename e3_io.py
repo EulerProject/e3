@@ -897,7 +897,7 @@ class GraphCreator(object):
                 if articulation.leftNodes[0].split(".")[0] == sourceTaxonomy.id:
                     g.add_edge(articulation.leftNodes[0], articulation.rightNodes[0], relation = articulation.relation)
                 elif articulation.leftNodes[0].split(".")[0] == targetTaxonomy.id:
-                    g.add_edge(articulation.rightNodes[0], articulation.leftNodes[0], relation = get_opposite_relation(articulation.relation))
+                    g.add_edge(articulation.rightNodes[0], articulation.leftNodes[0], relation = self.get_opposite_relation(articulation.relation))
         return json_graph.node_link.node_link_data(g)
     def get_opposite_relation(self, relation):
         if relation  == "equals" or relation  == "disjoint" or relation  == "overlaps":
