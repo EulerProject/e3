@@ -400,12 +400,19 @@ class Euler2(object):
                                 "articulation": a
                             })
         return mir
-    def get_inconsistency_lattice_graphs(self):
+    def get_inconsistency_lattice_graphs(self, type):
         graphs = []
         for filename in os.listdir(self.e2LatticesDir):
             if filename.endswith(".%s" % self.imageFormat):
                 file = os.path.join(self.e2LatticesDir, filename)
-                graphs.append(file)
+                if type == "full":
+                    if "_fulllat" in filename:
+                        graphs.append(file)
+                elif type == "reduced":
+                    if "_lat" in filename:
+                        graphs.append(file)
+                else:
+                    graphs.append(file)
         return graphs
     def get_four_in_one_lattice_graphs(self):
         graphs = []
@@ -1395,15 +1402,15 @@ class GraphInconsistency(Euler2Command):
         if self.type == "reduced":
             showInconLatReduced = Euler2(self.tap)
             stdout, stderr, returnCode = showInconLatReduced.run(Euler2.showInconLatReducedCommand)
-            graphs = showInconLatReduced.get_inconsistency_lattice_graphs()
+            graphs = showInconLatReduced.get_inconsistency_lattice_graphs(self.type)
         elif self.type == "full":
             showInconLatFull = Euler2(self.tap)
             stdout, stderr, returnCode = showInconLatFull.run(Euler2.showInconLatFullCommand)
-            graphs = showInconLatFull.get_inconsistency_lattice_graphs()
+            graphs = showInconLatFull.get_inconsistency_lattice_graphs(self.type)
         else:
             showInconLat = Euler2(self.tap)
             stdout, stderr, returnCode = showInconLat.run(Euler2.showInconLatCommand)
-            graphs = showInconLat.get_inconsistency_lattice_graphs()
+            graphs = showInconLat.get_inconsistency_lattice_graphs(self.type)
         
         self.output.append("Take a look at the produced graph.")
         self.executeOutput = []
