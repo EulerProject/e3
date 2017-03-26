@@ -647,16 +647,19 @@ class GitStatePull(MiscCommand):
             g.status()
             g.pull()
         except git.exc.GitCommandError as e:
-            e3_io.clean_e3_git_dir()
-            g.clone(repo, e3_io.get_e3_git_dir())
+            shutil.rmtree(gitDir)
+            e3_io.mkdirs_ignore_existing(gitDir)
+            g.clone(repo, gitDir)
         
         targetDir = os.path.join(gitDir, os.path.join(*(self.name.split("/"))))
         if not os.path.isdir(targetDir):
             self.output.append("Pulled successfully but " + self.name + " not found in the repository.")
             return
-        if os.path.isdir(e3_io.get_e3_dir()):
-            shutil.rmtree(e3_io.get_e3_dir())
-        shutil.copytree(targetDir, e3_io.get_e3_dir())
+        
+        workingDir = e3_io.get_working_dir()
+        if os.path.isdir(workingDir):
+            shutil.rmtree(workingDir)
+        shutil.copytree(targetDir, workingDir)
         self.output.append("Pulled successfully")
         self.output.append("Tap: " + self.tapManager.get_tap_name_and_status(self.tap.get_id()))
         
@@ -685,16 +688,19 @@ class GitPull(MiscCommand):
             g.status()
             g.pull()
         except git.exc.GitCommandError as e:
-            e3_io.clean_e3_data_git_dir()
-            g.clone(repo, e3_io.get_e3_data_git_dir())
+            shutil.rmtree(gitDir)
+            e3_io.mkdirs_ignore_existing(gitDir)
+            g.clone(repo, gitDir)
             
         targetDir = os.path.join(gitDir, os.path.join(*(self.name.split("/"))))
         if not os.path.isdir(targetDir):
             self.output.append("Pulled successfully but " + self.name + " not found in the repository.")
             return
-        if os.path.isdir(e3_io.get_working_dir()):
-            shutil.rmtree(e3_io.get_working_dir())
-        shutil.copytree(targetDir, e3_io.get_working_dir())
+        
+        workingDir = e3_io.get_working_dir()
+        if os.path.isdir(workingDir):
+            shutil.rmtree(workingDir)
+        shutil.copytree(targetDir, workingDir)
         self.output.append("Pulled successfully")
 
 @logged
