@@ -57,6 +57,12 @@ def clean_e3_dir():
 def clean_e3_temp_dir():
     shutil.rmtree(get_e3_temp_dir())
     
+def clean_e3_git_dir():
+    shutil.rmtree(get_e3_git_dir())
+    
+def clean_e3_data_git_dir():
+    shutil.rmtree(get_e3_data_git_dir())
+    
 def clean_working_dir():
     workingDir = get_working_dir()
     if os.path.isdir(workingDir):
