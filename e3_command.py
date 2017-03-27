@@ -656,12 +656,12 @@ class GitStatePull(MiscCommand):
             self.output.append("Pulled successfully but " + self.name + " not found in the repository.")
             return
         
-        workingDir = e3_io.get_working_dir()
-        if os.path.isdir(workingDir):
-            shutil.rmtree(workingDir)
-        shutil.copytree(targetDir, workingDir)
+        e3Dir = e3_io.get_e3_dir()
+        if os.path.isdir(e3Dir):
+            shutil.rmtree(e3Dir)
+        shutil.copytree(targetDir, e3Dir)
         self.output.append("Pulled successfully")
-        self.output.append("Tap: " + self.tapManager.get_tap_name_and_status(self.tap.get_id()))
+        self.output.append("Tap: " + self.tapManager.get_tap_name_and_status(self.tapManager.get_current_tap().get_id()))
         
 @logged
 class GitPull(MiscCommand):

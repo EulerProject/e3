@@ -133,7 +133,7 @@ class GitStatePullParser(CommandParser):
     def get_command(self, input):
         match = self.is_input(input)
         if match:
-            return e3_command.GitStatePull(match.group("name"))
+            return e3_command.GitStatePull(match.group("path"))
         else:
             raise Exception('Unrecognized command line')
     def get_help(self):
