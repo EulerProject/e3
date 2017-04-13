@@ -101,7 +101,7 @@ print maximal consistency [\<tap\>] | Prints the maximal subsets of articulation
 use maximal consistency \<set id\> [\<tap\>] | Replaces the articulations of the current tap or the optionally provided \<tap\> with the articulations of the given maximal consistency \<set id\>.
 print maximal ambiguity [\<tap\>] | Prints the maximal subsets of articulations that create ambiguity for the current tap, or the optionally provided \<tap\>.
 use maximal ambiguity \<set id\> [\<tap\>] | Replaces the articulations of the current tap or the optionally provided \<tap\> with the articulations of the given maximal ambiguity \<set id\>.
-graph [<full|reduced>] inconsistency [\<tap\>] | Creates a graph visualization of the inconsistency, if any exists, for the current tap, or the optionally provided \<tap\>.
+graph [\<full|reduced\>] inconsistency [\<tap\>] | Creates a graph visualization of the inconsistency, if any exists, for the current tap, or the optionally provided \<tap\>.
 print fix [\<tap\>] | Prints a set of suggested fixes of the inconsistency, if any exists, for the current tap, or the optionally provided \<tap\>.
 use fix \<fix set id\> [\<tap\>] | Uses the fix with \<fix set id\> to create a consistent input from the current tap, or the optionally provided \<tap\>.
 create tap from worlds \<tap_1\> ... \<tap_n\> | Creates a tap with the unique worlds of \<tap_1\> ... \<tap_n\> as taxonomies.
