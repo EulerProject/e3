@@ -14,6 +14,7 @@ import shutil
 from ruamel import yaml
 import time
 import traceback
+import hashlib
 
 @logged
 class Run(object):
@@ -143,8 +144,12 @@ class Run(object):
                 command.run()
                 command.endTime = time.time()
                 tapAfterExecution = self.tapManager.get_current_tap()
-                self.add_to_history(input, command, tapBeforeExecution, tapAfterExecution)
-                runDirOutputFiles = self.create_e3_data_output(input, command, tapAfterExecution)
+                
+                configHash = hashlib.sha1(self.configManager.get_config().__str__()).hexdigest()
+                configHash = configHash[-4:0] #unique enough
+                self.add_to_history(input + " " + configHash, command, tapBeforeExecution, tapAfterExecution)
+                runDirOutputFiles = self.create_e3_data_output(input + " " + configHash, command, tapAfterExecution)
+                
                 self.process_execute_result(command, runDirOutputFiles)
             except Exception as e:
                 tb = traceback.format_exc()
