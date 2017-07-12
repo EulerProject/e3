@@ -146,7 +146,7 @@ class Run(object):
                 tapAfterExecution = self.tapManager.get_current_tap()
                 
                 configHash = hashlib.sha1(self.configManager.get_config().__str__()).hexdigest()
-                configHash = configHash[-4:0] #unique enough
+                configHash = configHash[-4:] #unique enough
                 self.add_to_history(input + " " + configHash, command, tapBeforeExecution, tapAfterExecution)
                 runDirOutputFiles = self.create_e3_data_output(input + " " + configHash, command, tapAfterExecution)
                 
