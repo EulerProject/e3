@@ -103,6 +103,41 @@ input:
       dot: "style=solid color=\"#000000\" constraint=true penwidth=1"
       display: "label"
       penwidth: "off"
+inputtaxonomy:
+  graphstyle: 
+    graph: "rankdir=BT"
+    face2face: "off"
+    subgraph: "off"
+    legend: "source"
+    mapping: "off"
+    wmap: "off"
+    wcolor: "off"
+    wmin: "1"
+    wmax: "5"
+  nodestyle: 
+    all: "shape=circle style=filled fillcolor=\"#FFFFFF\""
+    "1": "shape=box style=filled fillcolor=\"#CCFFCC\" fontname=\"helvetica\""
+    "2": "shape=note style=filled fillcolor=\"#FFFFCC\" fontname=\"helvetica\""
+    "3": "shape=box style=filled fillcolor=\"#CCCCFF\" fontname=\"helvetica\""
+    "4": "shape=box style=filled fillcolor=\"#FFCCCC\" fontname=\"helvetica\""
+    "5": "shape=box style=filled fillcolor=\"#CCFFFF\" fontname=\"helvetica\""
+    default: "shape=circle style=filled fillcolor=\"#FFFFFF\""
+  edgestyle: 
+    - 
+      label: "isa"
+      dot: "style=solid color=\"#000000\" constraint=true penwidth=1"
+      display: ""
+      penwidth: "off"
+    - 
+      label: "default"
+      dot: "style=solid color=\"#000000\" constraint=true penwidth=1"
+      display: "label"
+      penwidth: "off"
+    - 
+      label: "all"
+      dot: "style=solid color=\"#000000\" constraint=true penwidth=1"
+      display: "label"
+      penwidth: "off"
 map:
   graphstyle: 
     graph: "rankdir=BT ranksep=0.1 nodesep=0.3"
@@ -138,6 +173,102 @@ map:
     - 
       label: "all"
       dot: "style=solid color=\"#000000\" constraint=true penwidth=1 arrowhead=normal"
+      display: ""
+      penwidth: "off"
+mir:
+  graphstyle: 
+    graph: "rankdir=LR"
+    face2face: "on"
+    subgraph: "off"
+    legend: "source"
+    mapping: "off"
+    wmap: "off"
+    wcolor: "off"
+    wmin: "1"
+    wmax: "5"
+  nodestyle: 
+    all: "shape=circle style=filled fillcolor=\"#FFFFFF\""
+    "1": "shape=box style=filled fillcolor=\"#CCFFCC\" fontname=\"helvetica\""
+    "2": "shape=note style=filled fillcolor=\"#FFFFCC\" fontname=\"helvetica\""
+    "3": "shape=box style=filled fillcolor=\"#CCCCFF\" fontname=\"helvetica\""
+    "4": "shape=box style=filled fillcolor=\"#FFCCCC\" fontname=\"helvetica\""
+    "5": "shape=box style=filled fillcolor=\"#CCFFFF\" fontname=\"helvetica\""
+    default: "shape=circle style=filled fillcolor=\"#FFFFFF\""
+  edgestyle: 
+    - 
+      label: "isa"
+      dot: "style=solid color=\"#000000\" constraint=true penwidth=1 dir=forward"
+      display: ""
+      penwidth: "off"
+    - 
+      label: "in"
+      dot: "style=solid color=\"#000000\" constraint=true penwidth=1 dir=forward"
+      display: ""
+      penwidth: "off"
+    - 
+      label: "out"
+      dot: "style=solid color=\"#000000\" constraint=true penwidth=1 dir=forward"
+      display: ""
+      penwidth: "off"
+    - 
+      label: "articulations"
+      dot: "style=dashed color=\"#AA00FF\" constraint=true penwidth=1 dir=both"
+      display: "label"
+      penwidth: "off"
+    - 
+      label: "default"
+      dot: "style=solid color=\"#000000\" constraint=true penwidth=1 dir=forward"
+      display: "label"
+      penwidth: "off"
+    - 
+      label: "all"
+      dot: "style=solid color=\"#000000\" constraint=true penwidth=1 dir=forward"
+      display: "label"
+      penwidth: "off"
+ncs:
+  graphstyle: 
+    graph: "rankdir=RL"
+    face2face: "off"
+    subgraph: "off"
+    legend: "source"
+    mapping: "off"
+    wcolor: "off"
+    wmap: "off"
+    wmin: "1"
+    wmax: "5"
+  nodestyle: 
+    default: "shape=circle style=filled fillcolor=\"#FFFFFF\""
+    "1": "shape=box style=filled fillcolor=\"#CCFFCC\""
+    "2": "shape=note style=filled fillcolor=\"#FFFFCC\""
+    "3": "shape=box style=filled fillcolor=\"#CCCCFF\""
+    "4": "shape=box style=filled fillcolor=\"#FFCCCC\""
+    "5": "shape=box style=filled fillcolor=\"#CCFFFF\""
+    "comb": "shape=box style=\"filled,rounded\" fillcolor=\"#EEEEEE\""
+    "nc": "shape=box style=\"dotted, filled,rounded\" fillcolor=\"##FFFF00\""
+  edgestyle: 
+    - 
+      label: "input"
+      dot: "arrowhead=normal style=solid color=\"#000000\" constraint=true penwidth=1"
+      display: ""
+      penwidth: "off"
+    - 
+      label: "inferred"
+      dot: "arrowhead=normal style=solid color=\"#FF0000\" constraint=true penwidth=1"
+      display: ""
+      penwidth: "off"
+    - 
+      label: "overlaps"
+      dot: "arrowhead=none style=dotted color=\"#0000FF\" constraint=false penwidth=1"
+      display: ""
+      penwidth: "off"
+    - 
+      label: "redundant"
+      dot: "arrowhead=normal style=dotted color=\"#000000\" constraint=true penwidth=1"
+      display: ""
+      penwidth: "off"
+    - 
+      label: "default"
+      dot: "arrowhead=normal style=dotted color=\"#000000\" constraint=true penwidth=1"
       display: ""
       penwidth: "off"
 rcg:
@@ -236,4 +367,65 @@ singletoninput:
       label: "all"
       dot: "style=solid color=\"#000000\" constraint=true penwidth=1"
       display: "label"
+      penwidth: "off"
+zoomin:
+  graphstyle: 
+    graph: "rankdir=RL"
+    face2face: "off"
+    subgraph: "off"
+    legend: "source"
+    mapping: "off"
+    wcolor: "off"
+    wmap: "off"
+    wmin: "1"
+    wmax: "5"
+  nodestyle: 
+    default: "shape=circle style=filled fillcolor=\"#FFFFFF\""
+    "1": "shape=box style=filled fillcolor=\"#CCFFCC\" fontname=\"helvetica\""
+    "2": "shape=note style=filled fillcolor=\"#FFFFCC\" fontname=\"helvetica\""
+    "3": "shape=box style=filled fillcolor=\"#CCCCFF\" fontname=\"helvetica\""
+    "4": "shape=box style=filled fillcolor=\"#FFCCCC\" fontname=\"helvetica\""
+    "5": "shape=box style=filled fillcolor=\"#CCFFFF\" fontname=\"helvetica\""
+    "combT1": "shape=box style=\"filled,rounded\" fillcolor=\"#CCFFCC\" fontname=\"helvetica\""
+    "combT2": "shape=box style=\"filled,rounded\" fillcolor=\"#FFFFCC\" fontname=\"helvetica\""
+    "combT3": "shape=box style=\"filled,rounded\" fillcolor=\"#CCCCFF\" fontname=\"helvetica\""
+    "combT4": "shape=box style=\"filled,rounded\" fillcolor=\"#FFCCCC\" fontname=\"helvetica\""
+    "combT5": "shape=box style=\"filled,rounded\" fillcolor=\"#CCFFFF\" fontname=\"helvetica\""
+    "subT1": "shape=box style=\"filled,rounded,dashed\" fillcolor=\"#CCFFCC\" fontname=\"helvetica\""
+    "subT2": "shape=box style=\"filled,rounded,dashed\" fillcolor=\"#FFFFCC\" fontname=\"helvetica\""
+    "subT3": "shape=box style=\"filled,rounded,dashed\" fillcolor=\"#CCCCFF\" fontname=\"helvetica\""
+    "subT4": "shape=box style=\"filled,rounded,dashed\" fillcolor=\"#FFCCCC\" fontname=\"helvetica\""
+    "subT5": "shape=box style=\"filled,rounded,dashed\" fillcolor=\"#CCFFFF\" fontname=\"helvetica\""
+    "*NEW*": "shape=box style=\"filled,rounded,bold\" fillcolor=\"#FFE0D8\" fontname=\"helvetica\""
+    "congruent": "shape=box style=\"filled,rounded\" fillcolor=\"#EEEEEE\" fontname=\"helvetica\""
+  edgestyle: 
+    - 
+      label: "is_a (input)"
+      dot: "arrowhead=normal style=solid color=\"#000000\" constraint=true penwidth=1"
+      display: ""
+      penwidth: "off"
+    - 
+      label: "is_a (inferred)"
+      dot: "arrowhead=normal style=solid color=\"#FF0000\" constraint=true penwidth=1"
+      display: ""
+      penwidth: "off"
+    - 
+      label: "overlaps (input)"
+      dot: "arrowhead=none style=dotted color=\"#0000FF\" constraint=false penwidth=1"
+      display: ""
+      penwidth: "off"
+    - 
+      label: "overlaps (inferred)"
+      dot: "arrowhead=none style=dashed color=\"#FF0000\" constraint=false penwidth=1"
+      display: ""
+      penwidth: "off"
+    - 
+      label: "redundant"
+      dot: "arrowhead=normal style=dotted color=\"#000000\" constraint=true penwidth=1"
+      display: ""
+      penwidth: "off"
+    - 
+      label: "default"
+      dot: "arrowhead=normal style=dotted color=\"#000000\" constraint=true penwidth=1"
+      display: ""
       penwidth: "off"
